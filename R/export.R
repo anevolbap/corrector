@@ -3,6 +3,7 @@
 #' @param results Data frame returned by [grade_submissions()].
 #' @param path Output file path (e.g. `"grades.csv"`).
 #' @return `results`, invisibly.
+#' @importFrom utils write.csv
 #' @export
 export_to_csv <- function(results, path) {
   utils::write.csv(results, path, row.names = FALSE)

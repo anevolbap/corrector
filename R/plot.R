@@ -11,6 +11,8 @@
 #' @param ask If `TRUE` (default in interactive sessions), pause between plots.
 #'   Pass `FALSE` when rendering to a file device (PDF, PNG, etc.).
 #' @return `results`, invisibly.
+#' @importFrom graphics abline axis barplot box image legend par
+#' @importFrom stats setNames
 #' @export
 plot_report <- function(results, ask = interactive()) {
   exercise_cols <- setdiff(names(results), "student")

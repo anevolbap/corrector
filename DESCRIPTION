@@ -26,6 +26,9 @@ Suggests:
     cli,
     ggplot2,
     googlesheets4,
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0),
     withr
+VignetteBuilder: knitr
 Config/testthat/edition: 3

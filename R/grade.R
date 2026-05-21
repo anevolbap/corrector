@@ -121,14 +121,15 @@ grade_submissions <- function(submissions_path, test_dir, timeout = Inf,
   }
 
   use_cli <- requireNamespace("cli", quietly = TRUE) && length(students) > 1
-  if (use_cli) {
-    cli::cli_progress_bar("Grading", total = length(students), clear = FALSE)
-  }
+  progress_id <- if (use_cli) {
+    cli::cli_progress_bar("Grading", total = length(students), clear = FALSE,
+                          .auto_close = FALSE)
+  } else NULL
 
   slices <- lapply(students, function(student) {
     name <- student_name_fn(student)
     if (use_cli) {
-      cli::cli_progress_update(status = name)
+      cli::cli_progress_update(id = progress_id, status = name)
     } else {
       message("Grading: ", name)
     }
@@ -152,7 +153,7 @@ grade_submissions <- function(submissions_path, test_dir, timeout = Inf,
     do.call(rbind, lapply(per_student, unclass_df))
   })
 
-  if (use_cli) cli::cli_progress_done()
+  if (use_cli) cli::cli_progress_done(id = progress_id)
 
   combined <- do.call(rbind, slices)
   new_grade_results(combined)

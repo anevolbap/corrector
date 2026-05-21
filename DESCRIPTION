@@ -1,6 +1,6 @@
 Package: corrector
 Title: Automatic Grading of R Coding Exercises
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Pablo", "Vena", email = "vena.pablo@gmail.com",
     role = c("aut", "cre"))
 Author: Pablo Vena [aut, cre]
@@ -10,15 +10,25 @@ Description: Grades student R coding exercises against professor-written test
     exercise file to its test file, and returns a pass/fail data frame.
     Provides optional export to CSV or Google Sheets.
 License: MIT + file LICENSE
+URL: https://github.com/anevolbap/corrector
+BugReports: https://github.com/anevolbap/corrector/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+Depends:
+    R (>= 4.0)
 Imports:
     graphics,
     stats,
     utils
 Suggests:
+    callr,
+    cli,
+    ggplot2,
     googlesheets4,
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0),
     withr
+VignetteBuilder: knitr
 Config/testthat/edition: 3

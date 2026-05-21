@@ -4,8 +4,8 @@
 
 An R package for automatically grading student coding exercises. Each student
 submits one R file per exercise; the professor provides matching test files. The
-package sources both into an isolated environment, runs the tests, and returns a
-tidy data frame of results.
+package sources both into an isolated environment, runs the tests, and returns
+a per-test results object.
 
 ## Installation
 
@@ -49,9 +49,11 @@ writeLines(
 
 # --- 2. Grade ---
 results <- grade_submissions("submissions/", test_dir = "tests/")
-#   student    ejercicio1
-# 1 Garcia          TRUE
-# 2 Lopez          FALSE
+results
+# <grade_results> 4 rows, 2 students, 1 exercises
+# Status:
+#   pass  2
+#   fail  2
 
 # --- 3. Summarise and export ---
 grade_report(results)
@@ -66,6 +68,32 @@ results <- example_results()  # 8 fake students, 5 exercises
 grade_report(results)
 plot_report(results)
 ```
+
+## Results shape
+
+`grade_submissions()` and `grade_exercise()` return a `grade_results` object, a
+long-format data frame with one row per (student, exercise, test):
+
+| student | exercise   | test                    | status | message | duration |
+|---------|------------|-------------------------|--------|---------|----------|
+| Garcia  | ejercicio1 | test_ejercicio1_raices  | pass   | NA      | 0.001    |
+| Lopez   | ejercicio1 | test_ejercicio1_raices  | fail   | NA      | 0.001    |
+
+`status` is a factor with levels `pass`, `fail`, `error`, `timeout`, `missing`,
+`source_error`. This makes it easy to tell a test that returned `FALSE` apart
+from one that errored, hit a timeout, or a file the student never submitted.
+
+The legacy wide view (one row per student, one logical column per exercise) is
+one call away:
+
+```r
+as.data.frame(results, format = "wide")
+#   student    ejercicio1
+# 1 Garcia          TRUE
+# 2 Lopez          FALSE
+```
+
+`NA` means the exercise was missing or failed to parse.
 
 ## How it works
 
@@ -99,6 +127,11 @@ test_ejercicio1_tipo <- function() {
 }
 ```
 
+The expected exercise list comes from the test directory: every `test_*.R`
+file defines an exercise. If a student does not submit an exercise that has a
+test file, a row with `status = missing` is recorded rather than silently
+skipping it.
+
 Student code and test code are sourced into a fresh, isolated environment for
 each exercise, so submissions cannot interfere with each other.
 
@@ -117,8 +150,9 @@ grade_exercise("submissions/garcia_juan/ejercicio1.R", test_dir = "tests/")
 grade_report(results)
 
 # Export
-export_to_csv(results, "grades.csv")
-export_to_html(results, "report.html")
+export_to_csv(results, "grades.csv")               # wide view by default
+export_to_csv(results, "grades-long.csv", format = "long")
+export_to_html(results, "report.html")             # colour-coded, per-test breakdown
 
 # Export to Google Sheets (requires googlesheets4)
 googlesheets4::gs4_auth()
@@ -138,6 +172,9 @@ plot_report(results)
 pdf("report.pdf", width = 8, height = 5)
 plot_report(results, ask = FALSE)
 dev.off()
+
+# Use ggplot2 when installed (falls back to base R otherwise)
+plot_report(results, backend = "ggplot2")
 ```
 
 ![Plots preview](man/figures/plots-preview.png)
@@ -148,7 +185,19 @@ dev.off()
 results <- grade_submissions("submissions/", test_dir = "tests/", timeout = 10)
 ```
 
-Tests that exceed the limit are recorded as `FALSE`.
+By default the grader uses `setTimeLimit()` inside the current session. It
+handles ordinary cases but does not always interrupt `Sys.sleep()` or every
+tight loop. For a real wall-clock kill, use the `callr` engine:
+
+```r
+results <- grade_submissions(
+  "submissions/", test_dir = "tests/",
+  timeout = 10, engine = "callr"
+)
+```
+
+`callr` runs each exercise in a fresh subprocess and kills it when the budget
+is exceeded. Requires the `callr` package.
 
 ## Example test files
 
@@ -168,6 +217,22 @@ system.file("examples", package = "corrector")
 
 corrector is the lightest option: no server, plain `.R` file submissions,
 zero hard dependencies.
+
+## Folder names
+
+The default extractor takes the first underscore-separated token of the folder
+name and applies title case (so `garcia_juan_12345` becomes `Garcia`). Pass
+`student_name_fn` to override:
+
+```r
+results <- grade_submissions(
+  "submissions/", test_dir = "tests/",
+  student_name_fn = function(folder) sub("_.*$", "", folder)
+)
+```
+
+Submissions can also be handed in as a single `.zip`; the package extracts it
+into a temporary directory before grading.
 
 ## Contributing
 

@@ -5,7 +5,7 @@
 Paquete de R para corregir automáticamente ejercicios de programación. Cada
 estudiante entrega un archivo `.R` por ejercicio y el docente provee los archivos
 de tests. El paquete los carga en un entorno aislado, ejecuta los tests y
-devuelve un data frame con los resultados.
+devuelve un objeto con los resultados por test.
 
 ## Instalación
 
@@ -49,11 +49,13 @@ writeLines(
 
 # --- 2. Corregir ---
 resultados <- grade_submissions("entregas/", test_dir = "tests/")
-#   student    ejercicio1
-# 1 Garcia          TRUE
-# 2 Lopez          FALSE
+resultados
+# <grade_results> 4 rows, 2 students, 1 exercises
+# Status:
+#   pass  2
+#   fail  2
 
-# --- 3. Resumen y exportación ---
+# --- 3. Vista resumida y exportación ---
 grade_report(resultados)
 export_to_html(resultados, "informe.html")
 export_to_csv(resultados,  "notas.csv")
@@ -67,6 +69,33 @@ resultados <- example_results()  # 8 estudiantes ficticios, 5 ejercicios
 grade_report(resultados)
 plot_report(resultados)
 ```
+
+## Estructura de los resultados
+
+`grade_submissions()` y `grade_exercise()` devuelven un objeto `grade_results`,
+un data frame en formato largo con una fila por (estudiante, ejercicio, test):
+
+| student | exercise   | test                    | status | message | duration |
+|---------|------------|-------------------------|--------|---------|----------|
+| Garcia  | ejercicio1 | test_ejercicio1_raices  | pass   | NA      | 0.001    |
+| Lopez   | ejercicio1 | test_ejercicio1_raices  | fail   | NA      | 0.001    |
+
+`status` es un factor con niveles `pass`, `fail`, `error`, `timeout`, `missing`,
+`source_error`. Esto permite distinguir un test que devolvió `FALSE` de uno que
+arrojó un error, agotó el tiempo límite, o de un archivo que el estudiante no
+entregó.
+
+Para obtener la vista clásica (una fila por estudiante, una columna lógica por
+ejercicio):
+
+```r
+as.data.frame(resultados, format = "wide")
+#   student    ejercicio1
+# 1 Garcia          TRUE
+# 2 Lopez          FALSE
+```
+
+`NA` indica que el ejercicio no se entregó o que el archivo no parseó.
 
 ## Cómo funciona
 
@@ -100,6 +129,11 @@ test_ejercicio1_tipo <- function() {
 }
 ```
 
+La lista de ejercicios esperados sale del directorio de tests: cada archivo
+`test_*.R` define un ejercicio. Si un estudiante no entrega un ejercicio que
+existe en `test_dir/`, se registra una fila con `status = missing` en lugar de
+ignorarlo en silencio.
+
 El código del estudiante y los tests se cargan en un entorno nuevo y aislado
 para cada ejercicio, así las entregas no se interfieren entre sí.
 
@@ -129,8 +163,9 @@ grade_report(resultados)
 #   Lopez                ##########            50%
 
 # Exportar
-export_to_csv(resultados, "notas.csv")
-export_to_html(resultados, "informe.html")   # tabla con colores
+export_to_csv(resultados, "notas.csv")               # vista wide por defecto
+export_to_csv(resultados, "notas-largo.csv", format = "long")
+export_to_html(resultados, "informe.html")           # tabla con colores y detalle por test
 
 # Exportar a Google Sheets (requiere googlesheets4)
 googlesheets4::gs4_auth()
@@ -150,6 +185,9 @@ plot_report(resultados)
 pdf("informe.pdf", width = 8, height = 5)
 plot_report(resultados, ask = FALSE)
 dev.off()
+
+# Usar ggplot2 si está instalado (vuelve a base R si no)
+plot_report(resultados, backend = "ggplot2")
 ```
 
 ![Vista previa de los gráficos](man/figures/plots-preview.png)
@@ -157,13 +195,26 @@ dev.off()
 ## Tiempo límite por test
 
 Para evitar que bucles infinitos en el código de los estudiantes bloqueen el
-corrector, podés definir un límite de tiempo en segundos:
+corrector, definí un límite de tiempo en segundos:
 
 ```r
 resultados <- grade_submissions("entregas/", test_dir = "tests/", timeout = 10)
 ```
 
-Los tests que superen el límite se registran como `FALSE`.
+Por defecto el corrector usa `setTimeLimit()` dentro de la sesión actual.
+Funciona para casos comunes pero no siempre interrumpe `Sys.sleep()` ni todos
+los bucles cerrados. Para un corte real por reloj de pared, usá el motor
+`callr`:
+
+```r
+resultados <- grade_submissions(
+  "entregas/", test_dir = "tests/",
+  timeout = 10, engine = "callr"
+)
+```
+
+`callr` corre cada ejercicio en un subproceso fresco y lo mata cuando excede el
+presupuesto. Requiere el paquete `callr` instalado.
 
 ## Archivos de tests de ejemplo
 
@@ -202,6 +253,15 @@ Se espera que las carpetas de cada estudiante empiecen con el apellido,
 opcionalmente seguido de otros campos separados por guiones bajos
 (por ejemplo `garcia_juan_12345`). El corrector extrae el primer segmento como
 nombre para mostrar.
+
+Para usar otra convención, pasá una función a `student_name_fn`:
+
+```r
+resultados <- grade_submissions(
+  "entregas/", test_dir = "tests/",
+  student_name_fn = function(folder) sub("_.*$", "", folder)
+)
+```
 
 Las entregas también se pueden entregar como un único archivo `.zip`; el paquete
 lo descomprime automáticamente antes de corregir.

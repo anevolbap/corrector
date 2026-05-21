@@ -1,0 +1,33 @@
+url: https://anevolbap.github.io/corrector/
+
+template:
+  bootstrap: 5
+
+reference:
+  - title: Grading
+    contents:
+      - grade_exercise
+      - grade_submissions
+  - title: Summarising
+    contents:
+      - grade_report
+      - plot_report
+  - title: Exporting
+    contents:
+      - export_to_csv
+      - export_to_html
+      - export_to_sheets
+  - title: Result object
+    contents:
+      - grade_results
+      - as.data.frame.grade_results
+  - title: Helpers
+    contents:
+      - default_student_name
+      - example_results
+
+articles:
+  - title: Guides
+    navbar: ~
+    contents:
+      - grading-pipeline

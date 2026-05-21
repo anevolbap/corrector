@@ -1,0 +1,121 @@
+---
+title: "Setting up a grading pipeline"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Setting up a grading pipeline}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+This vignette walks through a complete grading run end to end: writing tests,
+gathering submissions, grading, summarising, and exporting.
+
+## Folder layout
+
+The grader expects one sub-folder per student under a submissions root, and a
+flat folder of test files. File names follow a simple convention:
+
+```
+submissions/
+  garcia_juan/
+    ejercicio1.R
+    ejercicio2.R
+  lopez_maria/
+    ejercicio1.R
+    ejercicio2.R
+
+tests/
+  test_ejercicio1.R
+  test_ejercicio2.R
+```
+
+A test file holds one or more functions named `test_<exercise>_<case>` that
+return `TRUE` or `FALSE`.
+
+```r
+# tests/test_ejercicio1.R
+test_ejercicio1_roots <- function() {
+  all(quadratic_roots(1, 0, -1) == c(-1, 1))
+}
+test_ejercicio1_numeric <- function() {
+  is.numeric(quadratic_roots(1, 0, -1))
+}
+```
+
+## Running the grader
+
+```r
+library(corrector)
+
+results <- grade_submissions("submissions/", test_dir = "tests/")
+```
+
+`results` is a `grade_results` object: a long-format data frame with one row
+per test, plus the columns `student`, `exercise`, `status`, `message`, and
+`duration`. Status is one of `pass`, `fail`, `error`, `timeout`, `missing`, or
+`source_error`.
+
+```r
+head(as.data.frame(results, format = "long"))
+```
+
+Convert to the legacy wide-boolean view with `as.data.frame(results, format =
+"wide")`.
+
+## Summarising
+
+`grade_report()` reduces the long results to per-exercise pass rates and
+per-student scores, plus counts of errors, timeouts, and missing submissions.
+
+```r
+grade_report(results)
+```
+
+`plot_report()` produces three plots. Pass `backend = "ggplot2"` to use
+ggplot2, if installed.
+
+## Exporting
+
+```r
+export_to_csv(results, "grades.csv")               # wide by default
+export_to_csv(results, "grades-long.csv", format = "long")
+export_to_html(results, "report.html")
+```
+
+The HTML report colour-codes each cell by status and includes a per-student
+breakdown of every test.
+
+## Timeouts and untrusted code
+
+The default engine runs tests in the current R session via `setTimeLimit()`.
+That works for well-behaved student code but cannot interrupt arbitrary busy
+loops, and it does not stop a student from touching the file system.
+
+For untrusted code or unreliable timing, pass `engine = "callr"`:
+
+```r
+results <- grade_submissions("submissions/", test_dir = "tests/",
+                             timeout = 10, engine = "callr")
+```
+
+The `callr` engine runs each exercise in a fresh subprocess and applies a
+wall-clock kill when the budget is exceeded. Requires the `callr` package.
+
+## Renaming students
+
+The default student-name extractor takes the first underscore-separated
+segment and applies title case (so `garcia_juan_12345` becomes `Garcia`).
+Pass `student_name_fn` to override:
+
+```r
+results <- grade_submissions(
+  "submissions/", test_dir = "tests/",
+  student_name_fn = function(folder) {
+    sub("_.*$", "", folder)
+  }
+)
+```

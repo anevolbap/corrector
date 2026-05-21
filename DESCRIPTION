@@ -1,6 +1,6 @@
 Package: corrector
 Title: Automatic Grading of R Coding Exercises
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Pablo", "Vena", email = "vena.pablo@gmail.com",
     role = c("aut", "cre"))
 Author: Pablo Vena [aut, cre]

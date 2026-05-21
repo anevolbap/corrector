@@ -2,6 +2,7 @@
 ^README\.en\.md$
 ^LICENSE\.md$
 ^\.github$
+^\.claude$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$

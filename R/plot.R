@@ -15,7 +15,7 @@
 #'   warning otherwise.
 #' @return `results`, invisibly.
 #' @importFrom graphics abline axis barplot box image legend par
-#' @importFrom stats setNames
+#' @importFrom stats setNames aggregate
 #' @export
 plot_report <- function(results, ask = interactive(), backend = c("base", "ggplot2")) {
   results <- ensure_grade_results(results)

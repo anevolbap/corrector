@@ -4,12 +4,15 @@
 \alias{export_to_csv}
 \title{Export grading results to a CSV file}
 \usage{
-export_to_csv(results, path)
+export_to_csv(results, path, format = c("wide", "long"))
 }
 \arguments{
-\item{results}{Data frame returned by \code{\link[=grade_submissions]{grade_submissions()}}.}
+\item{results}{A \link{grade_results} object.}
 
 \item{path}{Output file path (e.g. \code{"grades.csv"}).}
+
+\item{format}{\code{"wide"} (default) writes one row per student with one logical
+column per exercise. \code{"long"} writes the per-test detail.}
 }
 \value{
 \code{results}, invisibly.

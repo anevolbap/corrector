@@ -4,19 +4,23 @@
 \alias{plot_report}
 \title{Plot a visual summary of grading results}
 \usage{
-plot_report(results, ask = interactive())
+plot_report(results, ask = interactive(), backend = c("base", "ggplot2"))
 }
 \arguments{
-\item{results}{Data frame returned by \code{\link[=grade_submissions]{grade_submissions()}}.}
+\item{results}{A \link{grade_results} object.}
 
 \item{ask}{If \code{TRUE} (default in interactive sessions), pause between plots.
 Pass \code{FALSE} when rendering to a file device (PDF, PNG, etc.).}
+
+\item{backend}{\code{"base"} (default) uses base graphics, no extra dependencies.
+\code{"ggplot2"} uses ggplot2 when installed and falls back to base R with a
+warning otherwise.}
 }
 \value{
 \code{results}, invisibly.
 }
 \description{
-Produces three base-R plots in sequence:
+Produces three plots in sequence:
 \enumerate{
 \item Student scores ranked (horizontal bar chart).
 \item Pass rate per exercise (bar chart).

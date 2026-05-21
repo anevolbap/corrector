@@ -7,17 +7,23 @@
 grade_report(results)
 }
 \arguments{
-\item{results}{Data frame returned by \code{\link[=grade_submissions]{grade_submissions()}}.}
+\item{results}{A \link{grade_results} object returned by \code{\link[=grade_submissions]{grade_submissions()}}
+or \code{\link[=grade_exercise]{grade_exercise()}}.}
 }
 \value{
 A \code{grade_report} object (a list) with components:
 \describe{
-\item{\code{pass_rate_by_exercise}}{Named numeric vector (0–1).}
-\item{\code{score_by_student}}{Named numeric vector (0–1).}
-\item{\code{overall_mean}}{Scalar numeric (0–1).}
+\item{\code{pass_rate_by_exercise}}{Named numeric vector (0-1). Fraction of
+students whose every test passed.}
+\item{\code{score_by_student}}{Named numeric vector (0-1). Mean pass rate
+across the student's exercises.}
+\item{\code{overall_mean}}{Scalar numeric (0-1).}
+\item{\code{issue_counts}}{Named integer vector with counts of \code{error},
+\code{timeout}, and \code{missing} rows.}
 }
 }
 \description{
-Computes pass rate per exercise and score per student. The returned object
-has a \code{\link[=print]{print()}} method that renders a readable console summary.
+Computes pass rate per exercise and score per student, plus counts of
+errors, timeouts, and missing submissions. The returned object has a
+\code{\link[=print]{print()}} method that renders a readable console summary.
 }

@@ -4,20 +4,22 @@
 \alias{export_to_sheets}
 \title{Export grading results to a Google Sheet}
 \usage{
-export_to_sheets(results, sheet_url, sheet = 1)
+export_to_sheets(results, sheet_url, sheet = 1, format = c("wide", "long"))
 }
 \arguments{
-\item{results}{Data frame returned by \code{\link[=grade_submissions]{grade_submissions()}}.}
+\item{results}{A \link{grade_results} object.}
 
 \item{sheet_url}{URL of the target Google Sheet.}
 
 \item{sheet}{Name or index of the worksheet tab (default: first sheet).}
+
+\item{format}{\code{"wide"} (default) or \code{"long"}.}
 }
 \value{
 \code{results}, invisibly.
 }
 \description{
-Writes the results data frame to an existing Google Sheet, replacing its
-contents. Requires the \pkg{googlesheets4} package and prior authentication —
-call \code{\link[googlesheets4:gs4_auth]{googlesheets4::gs4_auth()}} once per session before using this function.
+Writes results to an existing Google Sheet, replacing its contents. Requires
+the \pkg{googlesheets4} package and prior authentication; call
+\code{googlesheets4::gs4_auth()} once per session before using this function.
 }

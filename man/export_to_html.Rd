@@ -4,18 +4,21 @@
 \alias{export_to_html}
 \title{Export grading results to an HTML report}
 \usage{
-export_to_html(results, path)
+export_to_html(results, path, include_details = TRUE)
 }
 \arguments{
-\item{results}{Data frame returned by \code{\link[=grade_submissions]{grade_submissions()}}.}
+\item{results}{A \link{grade_results} object.}
 
 \item{path}{Output file path (e.g. \code{"report.html"}).}
+
+\item{include_details}{If \code{TRUE}, append a per-test breakdown under each
+student (errors and timeouts include the message). Default \code{TRUE}.}
 }
 \value{
 \code{results}, invisibly.
 }
 \description{
 Produces a self-contained HTML file with a colour-coded table (green = pass,
-red = fail), a per-student score column, and a pass-rate summary row.
-No extra packages required.
+red = fail, amber = error/timeout, grey = missing), per-student score
+column, and a pass-rate summary row.
 }

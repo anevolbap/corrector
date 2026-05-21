@@ -3,6 +3,7 @@
 S3method(as.data.frame,grade_results)
 S3method(print,grade_report)
 S3method(print,grade_results)
+export(default_student_name)
 export(example_results)
 export(export_to_csv)
 export(export_to_html)

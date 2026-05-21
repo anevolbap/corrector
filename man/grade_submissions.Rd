@@ -4,7 +4,13 @@
 \alias{grade_submissions}
 \title{Grade all student submissions in a directory or zip archive}
 \usage{
-grade_submissions(submissions_path, test_dir, timeout = Inf)
+grade_submissions(
+  submissions_path,
+  test_dir,
+  timeout = Inf,
+  engine = c("inproc", "callr"),
+  student_name_fn = default_student_name
+)
 }
 \arguments{
 \item{submissions_path}{Path to a directory or \code{.zip} archive of submissions.}
@@ -12,6 +18,12 @@ grade_submissions(submissions_path, test_dir, timeout = Inf)
 \item{test_dir}{Directory that contains the test files.}
 
 \item{timeout}{Maximum seconds allowed per test function. Default \code{Inf}.}
+
+\item{engine}{\code{"inproc"} (default) or \code{"callr"}. See \code{\link[=grade_exercise]{grade_exercise()}}.}
+
+\item{student_name_fn}{Function applied to each student folder name to
+produce the display name. Defaults to taking the first underscore-
+separated token and applying title case.}
 }
 \value{
 A \link{grade_results} object.

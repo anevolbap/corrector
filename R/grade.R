@@ -1,19 +1,27 @@
 #' Grade a single exercise file against its tests
 #'
 #' Sources the student's file and the matching test file into an isolated
-#' environment, runs every function whose name matches the test pattern, and
-#' returns the per-test outcome as a [grade_results] object.
+#' environment, runs every function whose name starts with
+#' `test_<exercise>_`, and returns the per-test outcome as a [grade_results]
+#' object.
 #'
 #' @param file Path to the student's R file (e.g. `"ejercicio1.R"`).
 #' @param test_dir Directory that contains the test files.
 #' @param timeout Maximum seconds allowed per test function. Tests that exceed
 #'   this limit are recorded with status `timeout`. Default `Inf`.
 #' @param student Optional student display name. Defaults to `NA`.
+#' @param engine `"inproc"` (default) runs tests in the current R session via
+#'   `setTimeLimit()`. `"callr"` runs each exercise in a fresh subprocess via
+#'   the \pkg{callr} package, giving a hard wall-clock timeout that interrupts
+#'   busy loops. Requires the `callr` package.
 #' @return A [grade_results] object with one row per test. If the student file
 #'   fails to parse, one row with `status = source_error`. If no matching test
 #'   file is found, one row with `status = missing` and a warning.
 #' @export
-grade_exercise <- function(file, test_dir, timeout = Inf, student = NA_character_) {
+grade_exercise <- function(file, test_dir, timeout = Inf,
+                           student = NA_character_,
+                           engine = c("inproc", "callr")) {
+  engine <- match.arg(engine)
   exercise <- tools::file_path_sans_ext(basename(file))
   test_file <- find_test_file(file, test_dir)
 
@@ -28,6 +36,13 @@ grade_exercise <- function(file, test_dir, timeout = Inf, student = NA_character
       duration = NA_real_,
       stringsAsFactors = FALSE
     )))
+  }
+
+  test_fns <- discover_test_fns(test_file, exercise)
+  if (engine == "callr") {
+    out <- run_exercise_callr(file, test_file, test_fns, timeout)
+    df <- callr_to_rows(out, test_fns, timeout, student, exercise)
+    return(new_grade_results(df))
   }
 
   env <- new.env(parent = baseenv())
@@ -51,15 +66,15 @@ grade_exercise <- function(file, test_dir, timeout = Inf, student = NA_character
 
   source(test_file, local = env)
   prefix <- paste0("test_", exercise, "_")
-  test_fns <- ls(envir = env)
-  test_fns <- test_fns[startsWith(test_fns, prefix)]
+  test_fns_in_env <- ls(envir = env)
+  test_fns_in_env <- test_fns_in_env[startsWith(test_fns_in_env, prefix)]
 
-  if (length(test_fns) == 0) {
+  if (length(test_fns_in_env) == 0) {
     return(empty_grade_results())
   }
 
-  rows <- lapply(test_fns, function(fn) {
-    out <- run_one_test(get(fn, envir = env), timeout)
+  rows <- lapply(test_fns_in_env, function(fn) {
+    out <- run_one_test_inproc(get(fn, envir = env), timeout)
     data.frame(
       student  = student,
       exercise = exercise,
@@ -85,10 +100,17 @@ grade_exercise <- function(file, test_dir, timeout = Inf, student = NA_character
 #' @param submissions_path Path to a directory or `.zip` archive of submissions.
 #' @param test_dir Directory that contains the test files.
 #' @param timeout Maximum seconds allowed per test function. Default `Inf`.
+#' @param engine `"inproc"` (default) or `"callr"`. See [grade_exercise()].
+#' @param student_name_fn Function applied to each student folder name to
+#'   produce the display name. Defaults to taking the first underscore-
+#'   separated token and applying title case.
 #' @return A [grade_results] object.
 #' @importFrom utils unzip
 #' @export
-grade_submissions <- function(submissions_path, test_dir, timeout = Inf) {
+grade_submissions <- function(submissions_path, test_dir, timeout = Inf,
+                              engine = c("inproc", "callr"),
+                              student_name_fn = default_student_name) {
+  engine <- match.arg(engine)
   dir <- extract_if_zip(submissions_path)
   students <- list.files(dir)
 
@@ -98,9 +120,18 @@ grade_submissions <- function(submissions_path, test_dir, timeout = Inf) {
     return(empty_grade_results())
   }
 
+  use_cli <- requireNamespace("cli", quietly = TRUE) && length(students) > 1
+  if (use_cli) {
+    cli::cli_progress_bar("Grading", total = length(students), clear = FALSE)
+  }
+
   slices <- lapply(students, function(student) {
-    name <- student_name(student)
-    message("Grading: ", name)
+    name <- student_name_fn(student)
+    if (use_cli) {
+      cli::cli_progress_update(status = name)
+    } else {
+      message("Grading: ", name)
+    }
 
     per_student <- lapply(exercises, function(ex) {
       file <- file.path(dir, student, paste0(ex, ".R"))
@@ -115,10 +146,13 @@ grade_submissions <- function(submissions_path, test_dir, timeout = Inf) {
           stringsAsFactors = FALSE
         )))
       }
-      grade_exercise(file, test_dir = test_dir, timeout = timeout, student = name)
+      grade_exercise(file, test_dir = test_dir, timeout = timeout,
+                     student = name, engine = engine)
     })
     do.call(rbind, lapply(per_student, unclass_df))
   })
+
+  if (use_cli) cli::cli_progress_done()
 
   combined <- do.call(rbind, slices)
   new_grade_results(combined)
@@ -126,7 +160,7 @@ grade_submissions <- function(submissions_path, test_dir, timeout = Inf) {
 
 # ---------- internal helpers ----------
 
-run_one_test <- function(fn, timeout) {
+run_one_test_inproc <- function(fn, timeout) {
   t0 <- Sys.time()
   on.exit(setTimeLimit(elapsed = Inf, transient = FALSE), add = TRUE)
   if (is.finite(timeout)) setTimeLimit(elapsed = timeout, transient = FALSE)
@@ -172,6 +206,20 @@ expected_exercises <- function(test_dir) {
   sub("^test_", "", stems)
 }
 
+# Used by callr engine to know which test functions to invoke without loading
+# the student file in the main process.
+discover_test_fns <- function(test_file, exercise) {
+  env <- new.env(parent = baseenv())
+  # Provide a stub for any function called at top-level by the test file that
+  # could fail without the student definitions; tests should only define
+  # functions, so sourcing here should be safe.
+  src <- tryCatch({source(test_file, local = env); TRUE}, error = function(e) FALSE)
+  if (!isTRUE(src)) return(character())
+  prefix <- paste0("test_", exercise, "_")
+  fns <- ls(envir = env)
+  fns[startsWith(fns, prefix)]
+}
+
 extract_if_zip <- function(path) {
   if (identical(tolower(tools::file_ext(path)), "zip")) {
     dest <- file.path(tempdir(), paste0("corrector_", basename(tools::file_path_sans_ext(path))))
@@ -183,11 +231,22 @@ extract_if_zip <- function(path) {
   path
 }
 
-# Convention: folder names like "apellido_nombre_..." or just "apellido"
-student_name <- function(folder) {
+#' Default student-name extractor
+#'
+#' Splits the folder name on underscores, takes the first segment, lower-cases
+#' it, then applies [tools::toTitleCase()]. Examples:
+#' `"garcia_juan_12345"` becomes `"Garcia"`; `"lopez"` becomes `"Lopez"`.
+#'
+#' @param folder Character. Submission folder name.
+#' @return Character. Display name.
+#' @export
+default_student_name <- function(folder) {
   parts <- strsplit(folder, "_")[[1]]
   tools::toTitleCase(tolower(parts[[1]]))
 }
+
+# Kept for internal use; thin alias.
+student_name <- function(folder) default_student_name(folder)
 
 unclass_df <- function(x) {
   attr(x, "class") <- "data.frame"

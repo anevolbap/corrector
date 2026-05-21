@@ -4,7 +4,13 @@
 \alias{grade_exercise}
 \title{Grade a single exercise file against its tests}
 \usage{
-grade_exercise(file, test_dir, timeout = Inf, student = NA_character_)
+grade_exercise(
+  file,
+  test_dir,
+  timeout = Inf,
+  student = NA_character_,
+  engine = c("inproc", "callr")
+)
 }
 \arguments{
 \item{file}{Path to the student's R file (e.g. \code{"ejercicio1.R"}).}
@@ -15,6 +21,11 @@ grade_exercise(file, test_dir, timeout = Inf, student = NA_character_)
 this limit are recorded with status \code{timeout}. Default \code{Inf}.}
 
 \item{student}{Optional student display name. Defaults to \code{NA}.}
+
+\item{engine}{\code{"inproc"} (default) runs tests in the current R session via
+\code{setTimeLimit()}. \code{"callr"} runs each exercise in a fresh subprocess via
+the \pkg{callr} package, giving a hard wall-clock timeout that interrupts
+busy loops. Requires the \code{callr} package.}
 }
 \value{
 A \link{grade_results} object with one row per test. If the student file
@@ -23,6 +34,7 @@ file is found, one row with \code{status = missing} and a warning.
 }
 \description{
 Sources the student's file and the matching test file into an isolated
-environment, runs every function whose name matches the test pattern, and
-returns the per-test outcome as a \link{grade_results} object.
+environment, runs every function whose name starts with
+\verb{test_<exercise>_}, and returns the per-test outcome as a \link{grade_results}
+object.
 }

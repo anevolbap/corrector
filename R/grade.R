@@ -85,14 +85,17 @@ grade_submissions <- function(submissions_path, test_dir, timeout = Inf) {
 # ---------- internal helpers ----------
 
 find_test_file <- function(file, test_dir) {
-  pattern <- paste0("^test_", basename(file), "$")
-  matches <- list.files(test_dir, pattern = pattern, full.names = TRUE)
-  if (length(matches) == 0) NULL else matches[[1]]
+  target <- paste0("test_", basename(file))
+  matches <- list.files(test_dir, full.names = TRUE)
+  hit <- matches[basename(matches) == target]
+  if (length(hit) == 0) NULL else hit[[1]]
 }
 
 extract_if_zip <- function(path) {
-  if (identical(tools::file_ext(path), "zip")) {
-    dest <- tools::file_path_sans_ext(path)
+  if (identical(tolower(tools::file_ext(path)), "zip")) {
+    dest <- file.path(tempdir(), paste0("corrector_", basename(tools::file_path_sans_ext(path))))
+    unlink(dest, recursive = TRUE)
+    dir.create(dest, recursive = TRUE)
     unzip(path, exdir = dest)
     return(dest)
   }

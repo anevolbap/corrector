@@ -194,27 +194,32 @@ plot_report(resultados, backend = "ggplot2")
 
 ## Tiempo límite por test
 
-Para evitar que bucles infinitos en el código de los estudiantes bloqueen el
-corrector, definí un límite de tiempo en segundos:
+Cada test tiene un límite de `timeout` segundos (10 por defecto). Por defecto
+el corrector usa el motor `callr`: corre cada ejercicio en un subproceso nuevo,
+con una carpeta de trabajo temporal, y lo mata cuando excede el límite, incluso
+dentro de un bucle infinito. Para cambiar el límite:
 
 ```r
-resultados <- grade_submissions("entregas/", test_dir = "tests/", timeout = 10)
+resultados <- grade_submissions("entregas/", test_dir = "tests/", timeout = 30)
 ```
 
-Por defecto el corrector usa `setTimeLimit()` dentro de la sesión actual.
-Funciona para casos comunes pero no siempre interrumpe `Sys.sleep()` ni todos
-los bucles cerrados. Para un corte real por reloj de pared, usá el motor
-`callr`:
+Usá `timeout = Inf` para no poner límite. `engine = "inproc"` corre los tests
+en la sesión actual: es más rápido, pero `setTimeLimit()` no interrumpe todos
+los bucles y el código del estudiante puede modificar tu entorno global.
+
+Para cursos grandes, `workers` corre varios subprocesos a la vez:
 
 ```r
-resultados <- grade_submissions(
-  "entregas/", test_dir = "tests/",
-  timeout = 10, engine = "callr"
-)
+resultados <- grade_submissions("entregas/", test_dir = "tests/", workers = 4)
 ```
 
-`callr` corre cada ejercicio en un subproceso fresco y lo mata cuando excede el
-presupuesto. Requiere el paquete `callr` instalado.
+## Seguridad
+
+corrector no es un sandbox. El motor `callr` protege tu sesión de R, no tu
+computadora: el código del estudiante puede leer y escribir cualquier archivo
+al que tenga acceso tu usuario, usar la red o ejecutar comandos del sistema.
+Si no confiás en quien escribió el código, corré el corrector dentro de un
+contenedor o una máquina virtual sin tus credenciales.
 
 ## Archivos de tests de ejemplo
 

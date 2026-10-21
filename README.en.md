@@ -181,23 +181,31 @@ plot_report(results, backend = "ggplot2")
 
 ## Timeout
 
-```r
-results <- grade_submissions("submissions/", test_dir = "tests/", timeout = 10)
-```
-
-By default the grader uses `setTimeLimit()` inside the current session. It
-handles ordinary cases but does not always interrupt `Sys.sleep()` or every
-tight loop. For a real wall-clock kill, use the `callr` engine:
+Each test gets `timeout` seconds (default 10). The default engine, `callr`,
+runs each exercise in a fresh subprocess with a temporary working directory,
+and kills it when the budget runs out, even inside a busy loop. To change the
+limit:
 
 ```r
-results <- grade_submissions(
-  "submissions/", test_dir = "tests/",
-  timeout = 10, engine = "callr"
-)
+results <- grade_submissions("submissions/", test_dir = "tests/", timeout = 30)
 ```
 
-`callr` runs each exercise in a fresh subprocess and kills it when the budget
-is exceeded. Requires the `callr` package.
+Use `timeout = Inf` for no limit. `engine = "inproc"` runs tests in the
+current session: it is faster, but `setTimeLimit()` does not interrupt every
+loop, and student code can change your global environment.
+
+For large classes, `workers` runs several subprocesses at the same time:
+
+```r
+results <- grade_submissions("submissions/", test_dir = "tests/", workers = 4)
+```
+
+## Security
+
+corrector is not a sandbox. The `callr` engine protects your R session, not
+your computer: student code can read and write any file your user can, use
+the network, or run system commands. For code from people you do not trust,
+run corrector inside a container or virtual machine without your credentials.
 
 ## Example test files
 

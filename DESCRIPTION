@@ -1,6 +1,6 @@
 Package: corrector
 Title: Automatic Grading of R Coding Exercises
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: person("Pablo", "Vena", email = "vena.pablo@gmail.com",
     role = c("aut", "cre"))
 Author: Pablo Vena [aut, cre]
@@ -18,11 +18,11 @@ RoxygenNote: 7.3.2
 Depends:
     R (>= 4.0)
 Imports:
+    callr,
     graphics,
     stats,
     utils
 Suggests:
-    callr,
     cli,
     ggplot2,
     googlesheets4,

@@ -65,6 +65,60 @@ test_that("grade_submissions accepts a .zip archive", {
   expect_true(nrow(res) >= 3)
 })
 
+test_that("grade_submissions ignores stray files and steps into a lone top folder", {
+  subs <- make_submissions()
+  outer <- withr::local_tempdir()
+  file.copy(subs, outer, recursive = TRUE)
+  top <- file.path(outer, basename(subs))
+  writeLines("notas", file.path(top, "LEEME.txt"))
+  dir.create(file.path(outer, "__MACOSX"))
+  dir.create(file.path(top, ".hidden"))
+
+  tests <- make_test_dir()
+  res <- suppressMessages(grade_submissions(outer, test_dir = tests))
+  expect_setequal(unique(res$student), c("Alice", "Bob"))
+})
+
+strip_duration <- function(res) {
+  df <- as.data.frame(res)
+  df$duration <- NULL
+  df
+}
+
+test_that("workers > 1 gives the same results in the same order", {
+  subs  <- make_submissions()
+  tests <- make_test_dir()
+  one   <- suppressMessages(grade_submissions(subs, test_dir = tests))
+  three <- suppressMessages(grade_submissions(subs, test_dir = tests, workers = 3))
+  expect_equal(strip_duration(three), strip_duration(one))
+})
+
+test_that("inproc and callr engines agree on grade_submissions", {
+  subs  <- make_submissions()
+  tests <- make_test_dir()
+  callr  <- suppressMessages(grade_submissions(subs, test_dir = tests))
+  inproc <- suppressMessages(grade_submissions(subs, test_dir = tests,
+                                               engine = "inproc"))
+  expect_equal(strip_duration(inproc), strip_duration(callr))
+})
+
+test_that("workers > 1 runs students at the same time", {
+  skip_on_cran()
+  subs  <- withr::local_tempdir()
+  tests <- make_test_dir()
+  for (s in c("ana", "beto", "carla", "dario")) {
+    dir.create(file.path(subs, s))
+    writeLines("sumar <- function(a, b) { Sys.sleep(2); a + b }",
+               file.path(subs, s, "ejercicio1.R"))
+  }
+  t0 <- Sys.time()
+  res <- suppressMessages(grade_submissions(subs, test_dir = tests, workers = 4))
+  elapsed <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
+  # Sequential: 4 students x 2 tests x 2 s = 16 s at least.
+  expect_lt(elapsed, 10)
+  expect_true(all(res$status[res$exercise == "ejercicio1"] == "pass"))
+})
+
 test_that("grade_submissions warns when test_dir has no test files", {
   subs  <- make_submissions()
   empty <- withr::local_tempdir()
@@ -81,4 +135,18 @@ test_that("grade_submissions honours student_name_fn", {
     student_name_fn = function(folder) toupper(folder)
   ))
   expect_setequal(unique(res$student), c("ALICE_PEREYRA", "BOB_LOPEZ"))
+})
+
+test_that("students with the same display name are kept apart", {
+  subs  <- make_submissions()
+  tests <- make_test_dir()
+  dir.create(file.path(subs, "alice_gomez"))
+  writeLines("sumar <- function(a, b) 0", file.path(subs, "alice_gomez", "ejercicio1.R"))
+  expect_warning(
+    res <- suppressMessages(grade_submissions(subs, test_dir = tests)),
+    "same display name"
+  )
+  expect_setequal(unique(res$student), c("alice_gomez", "alice_pereyra", "Bob"))
+  wide <- as.data.frame(res, format = "wide")
+  expect_equal(nrow(wide), 3)
 })

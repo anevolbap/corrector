@@ -1,25 +1,62 @@
-#' Run an exercise in a subprocess via callr
+#' Grade an exercise in a subprocess via callr
 #'
-#' Internal. Returns a list with the per-test outcomes, or a tagged
-#' source_error / killed result. Each test gets a real wall-clock kill if
-#' the subprocess exceeds the budget.
+#' Internal. `start_grading_callr()` launches the subprocess and returns a
+#' job, or a finished grade_results when there is nothing to run.
+#' `finish_grading_callr()` collects the job, killing it first if it is past
+#' its wall-clock deadline. Between the two, callers wait with
+#' `wait_ms(job)` or poll `job$proc$is_alive()`.
 #'
 #' @noRd
-run_exercise_callr <- function(student_file, test_file, test_fns, timeout) {
-  if (!requireNamespace("callr", quietly = TRUE)) {
-    stop("Package 'callr' is required for engine = 'callr'. ",
-         "Install with: install.packages('callr')")
-  }
+start_grading_callr <- function(file, test_file, timeout, student, protected) {
+  exercise <- tools::file_path_sans_ext(basename(file))
+  test_fns <- discover_test_fns(test_file, exercise)
+  if (length(test_fns) == 0) return(empty_grade_results())
+  n <- max(length(test_fns), 1L)
+  budget <- if (is.finite(timeout)) timeout * n + 5 else Inf
+  list(
+    proc     = start_exercise_callr(file, test_file, test_fns, timeout, protected),
+    deadline = as.numeric(Sys.time()) + budget,
+    file = file, test_fns = test_fns, timeout = timeout,
+    student = student, exercise = exercise
+  )
+}
 
-  proc <- callr::r_bg(
-    func = function(student_file, test_file, test_fns, timeout) {
-      env <- new.env(parent = baseenv())
-      src <- tryCatch({source(student_file, local = env); TRUE},
+finish_grading_callr <- function(job) {
+  out <- finish_exercise_callr(job$proc)
+  if (identical(out$kind, "source_error")) {
+    warning("Failed to source ", basename(job$file), ": ", out$message)
+  }
+  df <- callr_to_rows(out, job$test_fns, job$timeout, job$student, job$exercise)
+  new_grade_results(add_masking_note(df, out$masked))
+}
+
+# Milliseconds left before the job's deadline, as proc$wait() expects.
+wait_ms <- function(job) {
+  if (!is.finite(job$deadline)) return(-1L)
+  max(0, ceiling((job$deadline - as.numeric(Sys.time())) * 1000))
+}
+
+past_deadline <- function(job) as.numeric(Sys.time()) > job$deadline
+
+start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
+                                 protected = character()) {
+  callr::r_bg(
+    func = function(student_file, test_file, test_fns, timeout, protected,
+                    encodings) {
+      # Files the student writes land in the subprocess's own temp dir.
+      setwd(tempdir())
+      student_env <- new.env(parent = baseenv())
+      src <- tryCatch({source(student_file, local = student_env, encoding = encodings[[1]]); TRUE},
                       error = function(e) conditionMessage(e))
       if (!isTRUE(src)) {
         return(list(kind = "source_error", message = src))
       }
-      source(test_file, local = env)
+      # Same isolation as the inproc engine (see copy_student_objects()).
+      env <- new.env(parent = baseenv())
+      nms <- ls(student_env, all.names = TRUE)
+      masked <- intersect(nms, protected)
+      for (nm in setdiff(nms, masked)) assign(nm, get(nm, envir = student_env), envir = env)
+      source(test_file, local = env, encoding = encodings[[2]])
       results <- list()
       for (fn in test_fns) {
         t0 <- Sys.time()
@@ -29,19 +66,20 @@ run_exercise_callr <- function(student_file, test_file, test_fns, timeout) {
         setTimeLimit(elapsed = Inf, transient = FALSE)
         results[[fn]] <- c(out, list(duration = as.numeric(difftime(Sys.time(), t0, units = "secs"))))
       }
-      list(kind = "tests", results = results)
+      list(kind = "tests", results = results, masked = masked)
     },
     args = list(
-      student_file = student_file,
-      test_file    = test_file,
+      student_file = normalizePath(student_file),
+      test_file    = normalizePath(test_file),
       test_fns     = test_fns,
-      timeout      = timeout
+      timeout      = timeout,
+      protected    = protected,
+      encodings    = c(source_encoding(student_file), source_encoding(test_file))
     )
   )
+}
 
-  n <- max(length(test_fns), 1L)
-  wall_ms <- if (is.finite(timeout)) ceiling((timeout * n + 5) * 1000) else -1L
-  proc$wait(timeout = wall_ms)
+finish_exercise_callr <- function(proc) {
   if (proc$is_alive()) {
     proc$kill()
     return(list(kind = "killed"))

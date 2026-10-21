@@ -18,6 +18,7 @@ reference:
       - export_to_csv
       - export_to_html
       - export_to_sheets
+      - export_feedback
   - title: Result object
     contents:
       - grade_results

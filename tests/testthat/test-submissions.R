@@ -108,14 +108,14 @@ test_that("workers > 1 runs students at the same time", {
   tests <- make_test_dir()
   for (s in c("ana", "beto", "carla", "dario")) {
     dir.create(file.path(subs, s))
-    writeLines("sumar <- function(a, b) { Sys.sleep(1); a + b }",
+    writeLines("sumar <- function(a, b) { Sys.sleep(2); a + b }",
                file.path(subs, s, "ejercicio1.R"))
   }
   t0 <- Sys.time()
   res <- suppressMessages(grade_submissions(subs, test_dir = tests, workers = 4))
   elapsed <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
-  # Sequential: 4 students x 2 tests x 1 s = 8 s at least.
-  expect_lt(elapsed, 6)
+  # Sequential: 4 students x 2 tests x 2 s = 16 s at least.
+  expect_lt(elapsed, 10)
   expect_true(all(res$status[res$exercise == "ejercicio1"] == "pass"))
 })
 

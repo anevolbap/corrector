@@ -48,7 +48,9 @@ A \link{grade_results} object.
 \description{
 Expects one sub-folder per student inside \code{submissions_path}. Every student
 is graded on every exercise that has a test file in \code{test_dir}; a student
-who omits an exercise gets a \code{missing} row.
+who omits an exercise gets a \code{missing} row. The student's file is matched
+ignoring case (\code{Ejercicio1.R} counts as \code{ejercicio1}), and \code{.Rmd} or \code{.qmd}
+files are accepted when there is no \code{.R} file.
 }
 \details{
 If \code{submissions_path} ends in \code{.zip} it is extracted into a \code{tempdir()}

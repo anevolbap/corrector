@@ -10,7 +10,10 @@
 #' test passes when at least one expectation succeeds and none fails, and a
 #' failed expectation is recorded as `fail` with its message.
 #'
-#' @param file Path to the student's R file (e.g. `"ejercicio1.R"`).
+#' @param file Path to the student's file: an R script (e.g. `"ejercicio1.R"`)
+#'   or an R Markdown or Quarto document (`.Rmd`, `.qmd`), whose R chunks are
+#'   extracted with `knitr::purl()`. The matching test file is found ignoring
+#'   case.
 #' @param test_dir Directory that contains the test files.
 #' @param timeout Maximum seconds allowed per test function. Tests that exceed
 #'   this limit are recorded with status `timeout`. Default 10. Use `Inf` for
@@ -51,7 +54,7 @@ grade_exercise <- function(file, test_dir, timeout = 10,
   engine <- match.arg(engine)
   protected <- setdiff(protected_names(), allow_masking)
   exercise <- tools::file_path_sans_ext(basename(file))
-  test_file <- find_test_file(file, test_dir)
+  test_file <- find_test_file(exercise, test_dir)
 
   if (is.null(test_file)) {
     warning("No test file found for: ", basename(file))
@@ -65,6 +68,8 @@ grade_exercise <- function(file, test_dir, timeout = 10,
       stringsAsFactors = FALSE
     )))
   }
+  # Use the test file's spelling ("Ejercicio1.R" is graded as ejercicio1).
+  exercise <- test_exercise(test_file)
 
   if (engine == "callr") {
     job <- start_grading_callr(file, test_file, timeout, student, protected)
@@ -77,21 +82,14 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 
   student_env <- new.env(parent = globalenv())
   src <- tryCatch({
-    source(file, local = student_env, encoding = source_encoding(file))
+    code <- r_code_path(file)
+    source(code, local = student_env, encoding = source_encoding(code))
     list(ok = TRUE)
   }, error = function(e) list(ok = FALSE, message = conditionMessage(e)))
 
   if (!isTRUE(src$ok)) {
     warning("Failed to source ", basename(file), ": ", src$message)
-    return(new_grade_results(data.frame(
-      student  = student,
-      exercise = exercise,
-      test     = NA_character_,
-      status   = "source_error",
-      message  = src$message,
-      duration = NA_real_,
-      stringsAsFactors = FALSE
-    )))
+    return(source_error_result(student, exercise, src$message))
   }
 
   # Tests run in their own environment. Student objects are copied in, except
@@ -123,7 +121,9 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 #'
 #' Expects one sub-folder per student inside `submissions_path`. Every student
 #' is graded on every exercise that has a test file in `test_dir`; a student
-#' who omits an exercise gets a `missing` row.
+#' who omits an exercise gets a `missing` row. The student's file is matched
+#' ignoring case (`Ejercicio1.R` counts as `ejercicio1`), and `.Rmd` or `.qmd`
+#' files are accepted when there is no `.R` file.
 #'
 #' If `submissions_path` ends in `.zip` it is extracted into a `tempdir()`
 #' subfolder first. Loose files, hidden folders and `__MACOSX` are ignored.
@@ -217,7 +217,8 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
     exercise = rep(exercises, times = length(students)),
     stringsAsFactors = FALSE
   )
-  tasks$file <- file.path(dir, tasks$folder, paste0(tasks$exercise, ".R"))
+  tasks$file <- mapply(find_student_file, file.path(dir, tasks$folder),
+                       tasks$exercise, USE.NAMES = FALSE)
   protected <- setdiff(protected_names(), allow_masking)
 
   results <- vector("list", nrow(tasks))
@@ -237,7 +238,7 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
         }
       }
 
-      if (!file.exists(file)) {
+      if (is.na(file)) {
         results[[i]] <- new_grade_results(data.frame(
           student  = name,
           exercise = tasks$exercise[[i]],
@@ -253,7 +254,7 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
                                        engine = "inproc",
                                        allow_masking = allow_masking)
       } else {
-        job <- start_grading_callr(file, find_test_file(file, test_dir),
+        job <- start_grading_callr(file, find_test_file(tasks$exercise[[i]], test_dir),
                                    timeout, name, protected)
         if (inherits(job, "grade_results")) {
           results[[i]] <- job
@@ -358,11 +359,53 @@ add_masking_note <- function(df, masked) {
   df
 }
 
-find_test_file <- function(file, test_dir) {
-  target <- paste0("test_", basename(file))
+find_test_file <- function(exercise, test_dir) {
+  target <- tolower(paste0("test_", exercise, ".R"))
   matches <- list.files(test_dir, full.names = TRUE)
-  hit <- matches[basename(matches) == target]
+  hit <- matches[tolower(basename(matches)) == target]
   if (length(hit) == 0) NULL else hit[[1]]
+}
+
+test_exercise <- function(test_file) {
+  sub("^test_", "", tools::file_path_sans_ext(basename(test_file)))
+}
+
+# The student's file for an exercise, ignoring case: .R first, then .Rmd and
+# .qmd. NA if there is none.
+find_student_file <- function(dir, exercise) {
+  files <- list.files(dir)
+  for (ext in c(".R", ".Rmd", ".qmd")) {
+    hit <- files[tolower(files) == tolower(paste0(exercise, ext))]
+    if (length(hit) > 0) return(file.path(dir, hit[[1]]))
+  }
+  NA_character_
+}
+
+# Path to the R code of a submission: the file itself, or the code chunks of
+# an .Rmd or .qmd file, extracted with knitr::purl().
+r_code_path <- function(file) {
+  if (!tolower(tools::file_ext(file)) %in% c("rmd", "qmd")) return(file)
+  if (!requireNamespace("knitr", quietly = TRUE)) {
+    stop("Package 'knitr' is required to grade .Rmd and .qmd files. ",
+         "Install with: install.packages('knitr')")
+  }
+  # purl() picks the chunk syntax from the extension; .qmd uses the same one.
+  input <- tempfile(fileext = ".Rmd")
+  file.copy(file, input)
+  knitr::purl(input, output = tempfile(fileext = ".R"), quiet = TRUE,
+              documentation = 0)
+}
+
+source_error_result <- function(student, exercise, message) {
+  new_grade_results(data.frame(
+    student  = student,
+    exercise = exercise,
+    test     = NA_character_,
+    status   = "source_error",
+    message  = message,
+    duration = NA_real_,
+    stringsAsFactors = FALSE
+  ))
 }
 
 expected_exercises <- function(test_dir) {

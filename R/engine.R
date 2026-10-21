@@ -8,13 +8,18 @@
 #'
 #' @noRd
 start_grading_callr <- function(file, test_file, timeout, student, protected) {
-  exercise <- tools::file_path_sans_ext(basename(file))
+  exercise <- test_exercise(test_file)
   test_fns <- discover_test_fns(test_file, exercise)
   if (length(test_fns) == 0) return(empty_grade_results())
+  code <- tryCatch(r_code_path(file), error = function(e) e)
+  if (inherits(code, "error")) {
+    warning("Failed to source ", basename(file), ": ", conditionMessage(code))
+    return(source_error_result(student, exercise, conditionMessage(code)))
+  }
   n <- max(length(test_fns), 1L)
   budget <- if (is.finite(timeout)) timeout * n + 5 else Inf
   list(
-    proc     = start_exercise_callr(file, test_file, test_fns, timeout, protected),
+    proc     = start_exercise_callr(code, test_file, test_fns, timeout, protected),
     deadline = as.numeric(Sys.time()) + budget,
     file = file, test_fns = test_fns, timeout = timeout,
     student = student, exercise = exercise

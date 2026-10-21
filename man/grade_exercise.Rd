@@ -14,7 +14,10 @@ grade_exercise(
 )
 }
 \arguments{
-\item{file}{Path to the student's R file (e.g. \code{"ejercicio1.R"}).}
+\item{file}{Path to the student's file: an R script (e.g. \code{"ejercicio1.R"})
+or an R Markdown or Quarto document (\code{.Rmd}, \code{.qmd}), whose R chunks are
+extracted with \code{knitr::purl()}. The matching test file is found ignoring
+case.}
 
 \item{test_dir}{Directory that contains the test files.}
 

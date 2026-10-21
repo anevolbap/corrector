@@ -215,7 +215,7 @@ system.file("examples", package = "corrector")
 
 ## Alternatives
 
-- **[gradethis](https://pkgs.rstudio.com/gradethis/)**: grades code inside
+- **[gradethis](https://rstudio.github.io/gradethis/)**: grades code inside
   interactive [learnr](https://rstudio.github.io/learnr/) tutorials. Requires a
   Shiny server.
 - **[exams](https://www.r-exams.org/)**: generates randomised exam questions,

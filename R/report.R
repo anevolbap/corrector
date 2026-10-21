@@ -17,6 +17,10 @@
 #'       `timeout`, and `missing` rows.}
 #'   }
 #' @export
+#' @examples
+#' report <- grade_report(example_results())
+#' report
+#' report$score_by_student
 grade_report <- function(results) {
   results <- ensure_grade_results(results)
   wide <- as.data.frame(results, format = "wide")

@@ -27,3 +27,8 @@ Computes pass rate per exercise and score per student, plus counts of
 errors, timeouts, and missing submissions. The returned object has a
 \code{\link[=print]{print()}} method that renders a readable console summary.
 }
+\examples{
+report <- grade_report(example_results())
+report
+report$score_by_student
+}

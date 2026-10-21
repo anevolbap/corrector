@@ -17,7 +17,7 @@
 #'   `<<-` or files the student writes do not reach your session or folder.
 #'   `"inproc"` runs tests in the current R session. It is faster, but its
 #'   `setTimeLimit()` timeout does not interrupt every kind of loop, and
-#'   student code can change your global environment.
+#'   student code can see and change your global environment.
 #' @param allow_masking Character vector of function names from base R and
 #'   the default packages (stats, utils, methods, graphics, grDevices) that
 #'   the student may redefine, e.g. `"factorial"` when the exercise asks for
@@ -28,6 +28,17 @@
 #'   fails to parse, one row with `status = source_error`. If no matching test
 #'   file is found, one row with `status = missing` and a warning.
 #' @export
+#' @examples
+#' # The package ships test files for five sample exercises.
+#' tests <- system.file("examples", package = "corrector")
+#' file <- file.path(tempdir(), "ejercicio1.R")
+#' writeLines(c(
+#'   "ceros_cuadratica <- function(a, b, c) {",
+#'   "  d <- sqrt(b^2 - 4 * a * c)",
+#'   "  c((-b - d) / (2 * a), (-b + d) / (2 * a))",
+#'   "}"
+#' ), file)
+#' grade_exercise(file, tests, student = "Garcia")
 grade_exercise <- function(file, test_dir, timeout = 10,
                            student = NA_character_,
                            engine = c("callr", "inproc"),
@@ -59,7 +70,7 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 
   test_fns <- discover_test_fns(test_file, exercise)
 
-  student_env <- new.env(parent = baseenv())
+  student_env <- new.env(parent = globalenv())
   src <- tryCatch({
     source(file, local = student_env, encoding = source_encoding(file))
     list(ok = TRUE)
@@ -80,7 +91,7 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 
   # Tests run in their own environment. Student objects are copied in, except
   # those that would mask a protected function the tests rely on.
-  env <- new.env(parent = baseenv())
+  env <- new.env(parent = globalenv())
   masked <- copy_student_objects(student_env, env, protected)
   source(test_file, local = env, encoding = source_encoding(test_file))
 
@@ -131,6 +142,22 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 #' @return A [grade_results] object.
 #' @importFrom utils unzip
 #' @export
+#' @examples
+#' # One folder per student, one test file per exercise.
+#' root <- file.path(tempdir(), "entregas")
+#' dir.create(file.path(root, "garcia_juan"), recursive = TRUE)
+#' dir.create(file.path(root, "lopez_maria"), recursive = TRUE)
+#' writeLines("ceros_cuadratica <- function(a, b, c) c(-1, 1)",
+#'            file.path(root, "garcia_juan", "ejercicio1.R"))
+#' writeLines("ceros_cuadratica <- function(a, b, c) 0",
+#'            file.path(root, "lopez_maria", "ejercicio1.R"))
+#' tests <- file.path(tempdir(), "tests")
+#' dir.create(tests)
+#' file.copy(system.file("examples", "test_ejercicio1.R", package = "corrector"),
+#'           tests)
+#' results <- grade_submissions(root, tests)
+#' results
+#' as.data.frame(results, format = "wide")
 grade_submissions <- function(submissions_path, test_dir, timeout = 10,
                               engine = c("callr", "inproc"),
                               student_name_fn = default_student_name,
@@ -319,7 +346,7 @@ expected_exercises <- function(test_dir) {
 # Used by callr engine to know which test functions to invoke without loading
 # the student file in the main process.
 discover_test_fns <- function(test_file, exercise) {
-  env <- new.env(parent = baseenv())
+  env <- new.env(parent = globalenv())
   # Provide a stub for any function called at top-level by the test file that
   # could fail without the student definitions; tests should only define
   # functions, so sourcing here should be safe.
@@ -356,6 +383,9 @@ extract_if_zip <- function(path) {
 #' @param folder Character. Submission folder name.
 #' @return Character. Display name.
 #' @export
+#' @examples
+#' default_student_name("garcia_juan_12345")
+#' default_student_name("LOPEZ")
 default_student_name <- function(folder) {
   parts <- strsplit(folder, "_")[[1]]
   tools::toTitleCase(tolower(parts[[1]]))

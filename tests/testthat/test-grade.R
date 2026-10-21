@@ -64,6 +64,19 @@ test_that("Latin-1 and UTF-8 student files both source", {
   }
 })
 
+for (engine in c("callr", "inproc")) {
+  test_that(paste("student and test code can use stats and utils, engine", engine), {
+    dir   <- withr::local_tempdir()
+    tests <- withr::local_tempdir()
+    writeLines("mediana <- function(x) median(utils::head(x, 3))",
+               file.path(dir, "ejercicio1.R"))
+    writeLines("test_ejercicio1_a <- function() mediana(c(1, 3, 2, 9)) == 2 && sd(c(1, 1)) == 0",
+               file.path(tests, "test_ejercicio1.R"))
+    res <- grade_exercise(file.path(dir, "ejercicio1.R"), tests, engine = engine)
+    expect_equal(as.character(res$status), "pass")
+  })
+}
+
 make_cheat <- function(envir = parent.frame()) {
   dir <- withr::local_tempdir(.local_envir = envir)
   writeLines(c(

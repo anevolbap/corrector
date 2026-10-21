@@ -22,3 +22,8 @@ Produces a self-contained HTML file with a colour-coded table (green = pass,
 red = fail, amber = error/timeout, grey = missing), per-student score
 column, and a pass-rate summary row.
 }
+\examples{
+path <- tempfile(fileext = ".html")
+export_to_html(example_results(), path)
+file.exists(path)
+}

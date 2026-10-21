@@ -30,7 +30,7 @@ directory. The timeout is a hard wall-clock limit, and assignments with
 \verb{<<-} or files the student writes do not reach your session or folder.
 \code{"inproc"} runs tests in the current R session. It is faster, but its
 \code{setTimeLimit()} timeout does not interrupt every kind of loop, and
-student code can change your global environment.}
+student code can see and change your global environment.}
 
 \item{allow_masking}{Character vector of function names from base R and
 the default packages (stats, utils, methods, graphics, grDevices) that
@@ -49,4 +49,16 @@ Sources the student's file and the matching test file into an isolated
 environment, runs every function whose name starts with
 \verb{test_<exercise>_}, and returns the per-test outcome as a \link{grade_results}
 object.
+}
+\examples{
+# The package ships test files for five sample exercises.
+tests <- system.file("examples", package = "corrector")
+file <- file.path(tempdir(), "ejercicio1.R")
+writeLines(c(
+  "ceros_cuadratica <- function(a, b, c) {",
+  "  d <- sqrt(b^2 - 4 * a * c)",
+  "  c((-b - d) / (2 * a), (-b + d) / (2 * a))",
+  "}"
+), file)
+grade_exercise(file, tests, student = "Garcia")
 }

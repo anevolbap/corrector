@@ -50,3 +50,20 @@ subfolder first. Loose files, hidden folders and \verb{__MACOSX} are ignored.
 If the path holds a single folder with no \code{.R} files but with sub-folders,
 those sub-folders are taken as the students.
 }
+\examples{
+# One folder per student, one test file per exercise.
+root <- file.path(tempdir(), "entregas")
+dir.create(file.path(root, "garcia_juan"), recursive = TRUE)
+dir.create(file.path(root, "lopez_maria"), recursive = TRUE)
+writeLines("ceros_cuadratica <- function(a, b, c) c(-1, 1)",
+           file.path(root, "garcia_juan", "ejercicio1.R"))
+writeLines("ceros_cuadratica <- function(a, b, c) 0",
+           file.path(root, "lopez_maria", "ejercicio1.R"))
+tests <- file.path(tempdir(), "tests")
+dir.create(tests)
+file.copy(system.file("examples", "test_ejercicio1.R", package = "corrector"),
+          tests)
+results <- grade_submissions(root, tests)
+results
+as.data.frame(results, format = "wide")
+}

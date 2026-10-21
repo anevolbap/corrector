@@ -79,6 +79,10 @@ print.grade_results <- function(x, ...) {
 #' @param ... Ignored.
 #' @return A plain data frame.
 #' @export
+#' @examples
+#' results <- example_results()
+#' head(as.data.frame(results))
+#' as.data.frame(results, format = "wide")
 as.data.frame.grade_results <- function(x, row.names = NULL, optional = FALSE,
                                         format = c("long", "wide"), ...) {
   format <- match.arg(format)

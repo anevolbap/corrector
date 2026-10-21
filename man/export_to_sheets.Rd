@@ -23,3 +23,10 @@ Writes results to an existing Google Sheet, replacing its contents. Requires
 the \pkg{googlesheets4} package and prior authentication; call
 \code{googlesheets4::gs4_auth()} once per session before using this function.
 }
+\examples{
+\dontrun{
+googlesheets4::gs4_auth()
+export_to_sheets(example_results(),
+                 "https://docs.google.com/spreadsheets/d/<sheet-id>")
+}
+}

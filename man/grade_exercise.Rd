@@ -50,3 +50,15 @@ environment, runs every function whose name starts with
 \verb{test_<exercise>_}, and returns the per-test outcome as a \link{grade_results}
 object.
 }
+\examples{
+# The package ships test files for five sample exercises.
+tests <- system.file("examples", package = "corrector")
+file <- file.path(tempdir(), "ejercicio1.R")
+writeLines(c(
+  "ceros_cuadratica <- function(a, b, c) {",
+  "  d <- sqrt(b^2 - 4 * a * c)",
+  "  c((-b - d) / (2 * a), (-b + d) / (2 * a))",
+  "}"
+), file)
+grade_exercise(file, tests, student = "Garcia")
+}

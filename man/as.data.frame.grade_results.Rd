@@ -32,3 +32,8 @@ A plain data frame.
 \description{
 Convert grading results to a data frame
 }
+\examples{
+results <- example_results()
+head(as.data.frame(results))
+as.data.frame(results, format = "wide")
+}

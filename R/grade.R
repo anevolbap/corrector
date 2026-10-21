@@ -28,6 +28,17 @@
 #'   fails to parse, one row with `status = source_error`. If no matching test
 #'   file is found, one row with `status = missing` and a warning.
 #' @export
+#' @examples
+#' # The package ships test files for five sample exercises.
+#' tests <- system.file("examples", package = "corrector")
+#' file <- file.path(tempdir(), "ejercicio1.R")
+#' writeLines(c(
+#'   "ceros_cuadratica <- function(a, b, c) {",
+#'   "  d <- sqrt(b^2 - 4 * a * c)",
+#'   "  c((-b - d) / (2 * a), (-b + d) / (2 * a))",
+#'   "}"
+#' ), file)
+#' grade_exercise(file, tests, student = "Garcia")
 grade_exercise <- function(file, test_dir, timeout = 10,
                            student = NA_character_,
                            engine = c("callr", "inproc"),
@@ -131,6 +142,22 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 #' @return A [grade_results] object.
 #' @importFrom utils unzip
 #' @export
+#' @examples
+#' # One folder per student, one test file per exercise.
+#' root <- file.path(tempdir(), "entregas")
+#' dir.create(file.path(root, "garcia_juan"), recursive = TRUE)
+#' dir.create(file.path(root, "lopez_maria"), recursive = TRUE)
+#' writeLines("ceros_cuadratica <- function(a, b, c) c(-1, 1)",
+#'            file.path(root, "garcia_juan", "ejercicio1.R"))
+#' writeLines("ceros_cuadratica <- function(a, b, c) 0",
+#'            file.path(root, "lopez_maria", "ejercicio1.R"))
+#' tests <- file.path(tempdir(), "tests")
+#' dir.create(tests)
+#' file.copy(system.file("examples", "test_ejercicio1.R", package = "corrector"),
+#'           tests)
+#' results <- grade_submissions(root, tests)
+#' results
+#' as.data.frame(results, format = "wide")
 grade_submissions <- function(submissions_path, test_dir, timeout = 10,
                               engine = c("callr", "inproc"),
                               student_name_fn = default_student_name,
@@ -356,6 +383,9 @@ extract_if_zip <- function(path) {
 #' @param folder Character. Submission folder name.
 #' @return Character. Display name.
 #' @export
+#' @examples
+#' default_student_name("garcia_juan_12345")
+#' default_student_name("LOPEZ")
 default_student_name <- function(folder) {
   parts <- strsplit(folder, "_")[[1]]
   tools::toTitleCase(tolower(parts[[1]]))

@@ -20,3 +20,8 @@ column per exercise. \code{"long"} writes the per-test detail.}
 \description{
 Export grading results to a CSV file
 }
+\examples{
+path <- tempfile(fileext = ".csv")
+export_to_csv(example_results(), path)
+read.csv(path)
+}

@@ -27,3 +27,6 @@ Produces three plots in sequence:
 \item Pass/fail heatmap (students x exercises).
 }
 }
+\examples{
+plot_report(example_results(), ask = FALSE)
+}

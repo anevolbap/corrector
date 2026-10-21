@@ -7,6 +7,10 @@
 #' @return `results`, invisibly.
 #' @importFrom utils write.csv
 #' @export
+#' @examples
+#' path <- tempfile(fileext = ".csv")
+#' export_to_csv(example_results(), path)
+#' read.csv(path)
 export_to_csv <- function(results, path, format = c("wide", "long")) {
   results <- ensure_grade_results(results)
   format <- match.arg(format)
@@ -26,6 +30,12 @@ export_to_csv <- function(results, path, format = c("wide", "long")) {
 #' @param format `"wide"` (default) or `"long"`.
 #' @return `results`, invisibly.
 #' @export
+#' @examples
+#' \dontrun{
+#' googlesheets4::gs4_auth()
+#' export_to_sheets(example_results(),
+#'                  "https://docs.google.com/spreadsheets/d/<sheet-id>")
+#' }
 export_to_sheets <- function(results, sheet_url, sheet = 1, format = c("wide", "long")) {
   results <- ensure_grade_results(results)
   format <- match.arg(format)
@@ -55,6 +65,10 @@ export_to_sheets <- function(results, sheet_url, sheet = 1, format = c("wide", "
 #'   student (errors and timeouts include the message). Default `TRUE`.
 #' @return `results`, invisibly.
 #' @export
+#' @examples
+#' path <- tempfile(fileext = ".html")
+#' export_to_html(example_results(), path)
+#' file.exists(path)
 export_to_html <- function(results, path, include_details = TRUE) {
   results <- ensure_grade_results(results)
   wide <- as.data.frame(results, format = "wide")

@@ -17,6 +17,8 @@
 #' @importFrom graphics abline axis barplot box image legend par
 #' @importFrom stats setNames aggregate
 #' @export
+#' @examples
+#' plot_report(example_results(), ask = FALSE)
 plot_report <- function(results, ask = interactive(), backend = c("base", "ggplot2")) {
   results <- ensure_grade_results(results)
   backend <- match.arg(backend)

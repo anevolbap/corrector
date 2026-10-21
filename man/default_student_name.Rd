@@ -17,3 +17,7 @@ Splits the folder name on underscores, takes the first segment, lower-cases
 it, then applies \code{\link[tools:toTitleCase]{tools::toTitleCase()}}. Examples:
 \code{"garcia_juan_12345"} becomes \code{"Garcia"}; \code{"lopez"} becomes \code{"Lopez"}.
 }
+\examples{
+default_student_name("garcia_juan_12345")
+default_student_name("LOPEZ")
+}

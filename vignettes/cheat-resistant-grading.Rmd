@@ -117,9 +117,13 @@ test_ejercicio2_ordenar <- function() {
 ## What is still possible
 
 - Student code runs as your user, so it can read any file you can,
-  including the test files and the reference solutions in them. Run
-  corrector inside a container or a virtual machine that holds only the
-  submissions and the tests, and treat test files as visible to students.
+  including the test files and the reference solutions in them. It can also
+  write any file you can, including corrector's own temporary files and
+  other students' submissions, and start programs that outlive the grading.
+  The isolated engine keeps student code out of the process that compares
+  values, but it cannot stop attacks through the file system. Run corrector
+  inside a container or a virtual machine that holds only the submissions
+  and the tests, and treat test files as visible to students.
 - A student function returns whatever its author wants. If the tests use
   fixed inputs, an answer table works; random inputs stop that.
 - The checks above look for known tricks. Obfuscated code that hides them

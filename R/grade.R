@@ -8,12 +8,16 @@
 #' @param file Path to the student's R file (e.g. `"ejercicio1.R"`).
 #' @param test_dir Directory that contains the test files.
 #' @param timeout Maximum seconds allowed per test function. Tests that exceed
-#'   this limit are recorded with status `timeout`. Default `Inf`.
+#'   this limit are recorded with status `timeout`. Default 10. Use `Inf` for
+#'   no limit.
 #' @param student Optional student display name. Defaults to `NA`.
-#' @param engine `"inproc"` (default) runs tests in the current R session via
-#'   `setTimeLimit()`. `"callr"` runs each exercise in a fresh subprocess via
-#'   the \pkg{callr} package, giving a hard wall-clock timeout that interrupts
-#'   busy loops. Requires the `callr` package.
+#' @param engine `"callr"` (default) runs each exercise in a fresh R
+#'   subprocess via the \pkg{callr} package, with a temporary working
+#'   directory. The timeout is a hard wall-clock limit, and assignments with
+#'   `<<-` or files the student writes do not reach your session or folder.
+#'   `"inproc"` runs tests in the current R session. It is faster, but its
+#'   `setTimeLimit()` timeout does not interrupt every kind of loop, and
+#'   student code can change your global environment.
 #' @param allow_masking Character vector of function names from base R and
 #'   the default packages (stats, utils, methods, graphics, grDevices) that
 #'   the student may redefine, e.g. `"factorial"` when the exercise asks for
@@ -24,9 +28,9 @@
 #'   fails to parse, one row with `status = source_error`. If no matching test
 #'   file is found, one row with `status = missing` and a warning.
 #' @export
-grade_exercise <- function(file, test_dir, timeout = Inf,
+grade_exercise <- function(file, test_dir, timeout = 10,
                            student = NA_character_,
-                           engine = c("inproc", "callr"),
+                           engine = c("callr", "inproc"),
                            allow_masking = character()) {
   engine <- match.arg(engine)
   protected <- setdiff(protected_names(), allow_masking)
@@ -49,6 +53,9 @@ grade_exercise <- function(file, test_dir, timeout = Inf,
   test_fns <- discover_test_fns(test_file, exercise)
   if (engine == "callr") {
     out <- run_exercise_callr(file, test_file, test_fns, timeout, protected)
+    if (identical(out$kind, "source_error")) {
+      warning("Failed to source ", basename(file), ": ", out$message)
+    }
     df <- callr_to_rows(out, test_fns, timeout, student, exercise)
     return(new_grade_results(add_masking_note(df, out$masked)))
   }
@@ -110,8 +117,8 @@ grade_exercise <- function(file, test_dir, timeout = Inf,
 #'
 #' @param submissions_path Path to a directory or `.zip` archive of submissions.
 #' @param test_dir Directory that contains the test files.
-#' @param timeout Maximum seconds allowed per test function. Default `Inf`.
-#' @param engine `"inproc"` (default) or `"callr"`. See [grade_exercise()].
+#' @param timeout Maximum seconds allowed per test function. Default 10.
+#' @param engine `"callr"` (default) or `"inproc"`. See [grade_exercise()].
 #' @param student_name_fn Function applied to each student folder name to
 #'   produce the display name. Defaults to taking the first underscore-
 #'   separated token and applying title case. Folders that map to the same
@@ -121,8 +128,8 @@ grade_exercise <- function(file, test_dir, timeout = Inf,
 #' @return A [grade_results] object.
 #' @importFrom utils unzip
 #' @export
-grade_submissions <- function(submissions_path, test_dir, timeout = Inf,
-                              engine = c("inproc", "callr"),
+grade_submissions <- function(submissions_path, test_dir, timeout = 10,
+                              engine = c("callr", "inproc"),
                               student_name_fn = default_student_name,
                               allow_masking = character()) {
   engine <- match.arg(engine)

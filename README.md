@@ -194,27 +194,18 @@ plot_report(resultados, backend = "ggplot2")
 
 ## Tiempo límite por test
 
-Para evitar que bucles infinitos en el código de los estudiantes bloqueen el
-corrector, definí un límite de tiempo en segundos:
+Cada test tiene un límite de `timeout` segundos (10 por defecto). Por defecto
+el corrector usa el motor `callr`: corre cada ejercicio en un subproceso nuevo,
+con una carpeta de trabajo temporal, y lo mata cuando excede el límite, incluso
+dentro de un bucle infinito. Para cambiar el límite:
 
 ```r
-resultados <- grade_submissions("entregas/", test_dir = "tests/", timeout = 10)
+resultados <- grade_submissions("entregas/", test_dir = "tests/", timeout = 30)
 ```
 
-Por defecto el corrector usa `setTimeLimit()` dentro de la sesión actual.
-Funciona para casos comunes pero no siempre interrumpe `Sys.sleep()` ni todos
-los bucles cerrados. Para un corte real por reloj de pared, usá el motor
-`callr`:
-
-```r
-resultados <- grade_submissions(
-  "entregas/", test_dir = "tests/",
-  timeout = 10, engine = "callr"
-)
-```
-
-`callr` corre cada ejercicio en un subproceso fresco y lo mata cuando excede el
-presupuesto. Requiere el paquete `callr` instalado.
+Usá `timeout = Inf` para no poner límite. `engine = "inproc"` corre los tests
+en la sesión actual: es más rápido, pero `setTimeLimit()` no interrumpe todos
+los bucles y el código del estudiante puede modificar tu entorno global.
 
 ## Archivos de tests de ejemplo
 

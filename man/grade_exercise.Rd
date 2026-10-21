@@ -7,9 +7,9 @@
 grade_exercise(
   file,
   test_dir,
-  timeout = Inf,
+  timeout = 10,
   student = NA_character_,
-  engine = c("inproc", "callr"),
+  engine = c("callr", "inproc"),
   allow_masking = character()
 )
 }
@@ -19,14 +19,18 @@ grade_exercise(
 \item{test_dir}{Directory that contains the test files.}
 
 \item{timeout}{Maximum seconds allowed per test function. Tests that exceed
-this limit are recorded with status \code{timeout}. Default \code{Inf}.}
+this limit are recorded with status \code{timeout}. Default 10. Use \code{Inf} for
+no limit.}
 
 \item{student}{Optional student display name. Defaults to \code{NA}.}
 
-\item{engine}{\code{"inproc"} (default) runs tests in the current R session via
-\code{setTimeLimit()}. \code{"callr"} runs each exercise in a fresh subprocess via
-the \pkg{callr} package, giving a hard wall-clock timeout that interrupts
-busy loops. Requires the \code{callr} package.}
+\item{engine}{\code{"callr"} (default) runs each exercise in a fresh R
+subprocess via the \pkg{callr} package, with a temporary working
+directory. The timeout is a hard wall-clock limit, and assignments with
+\verb{<<-} or files the student writes do not reach your session or folder.
+\code{"inproc"} runs tests in the current R session. It is faster, but its
+\code{setTimeLimit()} timeout does not interrupt every kind of loop, and
+student code can change your global environment.}
 
 \item{allow_masking}{Character vector of function names from base R and
 the default packages (stats, utils, methods, graphics, grDevices) that

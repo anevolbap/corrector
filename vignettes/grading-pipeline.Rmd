@@ -91,19 +91,18 @@ breakdown of every test.
 
 ## Timeouts and untrusted code
 
-The default engine runs tests in the current R session via `setTimeLimit()`.
-That works for well-behaved student code but cannot interrupt arbitrary busy
-loops, and it does not stop a student from touching the file system.
-
-For untrusted code or unreliable timing, pass `engine = "callr"`:
+The default engine, `"callr"`, runs each exercise in a fresh R subprocess
+with a temporary working directory. Each test gets `timeout` seconds (default
+10), and the subprocess is killed when the budget runs out, even inside a busy
+loop. Use `timeout = Inf` for no limit.
 
 ```r
-results <- grade_submissions("submissions/", test_dir = "tests/",
-                             timeout = 10, engine = "callr")
+results <- grade_submissions("submissions/", test_dir = "tests/", timeout = 30)
 ```
 
-The `callr` engine runs each exercise in a fresh subprocess and applies a
-wall-clock kill when the budget is exceeded. Requires the `callr` package.
+`engine = "inproc"` runs tests in the current R session. It is faster, but
+`setTimeLimit()` does not interrupt every loop, and student code can change
+your global environment.
 
 ## Renaming students
 

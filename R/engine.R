@@ -7,14 +7,11 @@
 #' @noRd
 run_exercise_callr <- function(student_file, test_file, test_fns, timeout,
                                protected = character()) {
-  if (!requireNamespace("callr", quietly = TRUE)) {
-    stop("Package 'callr' is required for engine = 'callr'. ",
-         "Install with: install.packages('callr')")
-  }
-
   proc <- callr::r_bg(
     func = function(student_file, test_file, test_fns, timeout, protected,
                     encodings) {
+      # Files the student writes land in the subprocess's own temp dir.
+      setwd(tempdir())
       student_env <- new.env(parent = baseenv())
       src <- tryCatch({source(student_file, local = student_env, encoding = encodings[[1]]); TRUE},
                       error = function(e) conditionMessage(e))
@@ -39,8 +36,8 @@ run_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       list(kind = "tests", results = results, masked = masked)
     },
     args = list(
-      student_file = student_file,
-      test_file    = test_file,
+      student_file = normalizePath(student_file),
+      test_file    = normalizePath(test_file),
       test_fns     = test_fns,
       timeout      = timeout,
       protected    = protected,

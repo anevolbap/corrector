@@ -26,6 +26,12 @@
 #'   `"inproc"` runs tests in the current R session. It is faster, but its
 #'   `setTimeLimit()` timeout does not interrupt every kind of loop, and
 #'   student code can see and change your global environment.
+#'   `"isolated"` runs the tests in one subprocess and the student code in
+#'   another. Each student function the tests call runs in the student
+#'   process and only its result (plain data) comes back, so tricks such as
+#'   `attach()`, S3 methods for comparisons or replaced base functions do
+#'   not change the grade. It is slower, and a student function may not
+#'   return a function or an environment. Use it when cheating matters.
 #' @param allow_masking Character vector of function names from base R and
 #'   the default packages (stats, utils, methods, graphics, grDevices) that
 #'   the student may redefine, e.g. `"factorial"` when the exercise asks for
@@ -49,7 +55,7 @@
 #' grade_exercise(file, tests, student = "Garcia")
 grade_exercise <- function(file, test_dir, timeout = 10,
                            student = NA_character_,
-                           engine = c("callr", "inproc"),
+                           engine = c("callr", "inproc", "isolated"),
                            allow_masking = character()) {
   engine <- match.arg(engine)
   if (!file.exists(file)) stop("Student file does not exist: ", file, call. = FALSE)
@@ -77,8 +83,9 @@ grade_exercise <- function(file, test_dir, timeout = 10,
   # Use the test file's spelling ("Ejercicio1.R" is graded as ejercicio1).
   exercise <- test_exercise(test_file)
 
-  if (engine == "callr") {
-    job <- start_grading_callr(file, test_file, timeout, student, protected)
+  if (engine %in% c("callr", "isolated")) {
+    job <- start_grading_callr(file, test_file, timeout, student, protected,
+                               allow_masking, isolated = engine == "isolated")
     if (inherits(job, "grade_results")) return(job)
     job$proc$wait(timeout = wait_ms(job))
     return(finish_grading_callr(job))
@@ -93,6 +100,10 @@ grade_exercise <- function(file, test_dir, timeout = 10,
     setwd(old_wd)
     options(old_options)
   }, add = TRUE)
+  # Undo attach(), registered methods and replaced base functions, so they
+  # cannot reach the next student.
+  snap <- integrity_snapshot()
+  on.exit(integrity_restore(snap), add = TRUE)
 
   student_env <- new.env(parent = globalenv())
   add_quit_stubs(student_env)
@@ -117,12 +128,15 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 
   # Tests run in their own environment. Student objects are copied in, except
   # those that would mask a protected function the tests rely on.
+  suspicious <- scan_code(code)
+  tampered <- integrity_changes(snap)
   env <- new.env(parent = globalenv())
-  masked <- copy_student_objects(student_env, env, protected)
+  masked <- copy_student_objects(student_env, env, protected, allow_masking)
   source(test_file, local = env, encoding = source_encoding(test_file))
   # Tests look up names in the attached packages, not the global env, which
   # student code can write to. Set after sourcing so library() calls count.
   parent.env(env) <- parent.env(globalenv())
+  snap_tests <- integrity_snapshot()
 
   if (length(test_fns) == 0) {
     return(empty_grade_results())
@@ -140,7 +154,10 @@ grade_exercise <- function(file, test_dir, timeout = 10,
       stringsAsFactors = FALSE
     )
   })
-  new_grade_results(add_masking_note(do.call(rbind, rows), masked))
+  tampered <- unique(c(tampered, integrity_changes(snap_tests)))
+  df <- add_masking_note(do.call(rbind, rows), masked)
+  df <- add_note(df, "suspicious code: ", suspicious)
+  new_grade_results(add_note(df, "tampering: ", tampered))
 }
 
 #' Grade all student submissions in a directory or zip archive
@@ -159,7 +176,8 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 #' @param submissions_path Path to a directory or `.zip` archive of submissions.
 #' @param test_dir Directory that contains the test files.
 #' @param timeout Maximum seconds allowed per test function. Default 10.
-#' @param engine `"callr"` (default) or `"inproc"`. See [grade_exercise()].
+#' @param engine `"callr"` (default), `"inproc"` or `"isolated"`. See
+#'   [grade_exercise()].
 #' @param student_name_fn Function applied to each student folder name to
 #'   produce the display name. Defaults to taking the first underscore-
 #'   separated token and applying title case. Folders that map to the same
@@ -194,7 +212,7 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 #' results
 #' as.data.frame(results, format = "wide")
 grade_submissions <- function(submissions_path, test_dir, timeout = 10,
-                              engine = c("callr", "inproc"),
+                              engine = c("callr", "inproc", "isolated"),
                               student_name_fn = default_student_name,
                               allow_masking = character(),
                               workers = 1L,
@@ -299,7 +317,8 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
       } else {
         job <- quiet_no_tests(start_grading_callr(
           file, find_test_file(tasks$exercise[[i]], test_dir),
-          timeout, name, protected
+          timeout, name, protected, allow_masking,
+          isolated = engine == "isolated"
         ))
         if (inherits(job, "grade_results")) {
           results[[i]] <- job
@@ -394,9 +413,10 @@ protected_names <- function() {
 
 # Copies objects from `from` into `to`, skipping protected names. Returns the
 # skipped names.
-copy_student_objects <- function(from, to, protected) {
+copy_student_objects <- function(from, to, protected, allow = character()) {
   nms <- ls(from, all.names = TRUE)
-  masked <- intersect(nms, protected)
+  masked <- union(intersect(nms, protected),
+                  setdiff(grep(comparison_methods, nms, value = TRUE), allow))
   for (nm in setdiff(nms, masked)) assign(nm, get(nm, envir = from), envir = to)
   is_stub <- vapply(masked, function(nm) {
     isTRUE(attr(get(nm, envir = from), "corrector_stub"))
@@ -405,9 +425,12 @@ copy_student_objects <- function(from, to, protected) {
 }
 
 add_masking_note <- function(df, masked) {
-  if (length(masked) == 0 || nrow(df) == 0) return(df)
-  note <- paste0("ignored student definitions that mask base functions: ",
-                 paste(masked, collapse = ", "))
+  add_note(df, "ignored student definitions that mask base functions: ", masked)
+}
+
+add_note <- function(df, prefix, items) {
+  if (length(items) == 0 || nrow(df) == 0) return(df)
+  note <- paste0(prefix, paste(items, collapse = ", "))
   df$message <- ifelse(is.na(df$message), note, paste0(df$message, "; ", note))
   df
 }

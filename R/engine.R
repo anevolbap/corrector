@@ -7,7 +7,8 @@
 #' `wait_ms(job)` or poll `job$proc$is_alive()`.
 #'
 #' @noRd
-start_grading_callr <- function(file, test_file, timeout, student, protected) {
+start_grading_callr <- function(file, test_file, timeout, student, protected,
+                                allow_masking = character(), isolated = FALSE) {
   exercise <- test_exercise(test_file)
   test_fns <- discover_test_fns(test_file, exercise)
   if (length(test_fns) == 0) return(empty_grade_results())
@@ -21,9 +22,11 @@ start_grading_callr <- function(file, test_file, timeout, student, protected) {
   progress <- tempfile("corrector_progress", fileext = ".rds")
   list(
     proc     = start_exercise_callr(code, test_file, test_fns, timeout, protected,
-                                    progress),
+                                    progress, allow_masking, isolated),
     deadline = as.numeric(Sys.time()) + budget,
     progress = progress,
+    isolated = isolated,
+    suspicious = scan_code(code),
     file = file, test_fns = test_fns, timeout = timeout,
     student = student, exercise = exercise
   )
@@ -32,7 +35,10 @@ start_grading_callr <- function(file, test_file, timeout, student, protected) {
 finish_grading_callr <- function(job) {
   out <- finish_exercise_callr(job$proc)
   # A killed subprocess saved the tests it finished; keep those results.
-  saved <- if (identical(out$kind, "killed") && file.exists(job$progress)) {
+  # Not for the isolated engine: student code there runs in another process
+  # that could reach the file, while the test process itself is rarely killed.
+  saved <- if (identical(out$kind, "killed") && !isTRUE(job$isolated) &&
+               file.exists(job$progress)) {
     tryCatch(readRDS(job$progress), error = function(e) NULL)
   }
   if (!is.null(saved)) {
@@ -44,7 +50,12 @@ finish_grading_callr <- function(job) {
     warning("Failed to source ", basename(job$file), ": ", out$message)
   }
   df <- callr_to_rows(out, job$test_fns, job$timeout, job$student, job$exercise)
-  new_grade_results(add_masking_note(df, out$masked))
+  df <- add_masking_note(df, out$masked)
+  if (identical(out$kind, "tests")) {
+    df <- add_note(df, "suspicious code: ", job$suspicious)
+    df <- add_note(df, "tampering: ", out$tampered)
+  }
+  new_grade_results(df)
 }
 
 # Milliseconds left before the job's deadline, as proc$wait() expects.
@@ -56,77 +67,80 @@ wait_ms <- function(job) {
 past_deadline <- function(job) as.numeric(Sys.time()) > job$deadline
 
 start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
-                                 protected = character(), progress_file = tempfile()) {
+                                 protected = character(), progress_file = tempfile(),
+                                 allow_masking = character(), isolated = FALSE) {
+  args <- list(
+    student_file = normalizePath(student_file),
+    test_file    = normalizePath(test_file),
+    test_fns     = test_fns,
+    timeout      = timeout,
+    protected    = protected,
+    encodings    = c(source_encoding(student_file), source_encoding(test_file)),
+    progress_file = progress_file,
+    allow        = allow_masking,
+    method_pattern = comparison_methods,
+    snapshot     = portable(integrity_snapshot),
+    changes      = portable(integrity_changes),
+    run_loop     = portable(run_test_loop)
+  )
+  if (isolated) {
+    return(callr::r_bg(
+      func = run_in_child,
+      args = c(list(portable(isolated_child)), args,
+               list(load = portable(isolated_load), unsafe = portable(unsafe_value))),
+      stdout = NULL,
+      stderr = NULL
+    ))
+  }
   callr::r_bg(
-    func = function(student_file, test_file, test_fns, timeout, protected,
-                    encodings, progress_file) {
-      # Files the student writes land in the subprocess's own temp dir.
-      setwd(tempdir())
-      student_env <- new.env(parent = globalenv())
-      # Same stubs as add_quit_stubs().
-      stub <- function(...) stop("quit() is not allowed while grading", call. = FALSE)
-      attr(stub, "corrector_stub") <- TRUE
-      assign("quit", stub, envir = student_env)
-      assign("q", stub, envir = student_env)
-      if (is.finite(timeout)) setTimeLimit(elapsed = timeout, transient = FALSE)
-      src <- tryCatch({source(student_file, local = student_env, encoding = encodings[[1]]); TRUE},
-                      error = function(e) conditionMessage(e))
-      setTimeLimit(elapsed = Inf, transient = FALSE)
-      if (!isTRUE(src) && grepl("elapsed time limit|CPU time limit", src)) {
-        return(list(kind = "load_timeout"))
-      }
-      if (!isTRUE(src)) {
-        return(list(kind = "source_error", message = src))
-      }
-      # Same isolation as the inproc engine (see copy_student_objects()).
-      env <- new.env(parent = globalenv())
-      nms <- ls(student_env, all.names = TRUE)
-      masked <- intersect(nms, protected)
-      for (nm in setdiff(nms, masked)) assign(nm, get(nm, envir = student_env), envir = env)
-      masked <- masked[!vapply(masked, function(nm) {
-        isTRUE(attr(get(nm, envir = student_env), "corrector_stub"))
-      }, logical(1))]
-      source(test_file, local = env, encoding = encodings[[2]])
-      parent.env(env) <- parent.env(globalenv())
-      results <- list()
-      for (fn in test_fns) {
-        t0 <- Sys.time()
-        if (is.finite(timeout)) setTimeLimit(elapsed = timeout, transient = FALSE)
-        # Same testthat handling as run_one_test_inproc().
-        n_ok <- 0L
-        out <- tryCatch(
-          list(v = withCallingHandlers(get(fn, envir = env)(),
-                                       expectation_success = function(c) {
-                                         n_ok <<- n_ok + 1L
-                                         tryInvokeRestart("continue_test")
-                                       }),
-               err = NULL, failed = FALSE),
-          error = function(e) list(v = NULL, err = conditionMessage(e),
-                                   failed = inherits(e, "expectation_failure")),
-          skip = function(e) list(v = NULL, failed = FALSE,
-                                  err = paste("test skipped:",
-                                              sub("^Reason: ", "", conditionMessage(e)))))
-        setTimeLimit(elapsed = Inf, transient = FALSE)
-        results[[fn]] <- c(out, list(n_ok = n_ok, duration = as.numeric(difftime(Sys.time(), t0, units = "secs"))))
-        # Write then rename, so a kill never leaves a half-written file.
-        saveRDS(list(results = results, masked = masked), paste0(progress_file, ".tmp"))
-        file.rename(paste0(progress_file, ".tmp"), progress_file)
-      }
-      list(kind = "tests", results = results, masked = masked)
-    },
-    args = list(
-      student_file = normalizePath(student_file),
-      test_file    = normalizePath(test_file),
-      test_fns     = test_fns,
-      timeout      = timeout,
-      protected    = protected,
-      encodings    = c(source_encoding(student_file), source_encoding(test_file)),
-      progress_file = progress_file
-    ),
+    func = run_in_child,
+    args = c(list(portable(callr_child)), args),
     # Discard student output: an unread pipe fills up and stalls the child.
     stdout = NULL,
     stderr = NULL
   )
+}
+
+# The child process for engine = "callr". Like isolated_child(), it is
+# sent with portable() and run through run_in_child().
+callr_child <- function(student_file, test_file, test_fns, timeout, protected,
+                encodings, progress_file, allow, method_pattern,
+                snapshot, changes, run_loop) {
+  # Files the student writes land in the subprocess's own temp dir.
+  setwd(tempdir())
+  student_env <- new.env(parent = globalenv())
+  # Same stubs as add_quit_stubs().
+  stub <- function(...) stop("quit() is not allowed while grading", call. = FALSE)
+  attr(stub, "corrector_stub") <- TRUE
+  assign("quit", stub, envir = student_env)
+  assign("q", stub, envir = student_env)
+  snap <- snapshot()
+  if (is.finite(timeout)) setTimeLimit(elapsed = timeout, transient = FALSE)
+  src <- tryCatch({source(student_file, local = student_env, encoding = encodings[[1]]); TRUE},
+                  error = function(e) conditionMessage(e))
+  setTimeLimit(elapsed = Inf, transient = FALSE)
+  if (!isTRUE(src) && grepl("elapsed time limit|CPU time limit", src)) {
+    return(list(kind = "load_timeout"))
+  }
+  if (!isTRUE(src)) {
+    return(list(kind = "source_error", message = src))
+  }
+  # Same isolation as the inproc engine (see copy_student_objects()).
+  env <- new.env(parent = globalenv())
+  nms <- ls(student_env, all.names = TRUE)
+  masked <- union(intersect(nms, protected),
+                  setdiff(grep(method_pattern, nms, value = TRUE), allow))
+  for (nm in setdiff(nms, masked)) assign(nm, get(nm, envir = student_env), envir = env)
+  masked <- masked[!vapply(masked, function(nm) {
+    isTRUE(attr(get(nm, envir = student_env), "corrector_stub"))
+  }, logical(1))]
+  source(test_file, local = env, encoding = encodings[[2]])
+  parent.env(env) <- parent.env(globalenv())
+  tampered <- changes(snap)
+  snap_tests <- snapshot()
+  results <- run_loop(env, test_fns, timeout, progress_file, masked)
+  list(kind = "tests", results = results, masked = masked,
+       tampered = unique(c(tampered, changes(snap_tests))))
 }
 
 finish_exercise_callr <- function(proc) {

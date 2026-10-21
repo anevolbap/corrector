@@ -54,11 +54,14 @@ test_that("plot_report accepts partial scoring on both backends", {
   expect_no_error(plot_report(make_scored(), backend = "ggplot2", scoring = "partial"))
 })
 
-test_that("grade_report defaults are unchanged and accept partial scoring", {
+test_that("grade_report counts missing exercises as 0 and accepts partial scoring", {
   res <- make_scored()
-  old <- grade_report(res)
-  expect_equal(unname(old$score_by_student), c(0.5, 1))
+  all <- grade_report(res)
+  expect_equal(unname(all$score_by_student), c(0.5, 0.5))
+  expect_equal(unname(all$pass_rate_by_exercise), c(0.5, 0.5))
   part <- grade_report(res, scoring = "partial")
-  expect_equal(unname(part$score_by_student), c(0.75, 1))
-  expect_equal(unname(part$pass_rate_by_exercise), c(0.75, 1))
+  expect_equal(unname(part$score_by_student), c(0.75, 0.5))
+  expect_equal(unname(part$pass_rate_by_exercise), c(0.75, 0.5))
+  # Same rule as student_scores()$total.
+  expect_equal(unname(part$score_by_student), student_scores(res)$total)
 })

@@ -1,3 +1,33 @@
+# corrector 0.5.0
+
+## New features
+
+* `engine = "isolated"` runs student code in a separate R session from the
+  tests. Each student function the tests call runs there and only its
+  result comes back, as plain data, so tricks such as `attach()`, S3
+  methods for comparisons, or replaced base functions do not change the
+  grade. It takes about twice as long as `callr`.
+* Every submission is read for suspicious code (`attach()`,
+  `unlockBinding()`, `registerS3method()`, `trace()`, writes into the global
+  or base environment, `parse(text = )`, ...) and checked after it runs for
+  tampering (attached environments, registered S3 methods, replaced base
+  functions). Both are noted in the `message` column, and `grade_report()`
+  lists those students under "Check by hand". New `scan_code()`.
+* Student S3 methods for comparison generics (`Ops`, `==`, `all.equal`,
+  `as.logical`, ...) are not visible to the tests unless listed in
+  `allow_masking`.
+* The inproc engine undoes attached environments, registered methods and
+  replaced base functions after each exercise, so they do not reach the
+  next student.
+* New article: `vignette("cheat-resistant-grading")`.
+
+## Breaking changes
+
+* `grade_report()`, `export_to_html()` and `plot_report()` count a missing
+  exercise, or one with a `source_error`, as 0. Before, they left it out, so
+  a student who handed in 1 of 5 exercises, all correct, showed 100%. The
+  student score is now the same as `student_scores()$total`.
+
 # corrector 0.4.0
 
 ## New features

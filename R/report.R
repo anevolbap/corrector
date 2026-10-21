@@ -15,13 +15,16 @@
 #'   \describe{
 #'     \item{`pass_rate_by_exercise`}{Named numeric vector (0-1). Mean
 #'       exercise score across students.}
-#'     \item{`score_by_student`}{Named numeric vector (0-1). Mean score
-#'       across the student's submitted exercises (missing ones are left
-#'       out; use [student_scores()] to count them as 0).}
+#'     \item{`score_by_student`}{Named numeric vector (0-1). The student's
+#'       `total` from [student_scores()].}
 #'     \item{`overall_mean`}{Scalar numeric (0-1).}
 #'     \item{`issue_counts`}{Named integer vector with counts of `error`,
 #'       `timeout`, `missing`, and `source_error` rows.}
+#'     \item{`flagged`}{Character vector of students with suspicious code
+#'       or tampering noted in the `message` column (see [scan_code()]).}
 #'   }
+#'   In `pass_rate_by_exercise` and `score_by_student`, a `missing` exercise
+#'   or one with a `source_error` counts as 0.
 #' @export
 #' @examples
 #' report <- grade_report(example_results())
@@ -46,7 +49,8 @@ grade_report <- function(results, scoring = c("all", "partial"), weights = NULL)
       pass_rate_by_exercise = pass_rate,
       score_by_student      = student_scores,
       overall_mean          = mean(student_scores, na.rm = TRUE),
-      issue_counts          = issue_counts
+      issue_counts          = issue_counts,
+      flagged               = flagged_students(results)
     ),
     class = "grade_report"
   )
@@ -85,29 +89,33 @@ print.grade_report <- function(x, ...) {
     cat(sprintf("  %-20s %-*s %s\n", nm, bar_width, bar, pct(sorted[[nm]])))
   }
 
+  if (length(x$flagged) > 0) {
+    cat("\nCheck by hand (suspicious code or tampering, see the message column):\n")
+    for (nm in x$flagged) cat("  ", nm, "\n", sep = "")
+  }
+
   invisible(x)
 }
 
-# Pass rate per exercise and score per student (missing exercises left out),
-# shared by grade_report(), export_to_html() and plot_report().
+# Students with a "suspicious code" or "tampering" note on any row.
+flagged_students <- function(results) {
+  hit <- grepl("(^|; )(suspicious code|tampering): ", results$message)
+  unique(results$student[hit])
+}
+
+# Pass rate per exercise and score per student, shared by grade_report(),
+# export_to_html() and plot_report(). Missing exercises count as 0.
 summary_scores <- function(results, scoring = "all", weights = NULL) {
   scores <- student_scores(results, scoring = scoring, weights = weights)
   exercise_cols <- setdiff(names(scores), c("student", "total"))
-  ex_weights <- vapply(exercise_cols, function(ex) {
-    if (ex %in% names(weights)) weights[[ex]] else 1
-  }, numeric(1))
 
   pass_rate <- vapply(exercise_cols, function(ex) {
-    mean(scores[[ex]], na.rm = TRUE)
+    v <- scores[[ex]]
+    mean(ifelse(is.na(v), 0, v))
   }, numeric(1))
   names(pass_rate) <- exercise_cols
 
-  by_student <- vapply(seq_len(nrow(scores)), function(i) {
-    stats::weighted.mean(unlist(scores[i, exercise_cols, drop = FALSE]),
-                         ex_weights, na.rm = TRUE)
-  }, numeric(1))
-  names(by_student) <- scores$student
-
+  by_student <- stats::setNames(scores$total, scores$student)
   list(pass_rate = pass_rate, by_student = by_student)
 }
 

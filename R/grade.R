@@ -436,6 +436,14 @@ student_dirs <- function(dir) {
 
 extract_if_zip <- function(path) {
   if (identical(tolower(tools::file_ext(path)), "zip")) {
+    # Refuse entries such as "../x" or "/x" that would land outside `dest`.
+    entries <- utils::unzip(path, list = TRUE)$Name
+    unsafe <- grepl("^([/\\\\]|[A-Za-z]:)", entries) |
+      vapply(strsplit(entries, "[/\\\\]"), function(p) any(p == ".."), logical(1))
+    if (any(unsafe)) {
+      stop("Zip has entries that point outside the extraction folder: ",
+           paste(entries[unsafe], collapse = ", "))
+    }
     dest <- file.path(tempdir(), paste0("corrector_", basename(tools::file_path_sans_ext(path))))
     unlink(dest, recursive = TRUE)
     dir.create(dest, recursive = TRUE)

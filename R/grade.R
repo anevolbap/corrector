@@ -17,7 +17,7 @@
 #'   `<<-` or files the student writes do not reach your session or folder.
 #'   `"inproc"` runs tests in the current R session. It is faster, but its
 #'   `setTimeLimit()` timeout does not interrupt every kind of loop, and
-#'   student code can change your global environment.
+#'   student code can see and change your global environment.
 #' @param allow_masking Character vector of function names from base R and
 #'   the default packages (stats, utils, methods, graphics, grDevices) that
 #'   the student may redefine, e.g. `"factorial"` when the exercise asks for
@@ -70,7 +70,7 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 
   test_fns <- discover_test_fns(test_file, exercise)
 
-  student_env <- new.env(parent = baseenv())
+  student_env <- new.env(parent = globalenv())
   src <- tryCatch({
     source(file, local = student_env, encoding = source_encoding(file))
     list(ok = TRUE)
@@ -91,7 +91,7 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 
   # Tests run in their own environment. Student objects are copied in, except
   # those that would mask a protected function the tests rely on.
-  env <- new.env(parent = baseenv())
+  env <- new.env(parent = globalenv())
   masked <- copy_student_objects(student_env, env, protected)
   source(test_file, local = env, encoding = source_encoding(test_file))
 
@@ -346,7 +346,7 @@ expected_exercises <- function(test_dir) {
 # Used by callr engine to know which test functions to invoke without loading
 # the student file in the main process.
 discover_test_fns <- function(test_file, exercise) {
-  env <- new.env(parent = baseenv())
+  env <- new.env(parent = globalenv())
   # Provide a stub for any function called at top-level by the test file that
   # could fail without the student definitions; tests should only define
   # functions, so sourcing here should be safe.

@@ -30,7 +30,7 @@ directory. The timeout is a hard wall-clock limit, and assignments with
 \verb{<<-} or files the student writes do not reach your session or folder.
 \code{"inproc"} runs tests in the current R session. It is faster, but its
 \code{setTimeLimit()} timeout does not interrupt every kind of loop, and
-student code can change your global environment.}
+student code can see and change your global environment.}
 
 \item{allow_masking}{Character vector of function names from base R and
 the default packages (stats, utils, methods, graphics, grDevices) that

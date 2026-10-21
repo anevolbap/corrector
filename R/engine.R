@@ -45,14 +45,14 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
                     encodings) {
       # Files the student writes land in the subprocess's own temp dir.
       setwd(tempdir())
-      student_env <- new.env(parent = baseenv())
+      student_env <- new.env(parent = globalenv())
       src <- tryCatch({source(student_file, local = student_env, encoding = encodings[[1]]); TRUE},
                       error = function(e) conditionMessage(e))
       if (!isTRUE(src)) {
         return(list(kind = "source_error", message = src))
       }
       # Same isolation as the inproc engine (see copy_student_objects()).
-      env <- new.env(parent = baseenv())
+      env <- new.env(parent = globalenv())
       nms <- ls(student_env, all.names = TRUE)
       masked <- intersect(nms, protected)
       for (nm in setdiff(nms, masked)) assign(nm, get(nm, envir = student_env), envir = env)

@@ -33,7 +33,8 @@ for (engine in c("callr", "inproc")) {
                            engine = engine)
     expect_true(all(ok$status == "pass"))
     expect_true(all(bad$status == "fail"))
-    expect_match(bad$message, "not equal", all = FALSE)
+    # The wording changes between testthat versions; the expression does not.
+    expect_match(bad$message, "sumar(", fixed = TRUE, all = FALSE)
   })
 
   test_that(paste("students cannot redefine testthat expectations, engine", engine), {

@@ -95,6 +95,39 @@ test_that("inproc undoes a student's attach() and registered methods", {
   expect_false(exists("all.equal.trampa3", envir = table, inherits = FALSE))
 })
 
+test_that("inproc warns when student code replaces a base function", {
+  original <- base::isFALSE
+  on.exit({
+    unlockBinding("isFALSE", baseenv())
+    assign("isFALSE", original, envir = baseenv())
+    lockBinding("isFALSE", baseenv())
+  })
+  file <- student_file(c(
+    'unlockBinding("isFALSE", baseenv())',
+    'assign("isFALSE", function(x) TRUE, envir = baseenv())',
+    "sumar <- function(a, b) a + b"
+  ))
+  expect_warning(
+    res <- grade_exercise(file, integrity_tests(), engine = "inproc"),
+    "replaced base functions in this R session: isFALSE"
+  )
+  expect_match(res$message, "changed base functions isFALSE", fixed = TRUE, all = TRUE)
+})
+
+test_that("a killed isolated job does not trust the progress file", {
+  fake_job <- function(isolated) {
+    progress <- withr::local_tempfile(fileext = ".rds", .local_envir = parent.frame(2))
+    ok <- list(v = TRUE, err = NULL, failed = FALSE, n_ok = 0L, duration = 0)
+    saveRDS(list(results = list(test_ejercicio1_a = ok), masked = character()), progress)
+    list(proc = callr::r_bg(function() Sys.sleep(60)), deadline = 0,
+         progress = progress, isolated = isolated, suspicious = character(),
+         file = "ejercicio1.R", test_fns = "test_ejercicio1_a", timeout = 1,
+         student = "Ana", exercise = "ejercicio1")
+  }
+  expect_equal(as.character(finish_grading_callr(fake_job(FALSE))$status), "pass")
+  expect_equal(as.character(finish_grading_callr(fake_job(TRUE))$status), "timeout")
+})
+
 test_that("grade_report lists students with suspicious code or tampering", {
   res <- example_results()
   res$message[res$student == "Lopez"] <- "suspicious code: attach() at line 2"

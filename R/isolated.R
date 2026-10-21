@@ -56,8 +56,8 @@ isolated_load <- function(student_file, encoding, timeout, snapshot, changes) {
     return(list(kind = "load_timeout"))
   }
   if (!isTRUE(src)) return(list(kind = "source_error", message = src))
-  assign(".corrector_student", student_env, envir = globalenv())
-  assign(".corrector_snap", snap, envir = globalenv())
+  # Kept in options() so later calls from B can find them.
+  options(corrector.student = student_env, corrector.snap = snap)
   nms <- ls(student_env, all.names = TRUE)
   is_fn <- vapply(nms, function(nm) is.function(get(nm, envir = student_env)), logical(1))
   is_stub <- vapply(nms, function(nm) {
@@ -116,10 +116,10 @@ isolated_child <- function(student_file, test_file, test_fns, timeout, protected
   # Code sent to A must not see A's search path (see run_in_child()).
   in_a <- function(.f, ...) .f(...)
   runner <- function(name, args) {
-    do.call(get(name, envir = get(".corrector_student", envir = globalenv())), args)
+    do.call(get(name, envir = getOption("corrector.student")), args)
   }
   environment(runner) <- baseenv()
-  later_changes <- function(changes) changes(get(".corrector_snap", envir = globalenv()))
+  later_changes <- function(changes) changes(getOption("corrector.snap"))
   environment(later_changes) <- baseenv()
 
   # Runs student function `name` in A. Waits in short slices so the test's

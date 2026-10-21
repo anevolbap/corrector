@@ -115,7 +115,11 @@ integrity_changes <- function(snap) {
     out <- c(out, paste("registered S3 methods", paste(s3[!from_package], collapse = ", ")))
   }
   now <- mget(names(snap$fns), envir = baseenv())
-  changed <- names(snap$fns)[!mapply(identical, snap$fns, now)]
+  # vapply(), not mapply(): mapply() calls isFALSE(), which student code
+  # may have replaced.
+  changed <- names(snap$fns)[!vapply(names(snap$fns), function(nm) {
+    identical(snap$fns[[nm]], now[[nm]])
+  }, logical(1))]
   if (length(changed) > 0) {
     out <- c(out, paste("changed base functions", paste(changed, collapse = ", ")))
   }
@@ -123,7 +127,8 @@ integrity_changes <- function(snap) {
 }
 
 # Undo what integrity_changes() reports, so one student's changes do not
-# reach the next one (inproc engine).
+# reach the next one (inproc engine). Replaced base functions cannot be put
+# back safely, so they only get a warning.
 integrity_restore <- function(snap) {
   for (nm in rev(setdiff(search(), snap$search))) {
     is_package <- startsWith(nm, "package:") &&
@@ -137,13 +142,17 @@ integrity_restore <- function(snap) {
       rm(list = nm, envir = table)
     }
   }
-  base <- baseenv()
-  for (nm in names(snap$fns)) {
-    if (!identical(get(nm, envir = base), snap$fns[[nm]])) {
-      unlockBinding(nm, base)
-      assign(nm, snap$fns[[nm]], envir = base)
-      lockBinding(nm, base)
-    }
+  now <- mget(names(snap$fns), envir = baseenv())
+  # vapply(), not mapply(): mapply() calls isFALSE(), which student code
+  # may have replaced.
+  changed <- names(snap$fns)[!vapply(names(snap$fns), function(nm) {
+    identical(snap$fns[[nm]], now[[nm]])
+  }, logical(1))]
+  if (length(changed) > 0) {
+    warning("Student code replaced base functions in this R session: ",
+            paste(changed, collapse = ", "),
+            ". Restart R before grading more, or use engine = \"callr\".",
+            call. = FALSE)
   }
 }
 

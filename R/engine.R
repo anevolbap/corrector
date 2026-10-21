@@ -25,6 +25,7 @@ start_grading_callr <- function(file, test_file, timeout, student, protected,
                                     progress, allow_masking, isolated),
     deadline = as.numeric(Sys.time()) + budget,
     progress = progress,
+    isolated = isolated,
     suspicious = scan_code(code),
     file = file, test_fns = test_fns, timeout = timeout,
     student = student, exercise = exercise
@@ -34,7 +35,10 @@ start_grading_callr <- function(file, test_file, timeout, student, protected,
 finish_grading_callr <- function(job) {
   out <- finish_exercise_callr(job$proc)
   # A killed subprocess saved the tests it finished; keep those results.
-  saved <- if (identical(out$kind, "killed") && file.exists(job$progress)) {
+  # Not for the isolated engine: student code there runs in another process
+  # that could reach the file, while the test process itself is rarely killed.
+  saved <- if (identical(out$kind, "killed") && !isTRUE(job$isolated) &&
+               file.exists(job$progress)) {
     tryCatch(readRDS(job$progress), error = function(e) NULL)
   }
   if (!is.null(saved)) {

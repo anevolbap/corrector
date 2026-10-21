@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">corrector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/grading-pipeline.html">Setting up a grading pipeline</a></li>
+    <li><a class="dropdown-item" href="../articles/cheat-resistant-grading.html">Cheat-resistant grading</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -180,11 +181,11 @@ the same time:</p>
 your R session, not your computer: student code can read and write any
 file your user can, use the network, or run system commands. For code
 from people you do not trust, run corrector inside a container or
-virtual machine without your credentials. The protection against
-cheating covers the common cases (redefining base R functions, writing
-them into the global environment, calling <code><a href="https://rdrr.io/r/base/quit.html" class="external-link">quit()</a></code>), not a
-student who sets out to break the grader, so check odd grades by
-hand.</p>
+virtual machine without your credentials. The <code>callr</code> and
+<code>inproc</code> engines block the common cheating tricks and report
+the rest; <code>engine = "isolated"</code> keeps student code out of the
+process that runs the tests. See
+<code><a href="../articles/cheat-resistant-grading.html">vignette("cheat-resistant-grading")</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="renaming-students">Renaming students<a class="anchor" aria-label="anchor" href="#renaming-students"></a>

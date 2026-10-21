@@ -13,7 +13,7 @@ grade_submissions(
   submissions_path,
   test_dir,
   timeout = 10,
-  engine = c("callr", "inproc"),
+  engine = c("callr", "inproc", "isolated"),
   student_name_fn = default_student_name,
   allow_masking = character(),
   workers = 1L,
@@ -37,7 +37,7 @@ grade_submissions(
 
 - engine:
 
-  `"callr"` (default) or `"inproc"`. See
+  `"callr"` (default), `"inproc"` or `"isolated"`. See
   [`grade_exercise()`](https://anevolbap.github.io/corrector/reference/grade_exercise.md).
 
 - student_name_fn:

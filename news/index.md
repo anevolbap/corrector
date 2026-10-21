@@ -1,5 +1,46 @@
 # Changelog
 
+## corrector 0.5.0
+
+### New features
+
+- `engine = "isolated"` runs student code in a separate R session from
+  the tests. Each student function the tests call runs there and only
+  its result comes back, as plain data, so tricks such as
+  [`attach()`](https://rdrr.io/r/base/attach.html), S3 methods for
+  comparisons, or replaced base functions do not change the grade. It
+  takes about twice as long as `callr`.
+- Every submission is read for suspicious code
+  ([`attach()`](https://rdrr.io/r/base/attach.html),
+  [`unlockBinding()`](https://rdrr.io/r/base/bindenv.html),
+  [`registerS3method()`](https://rdrr.io/r/base/ns-internal.html),
+  [`trace()`](https://rdrr.io/r/base/trace.html), writes into the global
+  or base environment, `parse(text = )`, …) and checked after it runs
+  for tampering (attached environments, registered S3 methods, replaced
+  base functions). Both are noted in the `message` column, and
+  [`grade_report()`](https://anevolbap.github.io/corrector/reference/grade_report.md)
+  lists those students under “Check by hand”. New
+  [`scan_code()`](https://anevolbap.github.io/corrector/reference/scan_code.md).
+- Student S3 methods for comparison generics (`Ops`, `==`, `all.equal`,
+  `as.logical`, …) are not visible to the tests unless listed in
+  `allow_masking`.
+- The inproc engine undoes attached environments, registered methods and
+  replaced base functions after each exercise, so they do not reach the
+  next student.
+- New article:
+  [`vignette("cheat-resistant-grading")`](https://anevolbap.github.io/corrector/articles/cheat-resistant-grading.md).
+
+### Breaking changes
+
+- [`grade_report()`](https://anevolbap.github.io/corrector/reference/grade_report.md),
+  [`export_to_html()`](https://anevolbap.github.io/corrector/reference/export_to_html.md)
+  and
+  [`plot_report()`](https://anevolbap.github.io/corrector/reference/plot_report.md)
+  count a missing exercise, or one with a `source_error`, as 0. Before,
+  they left it out, so a student who handed in 1 of 5 exercises, all
+  correct, showed 100%. The student score is now the same as
+  `student_scores()$total`.
+
 ## corrector 0.4.0
 
 ### New features

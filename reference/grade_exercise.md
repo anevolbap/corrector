@@ -14,7 +14,7 @@ grade_exercise(
   test_dir,
   timeout = 10,
   student = NA_character_,
-  engine = c("callr", "inproc"),
+  engine = c("callr", "inproc", "isolated"),
   allow_masking = character()
 )
 ```
@@ -52,7 +52,14 @@ grade_exercise(
   the current R session. It is faster, but its
   [`setTimeLimit()`](https://rdrr.io/r/base/setTimeLimit.html) timeout
   does not interrupt every kind of loop, and student code can see and
-  change your global environment.
+  change your global environment. `"isolated"` runs the tests in one
+  subprocess and the student code in another. Each student function the
+  tests call runs in the student process and only its result (plain
+  data) comes back, so tricks such as
+  [`attach()`](https://rdrr.io/r/base/attach.html), S3 methods for
+  comparisons or replaced base functions do not change the grade. It is
+  slower, and a student function may not return a function or an
+  environment. Use it when cheating matters.
 
 - allow_masking:
 

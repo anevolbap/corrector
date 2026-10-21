@@ -13,7 +13,7 @@ object."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">corrector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,6 +25,7 @@ object."></head><body>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/grading-pipeline.html">Setting up a grading pipeline</a></li>
+    <li><a class="dropdown-item" href="../articles/cheat-resistant-grading.html">Cheat-resistant grading</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -57,7 +58,7 @@ object.</p>
 <span>  <span class="va">test_dir</span>,</span>
 <span>  timeout <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  student <span class="op">=</span> <span class="cn">NA_character_</span>,</span>
-<span>  engine <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"callr"</span>, <span class="st">"inproc"</span><span class="op">)</span>,</span>
+<span>  engine <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"callr"</span>, <span class="st">"inproc"</span>, <span class="st">"isolated"</span><span class="op">)</span>,</span>
 <span>  allow_masking <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -94,7 +95,13 @@ directory. The timeout is a hard wall-clock limit, and assignments with
 <code>&lt;&lt;-</code> or files the student writes do not reach your session or folder.
 <code>"inproc"</code> runs tests in the current R session. It is faster, but its
 <code><a href="https://rdrr.io/r/base/setTimeLimit.html" class="external-link">setTimeLimit()</a></code> timeout does not interrupt every kind of loop, and
-student code can see and change your global environment.</p></dd>
+student code can see and change your global environment.
+<code>"isolated"</code> runs the tests in one subprocess and the student code in
+another. Each student function the tests call runs in the student
+process and only its result (plain data) comes back, so tricks such as
+<code><a href="https://rdrr.io/r/base/attach.html" class="external-link">attach()</a></code>, S3 methods for comparisons or replaced base functions do
+not change the grade. It is slower, and a student function may not
+return a function or an environment. Use it when cheating matters.</p></dd>
 
 
 <dt id="arg-allow-masking">allow_masking<a class="anchor" aria-label="anchor" href="#arg-allow-masking"></a></dt>

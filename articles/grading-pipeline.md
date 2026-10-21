@@ -138,10 +138,10 @@ corrector is not a sandbox. The `callr` engine protects your R session,
 not your computer: student code can read and write any file your user
 can, use the network, or run system commands. For code from people you
 do not trust, run corrector inside a container or virtual machine
-without your credentials. The protection against cheating covers the
-common cases (redefining base R functions, writing them into the global
-environment, calling [`quit()`](https://rdrr.io/r/base/quit.html)), not
-a student who sets out to break the grader, so check odd grades by hand.
+without your credentials. The `callr` and `inproc` engines block the
+common cheating tricks and report the rest; `engine = "isolated"` keeps
+student code out of the process that runs the tests. See
+[`vignette("cheat-resistant-grading")`](https://anevolbap.github.io/corrector/articles/cheat-resistant-grading.md).
 
 ## Renaming students
 

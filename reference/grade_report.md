@@ -43,10 +43,8 @@ A `grade_report` object (a list) with components:
 
 - `score_by_student`:
 
-  Named numeric vector (0-1). Mean score across the student's submitted
-  exercises (missing ones are left out; use
-  [`student_scores()`](https://anevolbap.github.io/corrector/reference/student_scores.md)
-  to count them as 0).
+  Named numeric vector (0-1). The student's `total` from
+  [`student_scores()`](https://anevolbap.github.io/corrector/reference/student_scores.md).
 
 - `overall_mean`:
 
@@ -56,6 +54,15 @@ A `grade_report` object (a list) with components:
 
   Named integer vector with counts of `error`, `timeout`, `missing`, and
   `source_error` rows.
+
+- `flagged`:
+
+  Character vector of students with suspicious code or tampering noted
+  in the `message` column (see
+  [`scan_code()`](https://anevolbap.github.io/corrector/reference/scan_code.md)).
+
+In `pass_rate_by_exercise` and `score_by_student`, a `missing` exercise
+or one with a `source_error` counts as 0.
 
 ## Examples
 

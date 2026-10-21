@@ -6,6 +6,8 @@
   : Grade a single exercise file against its tests
 - [`grade_submissions()`](https://anevolbap.github.io/corrector/reference/grade_submissions.md)
   : Grade all student submissions in a directory or zip archive
+- [`scan_code()`](https://anevolbap.github.io/corrector/reference/scan_code.md)
+  : Find suspicious code in a student file
 
 ## Summarising
 

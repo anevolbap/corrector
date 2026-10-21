@@ -276,12 +276,35 @@ can, use the network, or run system commands. For code from people you
 do not trust, run corrector inside a container or virtual machine
 without your credentials.
 
-The protection against cheating covers the common cases: redefining base
-R functions in the file, writing them into the global environment, or
-calling [`quit()`](https://rdrr.io/r/base/quit.html). A student who
-knows R in depth can still fool the grader (for example with
+### Cheating
+
+With the `callr` and `inproc` engines corrector blocks the common
+tricks: redefining base R functions or S3 comparison methods in the
+file, writing them into the global environment, or calling
+[`quit()`](https://rdrr.io/r/base/quit.html). A student who knows R in
+depth can still fool these engines (for example with
 [`attach()`](https://rdrr.io/r/base/attach.html) or by changing the base
-package), so check any grade that looks wrong by hand.
+package). corrector detects such code and notes it in the `message`
+column as `suspicious code` or `tampering`, and
+[`grade_report()`](https://anevolbap.github.io/corrector/reference/grade_report.md)
+lists those students under “Check by hand”.
+
+`engine = "isolated"` runs the student code in another process and only
+gets the results back, so those tricks do not change the grade. It takes
+about twice as long as `callr`; `workers` makes up for it:
+
+``` r
+
+results <- grade_submissions("submissions/", test_dir = "tests/",
+                             engine = "isolated", workers = 4)
+```
+
+The article [Cheat-resistant
+grading](https://anevolbap.github.io/corrector/articles/cheat-resistant-grading.html)
+explains what each engine covers and how to write tests that are hard to
+fool (for example, compare with
+[`identical()`](https://rdrr.io/r/base/identical.html) and use random
+inputs).
 
 ## Example test files
 

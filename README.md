@@ -266,11 +266,29 @@ al que tenga acceso tu usuario, usar la red o ejecutar comandos del sistema.
 Si no confiás en quien escribió el código, corré el corrector dentro de un
 contenedor o una máquina virtual sin tus credenciales.
 
-La protección contra trampas cubre los casos comunes: redefinir funciones de
-base R en el archivo, escribirlas en el entorno global, o llamar a `quit()`.
-Un estudiante que conozca R a fondo todavía puede engañar al corrector (por
-ejemplo con `attach()` o modificando el paquete base), así que revisá a mano
-las notas que te llamen la atención.
+### Trampas
+
+Con los motores `callr` e `inproc` el corrector bloquea las trampas comunes:
+redefinir funciones de base R o métodos S3 de comparación en el archivo,
+escribirlas en el entorno global, o llamar a `quit()`. Un estudiante que
+conozca R a fondo todavía puede engañarlos (por ejemplo con `attach()` o
+modificando el paquete base). El corrector detecta ese código y lo anota en
+la columna `message` como `suspicious code` o `tampering`, y `grade_report()`
+lista a esos estudiantes en "Check by hand".
+
+`engine = "isolated"` corre el código del estudiante en otro proceso y solo
+recibe de vuelta los resultados, así esas trampas no cambian la nota. Tarda
+más o menos el doble que `callr`; `workers` lo compensa:
+
+```r
+resultados <- grade_submissions("entregas/", test_dir = "tests/",
+                                engine = "isolated", workers = 4)
+```
+
+El artículo
+[Cheat-resistant grading](https://anevolbap.github.io/corrector/articles/cheat-resistant-grading.html)
+explica qué cubre cada motor y cómo escribir tests difíciles de engañar (por
+ejemplo, comparar con `identical()` y usar datos al azar).
 
 ## Archivos de tests de ejemplo
 

@@ -23,7 +23,8 @@ test_that("grade_exercise returns source_error for unparseble file", {
 })
 
 test_that("grade_exercise warns and returns missing when no test file found", {
-  file <- test_path("fixtures/student_ok/ejercicio99.R")
+  file <- file.path(withr::local_tempdir(), "ejercicio99.R")
+  writeLines("x <- 1", file)
   expect_warning(result <- grade_exercise(file, test_dir), "No test file found")
   expect_equal(nrow(result), 1)
   expect_equal(as.character(result$status), "missing")

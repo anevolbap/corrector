@@ -52,6 +52,9 @@ grade_exercise <- function(file, test_dir, timeout = 10,
                            engine = c("callr", "inproc"),
                            allow_masking = character()) {
   engine <- match.arg(engine)
+  if (!file.exists(file)) stop("Student file does not exist: ", file, call. = FALSE)
+  check_test_dir(test_dir)
+  check_timeout(timeout)
   protected <- setdiff(protected_names(), allow_masking)
   exercise <- tools::file_path_sans_ext(basename(file))
   test_file <- find_test_file(exercise, test_dir)
@@ -175,7 +178,15 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
                               layout = c("folders", "moodle")) {
   engine <- match.arg(engine)
   layout <- match.arg(layout)
-  stopifnot(length(workers) == 1, workers >= 1)
+  if (!file.exists(submissions_path)) {
+    stop("submissions_path does not exist: ", submissions_path, call. = FALSE)
+  }
+  check_test_dir(test_dir)
+  check_timeout(timeout)
+  if (!is.numeric(workers) || length(workers) != 1 || is.na(workers) ||
+      workers < 1 || workers != round(workers)) {
+    stop("workers must be a whole number of 1 or more", call. = FALSE)
+  }
   dir <- extract_if_zip(submissions_path)
   if (layout == "moodle") {
     dir <- moodle_to_folders(dir)
@@ -188,6 +199,10 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
       length(student_dirs(file.path(dir, students))) > 0) {
     dir <- file.path(dir, students)
     students <- student_dirs(dir)
+  }
+  if (length(students) == 0) {
+    warning("No student folders found in: ", submissions_path)
+    return(empty_grade_results())
   }
 
   exercises <- expected_exercises(test_dir)
@@ -443,6 +458,16 @@ discover_test_fns <- function(test_file, exercise) {
     ))
   }
   fns
+}
+
+check_test_dir <- function(test_dir) {
+  if (!dir.exists(test_dir)) stop("test_dir does not exist: ", test_dir, call. = FALSE)
+}
+
+check_timeout <- function(timeout) {
+  if (!is.numeric(timeout) || length(timeout) != 1 || is.na(timeout) || timeout <= 0) {
+    stop("timeout must be a positive number of seconds (or Inf)", call. = FALSE)
+  }
 }
 
 # grade_submissions() already warned once per test file without tests.

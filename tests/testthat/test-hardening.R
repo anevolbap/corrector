@@ -52,6 +52,28 @@ for (engine in c("callr", "inproc")) {
   })
 }
 
+test_that("bad paths and arguments give clear errors", {
+  subs  <- make_student()
+  tests <- test_path("fixtures/tests")
+  nope  <- file.path(withr::local_tempdir(), "nope")
+  expect_error(grade_submissions(nope, tests), "does not exist")
+  expect_error(grade_submissions(subs, nope), "does not exist")
+  expect_error(grade_exercise(file.path(nope, "ejercicio1.R"), tests), "does not exist")
+  expect_error(grade_exercise(file.path(subs, "ana", "ejercicio1.R"), nope), "does not exist")
+  expect_error(grade_submissions(subs, tests, timeout = -1), "timeout")
+  expect_error(grade_submissions(subs, tests, timeout = "10"), "timeout")
+  expect_error(grade_submissions(subs, tests, workers = 0), "workers")
+  expect_error(grade_submissions(subs, tests, workers = 1.5), "workers")
+})
+
+test_that("a folder with no student folders warns and returns no rows", {
+  empty <- withr::local_tempdir()
+  expect_warning(res <- grade_submissions(empty, test_path("fixtures/tests")),
+                 "No student folders")
+  expect_s3_class(res, "grade_results")
+  expect_equal(nrow(res), 0)
+})
+
 test_that("export_to_csv does not write live spreadsheet formulas", {
   res <- new_grade_results(data.frame(
     student = c("=cmd", "Ana"), exercise = "e1", test = "test_e1_a",

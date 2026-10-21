@@ -11,7 +11,8 @@ grade_submissions(
   engine = c("callr", "inproc"),
   student_name_fn = default_student_name,
   allow_masking = character(),
-  workers = 1L
+  workers = 1L,
+  layout = c("folders", "moodle")
 )
 }
 \arguments{
@@ -35,6 +36,11 @@ name keep their folder name, with a warning.}
 Default 1. Values above 1 speed up large classes; a value near
 \code{parallel::detectCores()} is a good upper bound. Ignored by the
 \code{"inproc"} engine.}
+
+\item{layout}{\code{"folders"} (default): one folder per student. \code{"moodle"}:
+the zip or folder from Moodle's "Download all submissions", with or
+without "Download submissions in folders". Only file submissions are
+graded, and \code{student_name_fn} defaults to \code{\link[=moodle_student_name]{moodle_student_name()}}.}
 }
 \value{
 A \link{grade_results} object.

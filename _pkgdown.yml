@@ -24,6 +24,7 @@ reference:
   - title: Helpers
     contents:
       - default_student_name
+      - moodle_student_name
       - example_results
 
 articles:

@@ -140,6 +140,10 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 #'   name keep their folder name, with a warning.
 #' @param allow_masking Base function names students may redefine. See
 #'   [grade_exercise()].
+#' @param layout `"folders"` (default): one folder per student. `"moodle"`:
+#'   the zip or folder from Moodle's "Download all submissions", with or
+#'   without "Download submissions in folders". Only file submissions are
+#'   graded, and `student_name_fn` defaults to [moodle_student_name()].
 #' @param workers Number of callr subprocesses to run at the same time.
 #'   Default 1. Values above 1 speed up large classes; a value near
 #'   `parallel::detectCores()` is a good upper bound. Ignored by the
@@ -167,10 +171,16 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
                               engine = c("callr", "inproc"),
                               student_name_fn = default_student_name,
                               allow_masking = character(),
-                              workers = 1L) {
+                              workers = 1L,
+                              layout = c("folders", "moodle")) {
   engine <- match.arg(engine)
+  layout <- match.arg(layout)
   stopifnot(length(workers) == 1, workers >= 1)
   dir <- extract_if_zip(submissions_path)
+  if (layout == "moodle") {
+    dir <- moodle_to_folders(dir)
+    if (missing(student_name_fn)) student_name_fn <- moodle_student_name
+  }
   students <- student_dirs(dir)
   # A zip of the parent folder holds one folder with the student folders inside.
   if (length(students) == 1 &&

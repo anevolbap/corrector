@@ -194,6 +194,19 @@ Use `timeout = Inf` for no limit. `engine = "inproc"` runs tests in the
 current session: it is faster, but `setTimeLimit()` does not interrupt every
 loop, and student code can change your global environment.
 
+For large classes, `workers` runs several subprocesses at the same time:
+
+```r
+results <- grade_submissions("submissions/", test_dir = "tests/", workers = 4)
+```
+
+## Security
+
+corrector is not a sandbox. The `callr` engine protects your R session, not
+your computer: student code can read and write any file your user can, use
+the network, or run system commands. For code from people you do not trust,
+run corrector inside a container or virtual machine without your credentials.
+
 ## Example test files
 
 ```r

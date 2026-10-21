@@ -1,3 +1,30 @@
+# corrector 0.3.0
+
+## Breaking changes
+
+* The default engine is now `"callr"` and the default `timeout` is 10 seconds
+  per test, for both `grade_exercise()` and `grade_submissions()`. Pass
+  `engine = "inproc"` and `timeout = Inf` for the old behavior. `callr` moved
+  from Suggests to Imports.
+
+## New features
+
+* `grade_submissions(workers = )` runs several callr subprocesses at the same
+  time. Results keep the same order as with one worker.
+* The callr subprocess runs in its own temporary working directory, so files
+  a student writes do not land in your folder.
+
+## Bug fixes
+
+* The callr engine now warns on `source_error`, like the inproc engine.
+* The callr engine returns zero rows instead of an error when a test file
+  defines no test functions for the exercise.
+
+## Other
+
+* CI checks on macOS and Windows, and a coverage workflow runs covr.
+* The READMEs and the vignette say that corrector is not a security sandbox.
+
 # corrector 0.2.1
 
 ## Bug fixes

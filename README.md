@@ -207,6 +207,20 @@ Usá `timeout = Inf` para no poner límite. `engine = "inproc"` corre los tests
 en la sesión actual: es más rápido, pero `setTimeLimit()` no interrumpe todos
 los bucles y el código del estudiante puede modificar tu entorno global.
 
+Para cursos grandes, `workers` corre varios subprocesos a la vez:
+
+```r
+resultados <- grade_submissions("entregas/", test_dir = "tests/", workers = 4)
+```
+
+## Seguridad
+
+corrector no es un sandbox. El motor `callr` protege tu sesión de R, no tu
+computadora: el código del estudiante puede leer y escribir cualquier archivo
+al que tenga acceso tu usuario, usar la red o ejecutar comandos del sistema.
+Si no confiás en quien escribió el código, corré el corrector dentro de un
+contenedor o una máquina virtual sin tus credenciales.
+
 ## Archivos de tests de ejemplo
 
 El paquete incluye ejemplos para cinco tipos de ejercicio: raíces de ecuación

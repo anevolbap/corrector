@@ -7,6 +7,10 @@ submits one R file per exercise; the professor provides matching test files. The
 package sources both into an isolated environment, runs the tests, and returns
 a per-test results object.
 
+Guides: [Grading pipeline](https://anevolbap.github.io/corrector/articles/grading-pipeline.html) ·
+[Cheat-resistant grading](https://anevolbap.github.io/corrector/articles/cheat-resistant-grading.html) ·
+[Function reference](https://anevolbap.github.io/corrector/reference/)
+
 ## Installation
 
 ```r

@@ -1,0 +1,171 @@
+---
+title: "Corregir entregas de principio a fin"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Corregir entregas de principio a fin}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+*[English version](grading-pipeline.html)*
+
+Este artículo recorre una corrección completa: escribir los tests, juntar las
+entregas, corregir, resumir y exportar.
+
+## Estructura de carpetas
+
+El corrector espera una carpeta por estudiante dentro de una carpeta de
+entregas, y una carpeta con los archivos de tests. Los nombres siguen una
+convención simple:
+
+```
+entregas/
+  garcia_juan/
+    ejercicio1.R
+    ejercicio2.R
+  lopez_maria/
+    ejercicio1.R
+    ejercicio2.R
+
+tests/
+  test_ejercicio1.R
+  test_ejercicio2.R
+```
+
+Un archivo de tests tiene una o más funciones con el nombre
+`test_<ejercicio>_<caso>` que devuelven `TRUE` o `FALSE`.
+
+```r
+# tests/test_ejercicio1.R
+test_ejercicio1_raices <- function() {
+  all(ceros_cuadratica(1, 0, -1) == c(-1, 1))
+}
+test_ejercicio1_numerico <- function() {
+  is.numeric(ceros_cuadratica(1, 0, -1))
+}
+```
+
+## Correr el corrector
+
+```r
+library(corrector)
+
+resultados <- grade_submissions("entregas/", test_dir = "tests/")
+```
+
+`resultados` es un objeto `grade_results`: un data frame en formato largo con
+una fila por test y las columnas `student`, `exercise`, `test`, `status`,
+`message` y `duration`. `status` es uno de `pass`, `fail`, `error`, `timeout`,
+`missing` o `source_error`.
+
+```r
+head(as.data.frame(resultados, format = "long"))
+```
+
+Para la vista ancha (una columna lógica por ejercicio) usá
+`as.data.frame(resultados, format = "wide")`.
+
+## Resumir
+
+`grade_report()` resume los resultados: porcentaje de aprobación por
+ejercicio, nota por estudiante y cantidad de errores, timeouts y entregas
+faltantes. Un ejercicio no entregado cuenta como 0.
+
+```r
+grade_report(resultados)
+```
+
+`plot_report()` dibuja tres gráficos. Pasá `backend = "ggplot2"` para usar
+ggplot2, si está instalado.
+
+## Exportar
+
+```r
+export_to_csv(resultados, "notas.csv")               # vista ancha por defecto
+export_to_csv(resultados, "notas-largo.csv", format = "long")
+export_to_html(resultados, "informe.html")
+```
+
+El informe HTML pinta cada celda según el resultado e incluye el detalle de
+cada test por estudiante.
+
+## Puntaje parcial, pesos y devoluciones
+
+`student_scores()` le da a cada ejercicio la fracción de tests que pasan, con
+pesos opcionales por test o por ejercicio, y una nota `total` donde un
+ejercicio no entregado cuenta como 0. `grade_report(scoring = "partial")` usa
+las mismas reglas. `export_feedback()` escribe un archivo Markdown por
+estudiante.
+
+```r
+notas <- student_scores(resultados, weights = c(ejercicio2 = 2))
+export_feedback(resultados, "devoluciones/")
+```
+
+## testthat, R Markdown y Quarto
+
+Los tests pueden usar expectativas de testthat (con `library(testthat)` al
+principio del archivo de tests). Los estudiantes pueden entregar archivos
+`.R`, `.Rmd` o `.qmd`, y los nombres se comparan sin importar mayúsculas.
+
+## Tiempo límite y código no confiable
+
+El motor por defecto, `"callr"`, corre cada ejercicio en un subproceso de R
+nuevo, con una carpeta de trabajo temporal. Cada test tiene `timeout`
+segundos (10 por defecto), y la carga del archivo del estudiante también. Si
+un test no responde al límite (por ejemplo dentro de `Sys.sleep()`), el
+subproceso se corta cuando el ejercicio completo pasa `timeout` × cantidad de
+tests + 5 segundos; los tests que ya terminaron conservan su resultado. Usá
+`timeout = Inf` para no poner límite.
+
+```r
+resultados <- grade_submissions("entregas/", test_dir = "tests/", timeout = 30)
+```
+
+`engine = "inproc"` corre los tests en la sesión actual de R. Es más rápido,
+pero `setTimeLimit()` no interrumpe todos los bucles y el código del
+estudiante puede modificar tu entorno global.
+
+Para cursos grandes, `workers` corre varios subprocesos a la vez:
+
+```r
+resultados <- grade_submissions("entregas/", test_dir = "tests/", workers = 4)
+```
+
+corrector no es un sandbox. El motor `callr` protege tu sesión de R, no tu
+computadora: el código del estudiante puede leer y escribir cualquier archivo
+al que tenga acceso tu usuario, usar la red o ejecutar comandos del sistema.
+Si no confiás en quien escribió el código, corré el corrector dentro de un
+contenedor o una máquina virtual sin tus credenciales. Los motores `callr` e
+`inproc` bloquean las trampas comunes y anotan las demás; `engine = "isolated"`
+deja el código del estudiante fuera del proceso que corre los tests. Mirá
+`vignette("evaluacion-anti-trampas")`.
+
+## Nombres de los estudiantes
+
+Por defecto el nombre es el primer segmento del nombre de la carpeta, separado
+por guiones bajos, con mayúscula inicial (`garcia_juan_12345` queda como
+`Garcia`). Pasá `student_name_fn` para cambiarlo:
+
+```r
+resultados <- grade_submissions(
+  "entregas/", test_dir = "tests/",
+  student_name_fn = function(carpeta) {
+    sub("_.*$", "", carpeta)
+  }
+)
+```
+
+## Moodle
+
+`layout = "moodle"` lee el `.zip` de "Descargar todas las entregas" de
+Moodle, con o sin "Descargar entregas en carpetas":
+
+```r
+resultados <- grade_submissions("tarea1.zip", test_dir = "tests/",
+                                layout = "moodle")
+```

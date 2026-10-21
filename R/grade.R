@@ -112,7 +112,8 @@ grade_exercise <- function(file, test_dir, timeout = Inf,
 #' @param engine `"inproc"` (default) or `"callr"`. See [grade_exercise()].
 #' @param student_name_fn Function applied to each student folder name to
 #'   produce the display name. Defaults to taking the first underscore-
-#'   separated token and applying title case.
+#'   separated token and applying title case. Folders that map to the same
+#'   name keep their folder name, with a warning.
 #' @param allow_masking Base function names students may redefine. See
 #'   [grade_exercise()].
 #' @return A [grade_results] object.
@@ -138,8 +139,17 @@ grade_submissions <- function(submissions_path, test_dir, timeout = Inf,
                           .auto_close = FALSE)
   } else NULL
 
-  slices <- lapply(students, function(student) {
-    name <- student_name_fn(student)
+  display <- vapply(students, student_name_fn, character(1), USE.NAMES = FALSE)
+  clash <- duplicated(display) | duplicated(display, fromLast = TRUE)
+  if (any(clash)) {
+    warning("Folders with the same display name; using folder names instead: ",
+            paste(students[clash], collapse = ", "))
+    display[clash] <- students[clash]
+  }
+
+  slices <- lapply(seq_along(students), function(i) {
+    student <- students[[i]]
+    name <- display[[i]]
     if (use_cli) {
       cli::cli_progress_update(id = progress_id, status = name)
     } else {

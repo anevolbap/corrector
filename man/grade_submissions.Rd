@@ -24,7 +24,8 @@ grade_submissions(
 
 \item{student_name_fn}{Function applied to each student folder name to
 produce the display name. Defaults to taking the first underscore-
-separated token and applying title case.}
+separated token and applying title case. Folders that map to the same
+name keep their folder name, with a warning.}
 
 \item{allow_masking}{Base function names students may redefine. See
 \code{\link[=grade_exercise]{grade_exercise()}}.}

@@ -82,3 +82,17 @@ test_that("grade_submissions honours student_name_fn", {
   ))
   expect_setequal(unique(res$student), c("ALICE_PEREYRA", "BOB_LOPEZ"))
 })
+
+test_that("students with the same display name are kept apart", {
+  subs  <- make_submissions()
+  tests <- make_test_dir()
+  dir.create(file.path(subs, "alice_gomez"))
+  writeLines("sumar <- function(a, b) 0", file.path(subs, "alice_gomez", "ejercicio1.R"))
+  expect_warning(
+    res <- suppressMessages(grade_submissions(subs, test_dir = tests)),
+    "same display name"
+  )
+  expect_setequal(unique(res$student), c("alice_gomez", "alice_pereyra", "Bob"))
+  wide <- as.data.frame(res, format = "wide")
+  expect_equal(nrow(wide), 3)
+})

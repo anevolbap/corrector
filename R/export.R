@@ -1,5 +1,9 @@
 #' Export grading results to a CSV file
 #'
+#' Text cells that start with `=`, `+`, `-` or `@` get a leading `'`, so a
+#' spreadsheet app does not run them as formulas (error messages come from
+#' student code).
+#'
 #' @param results A [grade_results] object.
 #' @param path Output file path (e.g. `"grades.csv"`).
 #' @param format `"wide"` (default) writes one row per student with one logical
@@ -14,13 +18,16 @@
 export_to_csv <- function(results, path, format = c("wide", "long")) {
   results <- ensure_grade_results(results)
   format <- match.arg(format)
-  utils::write.csv(as.data.frame(results, format = format), path, row.names = FALSE)
+  utils::write.csv(neutralize_formulas(as.data.frame(results, format = format)),
+                   path, row.names = FALSE)
   invisible(results)
 }
 
 #' Export grading results to a Google Sheet
 #'
-#' Writes results to an existing Google Sheet, replacing its contents. Requires
+#' Writes results to an existing Google Sheet, replacing its contents. Text
+#' cells that could run as formulas get a leading `'`, as in
+#' [export_to_csv()]. Requires
 #' the \pkg{googlesheets4} package and prior authentication; call
 #' `googlesheets4::gs4_auth()` once per session before using this function.
 #'
@@ -46,7 +53,7 @@ export_to_sheets <- function(results, sheet_url, sheet = 1, format = c("wide", "
     )
   }
   googlesheets4::sheet_write(
-    as.data.frame(results, format = format),
+    neutralize_formulas(as.data.frame(results, format = format)),
     ss    = sheet_url,
     sheet = sheet
   )
@@ -145,6 +152,18 @@ export_to_html <- function(results, path, include_details = TRUE) {
 }
 
 # ---------- internal helpers ----------
+
+# Spreadsheet apps run cells that start with = + - @ (or tab/CR) as formulas.
+# Student code controls the message column, so prefix such cells with a quote.
+neutralize_formulas <- function(df) {
+  for (col in names(df)) {
+    x <- df[[col]]
+    if (!is.character(x)) next
+    risky <- !is.na(x) & grepl("^[=+@\t\r-]", x)
+    df[[col]][risky] <- paste0("'", x[risky])
+  }
+  df
+}
 
 status_cell <- function(rows) {
   if (nrow(rows) == 0) return('<td>&mdash;</td>')

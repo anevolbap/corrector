@@ -48,6 +48,22 @@ test_that("as.data.frame(format = 'wide') returns the legacy view", {
   expect_true(wide$ejercicio1)
 })
 
+test_that("Latin-1 and UTF-8 student files both source", {
+  dir   <- withr::local_tempdir()
+  tests <- withr::local_tempdir()
+  writeLines('test_ejercicio1_largo <- function() nchar(saludo()) == 3',
+             file.path(tests, "test_ejercicio1.R"))
+  # saludo <- function() "a<n-tilde>o", with the n-tilde in each encoding.
+  head <- charToRaw('saludo <- function() "a')
+  tail <- charToRaw('o"\n')
+  for (bytes in list(as.raw(0xf1), as.raw(c(0xc3, 0xb1)))) {
+    file <- file.path(dir, "ejercicio1.R")
+    writeBin(c(head, bytes, tail), file)
+    result <- grade_exercise(file, tests)
+    expect_equal(as.character(result$status), "pass")
+  }
+})
+
 make_cheat <- function(envir = parent.frame()) {
   dir <- withr::local_tempdir(.local_envir = envir)
   writeLines(c(

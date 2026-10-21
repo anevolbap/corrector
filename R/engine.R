@@ -13,9 +13,10 @@ run_exercise_callr <- function(student_file, test_file, test_fns, timeout,
   }
 
   proc <- callr::r_bg(
-    func = function(student_file, test_file, test_fns, timeout, protected) {
+    func = function(student_file, test_file, test_fns, timeout, protected,
+                    encodings) {
       student_env <- new.env(parent = baseenv())
-      src <- tryCatch({source(student_file, local = student_env); TRUE},
+      src <- tryCatch({source(student_file, local = student_env, encoding = encodings[[1]]); TRUE},
                       error = function(e) conditionMessage(e))
       if (!isTRUE(src)) {
         return(list(kind = "source_error", message = src))
@@ -25,7 +26,7 @@ run_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       nms <- ls(student_env, all.names = TRUE)
       masked <- intersect(nms, protected)
       for (nm in setdiff(nms, masked)) assign(nm, get(nm, envir = student_env), envir = env)
-      source(test_file, local = env)
+      source(test_file, local = env, encoding = encodings[[2]])
       results <- list()
       for (fn in test_fns) {
         t0 <- Sys.time()
@@ -42,7 +43,8 @@ run_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       test_file    = test_file,
       test_fns     = test_fns,
       timeout      = timeout,
-      protected    = protected
+      protected    = protected,
+      encodings    = c(source_encoding(student_file), source_encoding(test_file))
     )
   )
 

@@ -55,7 +55,7 @@ grade_exercise <- function(file, test_dir, timeout = Inf,
 
   student_env <- new.env(parent = baseenv())
   src <- tryCatch({
-    source(file, local = student_env)
+    source(file, local = student_env, encoding = source_encoding(file))
     list(ok = TRUE)
   }, error = function(e) list(ok = FALSE, message = conditionMessage(e)))
 
@@ -76,7 +76,7 @@ grade_exercise <- function(file, test_dir, timeout = Inf,
   # those that would mask a protected function the tests rely on.
   env <- new.env(parent = baseenv())
   masked <- copy_student_objects(student_env, env, protected)
-  source(test_file, local = env)
+  source(test_file, local = env, encoding = source_encoding(test_file))
 
   if (length(test_fns) == 0) {
     return(empty_grade_results())
@@ -217,6 +217,12 @@ run_one_test_inproc <- function(fn, timeout) {
   )
 }
 
+# UTF-8 if the file is valid UTF-8, else Latin-1 (older Windows editors).
+source_encoding <- function(path) {
+  bytes <- readBin(path, "raw", file.size(path))
+  if (validUTF8(rawToChar(bytes[bytes != as.raw(0)]))) "UTF-8" else "latin1"
+}
+
 # Names a student may not redefine: base plus the packages attached by default.
 protected_names <- function() {
   pkgs <- c("stats", "utils", "methods", "graphics", "grDevices")
@@ -261,7 +267,7 @@ discover_test_fns <- function(test_file, exercise) {
   # Provide a stub for any function called at top-level by the test file that
   # could fail without the student definitions; tests should only define
   # functions, so sourcing here should be safe.
-  src <- tryCatch({source(test_file, local = env); TRUE}, error = function(e) FALSE)
+  src <- tryCatch({source(test_file, local = env, encoding = source_encoding(test_file)); TRUE}, error = function(e) FALSE)
   if (!isTRUE(src)) return(character())
   prefix <- paste0("test_", exercise, "_")
   fns <- ls(envir = env)

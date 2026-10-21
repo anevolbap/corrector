@@ -50,6 +50,15 @@ test_that("default engine keeps student side effects out of the session", {
   expect_false(file.exists(file.path(wd, "salida.txt")))
 })
 
+test_that("lots of student output does not stall the callr engine", {
+  dir <- withr::local_tempdir()
+  writeLines(c('cat(strrep("x", 2e5))',
+               'sumar <- function(a, b) { message(strrep("y", 1e5)); a + b }'),
+             file.path(dir, "ejercicio1.R"))
+  result <- grade_exercise(file.path(dir, "ejercicio1.R"), test_dir, timeout = 3)
+  expect_true(all(result$status == "pass"))
+})
+
 test_that("callr engine returns no rows when the test file has no tests", {
   tests <- withr::local_tempdir()
   writeLines("ayuda <- function() 1", file.path(tests, "test_ejercicio1.R"))

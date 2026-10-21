@@ -89,7 +89,10 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       timeout      = timeout,
       protected    = protected,
       encodings    = c(source_encoding(student_file), source_encoding(test_file))
-    )
+    ),
+    # Discard student output: an unread pipe fills up and stalls the child.
+    stdout = NULL,
+    stderr = NULL
   )
 }
 

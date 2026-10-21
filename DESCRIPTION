@@ -10,7 +10,7 @@ Description: Grades student R coding exercises against professor-written test
     exercise file to its test file, and returns a pass/fail data frame.
     Provides optional export to CSV or Google Sheets.
 License: MIT + file LICENSE
-URL: https://github.com/anevolbap/corrector
+URL: https://anevolbap.github.io/corrector/, https://github.com/anevolbap/corrector
 BugReports: https://github.com/anevolbap/corrector/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

@@ -18,9 +18,12 @@ start_grading_callr <- function(file, test_file, timeout, student, protected) {
   }
   n <- max(length(test_fns), 1L)
   budget <- if (is.finite(timeout)) timeout * n + 5 else Inf
+  progress <- tempfile("corrector_progress", fileext = ".rds")
   list(
-    proc     = start_exercise_callr(code, test_file, test_fns, timeout, protected),
+    proc     = start_exercise_callr(code, test_file, test_fns, timeout, protected,
+                                    progress),
     deadline = as.numeric(Sys.time()) + budget,
+    progress = progress,
     file = file, test_fns = test_fns, timeout = timeout,
     student = student, exercise = exercise
   )
@@ -28,6 +31,15 @@ start_grading_callr <- function(file, test_file, timeout, student, protected) {
 
 finish_grading_callr <- function(job) {
   out <- finish_exercise_callr(job$proc)
+  # A killed subprocess saved the tests it finished; keep those results.
+  saved <- if (identical(out$kind, "killed") && file.exists(job$progress)) {
+    tryCatch(readRDS(job$progress), error = function(e) NULL)
+  }
+  if (!is.null(saved)) {
+    out <- list(kind = "tests", results = saved$results, masked = saved$masked,
+                killed = TRUE)
+  }
+  unlink(c(job$progress, paste0(job$progress, ".tmp")))
   if (identical(out$kind, "source_error")) {
     warning("Failed to source ", basename(job$file), ": ", out$message)
   }
@@ -44,10 +56,10 @@ wait_ms <- function(job) {
 past_deadline <- function(job) as.numeric(Sys.time()) > job$deadline
 
 start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
-                                 protected = character()) {
+                                 protected = character(), progress_file = tempfile()) {
   callr::r_bg(
     func = function(student_file, test_file, test_fns, timeout, protected,
-                    encodings) {
+                    encodings, progress_file) {
       # Files the student writes land in the subprocess's own temp dir.
       setwd(tempdir())
       student_env <- new.env(parent = globalenv())
@@ -96,6 +108,9 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
                                               sub("^Reason: ", "", conditionMessage(e)))))
         setTimeLimit(elapsed = Inf, transient = FALSE)
         results[[fn]] <- c(out, list(n_ok = n_ok, duration = as.numeric(difftime(Sys.time(), t0, units = "secs"))))
+        # Write then rename, so a kill never leaves a half-written file.
+        saveRDS(list(results = results, masked = masked), paste0(progress_file, ".tmp"))
+        file.rename(paste0(progress_file, ".tmp"), progress_file)
       }
       list(kind = "tests", results = results, masked = masked)
     },
@@ -105,7 +120,8 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       test_fns     = test_fns,
       timeout      = timeout,
       protected    = protected,
-      encodings    = c(source_encoding(student_file), source_encoding(test_file))
+      encodings    = c(source_encoding(student_file), source_encoding(test_file)),
+      progress_file = progress_file
     ),
     # Discard student output: an unread pipe fills up and stalls the child.
     stdout = NULL,
@@ -163,6 +179,14 @@ callr_to_rows <- function(out, test_fns, timeout, student, exercise) {
   # tests
   rows <- lapply(test_fns, function(fn) {
     r <- out$results[[fn]]
+    if (is.null(r) && isTRUE(out$killed)) {
+      return(data.frame(
+        student = student, exercise = exercise, test = fn,
+        status = "timeout",
+        message = sprintf("exceeded wall-clock budget (~%g s per test)", timeout),
+        duration = NA_real_, stringsAsFactors = FALSE
+      ))
+    }
     if (is.null(r)) {
       return(data.frame(
         student = student, exercise = exercise, test = fn,

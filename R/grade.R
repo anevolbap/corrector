@@ -100,6 +100,9 @@ grade_exercise <- function(file, test_dir, timeout = 10,
   env <- new.env(parent = globalenv())
   masked <- copy_student_objects(student_env, env, protected)
   source(test_file, local = env, encoding = source_encoding(test_file))
+  # Tests look up names in the attached packages, not the global env, which
+  # student code can write to. Set after sourcing so library() calls count.
+  parent.env(env) <- parent.env(globalenv())
 
   if (length(test_fns) == 0) {
     return(empty_grade_results())

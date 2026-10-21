@@ -62,6 +62,7 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       masked <- intersect(nms, protected)
       for (nm in setdiff(nms, masked)) assign(nm, get(nm, envir = student_env), envir = env)
       source(test_file, local = env, encoding = encodings[[2]])
+      parent.env(env) <- parent.env(globalenv())
       results <- list()
       for (fn in test_fns) {
         t0 <- Sys.time()

@@ -67,6 +67,24 @@ for (engine in c("callr", "inproc")) {
   })
 }
 
+for (engine in c("callr", "inproc")) {
+  test_that(paste("students cannot plant functions in the global env, engine", engine), {
+    dir <- withr::local_tempdir()
+    writeLines(c(
+      'assign("==", function(e1, e2) TRUE, envir = globalenv())',
+      'sumar <- function(a, b) {',
+      '  assign("==", function(e1, e2) TRUE, envir = globalenv())',
+      '  1',
+      '}'
+    ), file.path(dir, "ejercicio1.R"))
+    res <- grade_exercise(file.path(dir, "ejercicio1.R"), test_dir, engine = engine)
+    if (exists("==", envir = globalenv(), inherits = FALSE)) {
+      rm("==", envir = globalenv())
+    }
+    expect_true(all(res$status == "fail"))
+  })
+}
+
 make_cheat <- function(envir = parent.frame()) {
   dir <- withr::local_tempdir(.local_envir = envir)
   writeLines(c(

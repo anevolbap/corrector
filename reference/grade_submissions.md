@@ -2,7 +2,9 @@
 
 Expects one sub-folder per student inside `submissions_path`. Every
 student is graded on every exercise that has a test file in `test_dir`;
-a student who omits an exercise gets a `missing` row.
+a student who omits an exercise gets a `missing` row. The student's file
+is matched ignoring case (`Ejercicio1.R` counts as `ejercicio1`), and
+`.Rmd` or `.qmd` files are accepted when there is no `.R` file.
 
 ## Usage
 
@@ -14,7 +16,8 @@ grade_submissions(
   engine = c("callr", "inproc"),
   student_name_fn = default_student_name,
   allow_masking = character(),
-  workers = 1L
+  workers = 1L,
+  layout = c("folders", "moodle")
 )
 ```
 
@@ -56,6 +59,14 @@ grade_submissions(
   [`parallel::detectCores()`](https://rdrr.io/r/parallel/detectCores.html)
   is a good upper bound. Ignored by the `"inproc"` engine.
 
+- layout:
+
+  `"folders"` (default): one folder per student. `"moodle"`: the zip or
+  folder from Moodle's "Download all submissions", with or without
+  "Download submissions in folders". Only file submissions are graded,
+  and `student_name_fn` defaults to
+  [`moodle_student_name()`](https://anevolbap.github.io/corrector/reference/moodle_student_name.md).
+
 ## Value
 
 A
@@ -67,8 +78,8 @@ object.
 If `submissions_path` ends in `.zip` it is extracted into a
 [`tempdir()`](https://rdrr.io/r/base/tempfile.html) subfolder first.
 Loose files, hidden folders and `__MACOSX` are ignored. If the path
-holds a single folder with no `.R` files but with sub-folders, those
-sub-folders are taken as the students.
+holds a single folder with no `.R`, `.Rmd` or `.qmd` files but with
+sub-folders, those sub-folders are taken as the students.
 
 ## Examples
 

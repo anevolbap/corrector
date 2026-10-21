@@ -7,7 +7,13 @@ score column, and a pass-rate summary row.
 ## Usage
 
 ``` r
-export_to_html(results, path, include_details = TRUE)
+export_to_html(
+  results,
+  path,
+  include_details = TRUE,
+  scoring = c("all", "partial"),
+  weights = NULL
+)
 ```
 
 ## Arguments
@@ -26,6 +32,11 @@ export_to_html(results, path, include_details = TRUE)
 
   If `TRUE`, append a per-test breakdown under each student (errors and
   timeouts include the message). Default `TRUE`.
+
+- scoring, weights:
+
+  How the score column and pass-rate row are computed. See
+  [`grade_report()`](https://anevolbap.github.io/corrector/reference/grade_report.md).
 
 ## Value
 

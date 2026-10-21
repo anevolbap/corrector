@@ -23,8 +23,12 @@ A `grade_results` object is a data frame in long format with one row per
 
 - `message`:
 
-  Character. Error message when `status` is `error`, `source_error`, or
-  `timeout`; `NA` otherwise.
+  Character. The error message for `error`, `source_error` and
+  `timeout`; the testthat message or "test returned non-logical" for
+  some `fail` rows; a note listing ignored student definitions (see
+  `allow_masking` in
+  [`grade_exercise()`](https://anevolbap.github.io/corrector/reference/grade_exercise.md));
+  `NA` otherwise.
 
 - `duration`:
 

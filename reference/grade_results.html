@@ -16,8 +16,11 @@ Factor with levels pass, fail, error, timeout,
 missing, source_error.
 
 message
-Character. Error message when status is error,
-source_error, or timeout; NA otherwise.
+Character. The error message for error,
+source_error and timeout; the testthat message or &quot;test returned
+non-logical&quot; for some fail rows; a note listing ignored student
+definitions (see allow_masking in grade_exercise()); NA
+otherwise.
 
 duration
 Numeric. Seconds elapsed running the test, or NA
@@ -42,8 +45,11 @@ Factor with levels pass, fail, error, timeout,
 missing, source_error.
 
 message
-Character. Error message when status is error,
-source_error, or timeout; NA otherwise.
+Character. The error message for error,
+source_error and timeout; the testthat message or &quot;test returned
+non-logical&quot; for some fail rows; a note listing ignored student
+definitions (see allow_masking in grade_exercise()); NA
+otherwise.
 
 duration
 Numeric. Seconds elapsed running the test, or NA
@@ -59,7 +65,7 @@ when the test was not run.
 
     <a class="navbar-brand me-2" href="../index.html">corrector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,8 +112,11 @@ records a <code>missing</code> submission or a <code>source_error</code>.</p></d
 <code>missing</code>, <code>source_error</code>.</p></dd>
 
 <dt><code>message</code></dt>
-<dd><p>Character. Error message when <code>status</code> is <code>error</code>,
-<code>source_error</code>, or <code>timeout</code>; <code>NA</code> otherwise.</p></dd>
+<dd><p>Character. The error message for <code>error</code>,
+<code>source_error</code> and <code>timeout</code>; the testthat message or "test returned
+non-logical" for some <code>fail</code> rows; a note listing ignored student
+definitions (see <code>allow_masking</code> in <code><a href="grade_exercise.html">grade_exercise()</a></code>); <code>NA</code>
+otherwise.</p></dd>
 
 <dt><code>duration</code></dt>
 <dd><p>Numeric. Seconds elapsed running the test, or <code>NA</code>

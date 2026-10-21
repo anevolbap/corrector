@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">corrector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,40 @@
       <small>Source: <a href="https://github.com/anevolbap/corrector/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.0" id="corrector-040">corrector 0.4.0<a class="anchor" aria-label="anchor" href="#corrector-040"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-4-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-4-0"></a></h3>
+<ul><li>Test functions can use testthat expectations. A failed <code>expect_*()</code> is recorded as <code>fail</code> with its message, and a test whose expectations all pass counts as <code>pass</code>. Students cannot redefine testthat functions.</li>
+<li>
+<code>grade_submissions(layout = "moodle")</code> reads the export from Moodle’s “Download all submissions”, with or without “Download submissions in folders”. New <code><a href="../reference/moodle_student_name.html">moodle_student_name()</a></code>.</li>
+<li>New <code><a href="../reference/student_scores.html">student_scores()</a></code>: partial credit per exercise, weights per test or per exercise, and a <code>total</code> where missing exercises count as 0. <code><a href="../reference/grade_report.html">grade_report()</a></code> gains <code>scoring</code> and <code>weights</code>; its defaults are unchanged.</li>
+<li>New <code><a href="../reference/export_feedback.html">export_feedback()</a></code> writes one Markdown file per student.</li>
+<li>Students can hand in <code>.Rmd</code> or <code>.qmd</code> files; their R chunks are graded.</li>
+<li>Student and test file names are matched ignoring case.</li>
+<li>
+<code><a href="../reference/export_to_html.html">export_to_html()</a></code> and <code><a href="../reference/plot_report.html">plot_report()</a></code> gain <code>scoring</code> and <code>weights</code>, like <code><a href="../reference/grade_report.html">grade_report()</a></code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="hardening-0-4-0">Hardening<a class="anchor" aria-label="anchor" href="#hardening-0-4-0"></a></h3>
+<ul><li>Tests look up names in the attached packages instead of the global environment, so a student can no longer forge passes by assigning functions there.</li>
+<li>The callr engine discards student output. Before, more than about 64 KB of printed output stalled the subprocess, and every test timed out.</li>
+<li>The time limit also applies while loading the student’s file. A file that never finishes loading gives <code>timeout</code> on every test; before, the inproc engine hung.</li>
+<li>
+<code><a href="https://rdrr.io/r/base/quit.html" class="external-link">quit()</a></code> and <code><a href="https://rdrr.io/r/base/quit.html" class="external-link">q()</a></code> in student code raise an error instead of ending the session. The inproc engine restores the working directory and options.</li>
+<li>When the callr engine kills an exercise, tests that already finished keep their result.</li>
+<li>A test file that fails to load stops grading with a clear error before anyone is graded; before, the callr engine returned zero rows in silence. A test file without <code>test_&lt;exercise&gt;_*</code> functions warns once.</li>
+<li>testthat <code><a href="https://testthat.r-lib.org/reference/skip.html" class="external-link">skip()</a></code> in a test is recorded as <code>error</code> instead of aborting.</li>
+<li>Zip entries that point outside the extraction folder are refused.</li>
+<li>CSV and Google Sheets exports put a <code>'</code> before text that a spreadsheet would run as a formula.</li>
+<li>Clear errors for missing paths and bad <code>timeout</code> or <code>workers</code> values, and a warning when there are no student folders.</li>
+<li>Fixed edge cases: <code>NA</code> student names, a single student folder with only <code>.Rmd</code> files, empty results in <code><a href="../reference/grade_report.html">grade_report()</a></code> and <code><a href="../reference/plot_report.html">plot_report()</a></code>, colliding feedback file names, and exercises named <code>student</code> or <code>total</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="other-0-4-0">Other<a class="anchor" aria-label="anchor" href="#other-0-4-0"></a></h3>
+<ul><li>The three pattern arguments listed by mistake in the 0.2.0 notes (<code>exercise_pattern</code>, <code>test_file_template</code>, <code>test_fn_pattern</code>) will not be added: exercise names already come from the test file names.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.1" id="corrector-031">corrector 0.3.1<a class="anchor" aria-label="anchor" href="#corrector-031"></a></h2>
 <ul><li>Fixed: student and test code could only use base R. Calls such as <code><a href="https://rdrr.io/r/stats/median.html" class="external-link">median()</a></code>, <code><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd()</a></code>, <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm()</a></code> or <code><a href="https://rdrr.io/r/utils/head.html" class="external-link">head()</a></code> failed with “could not find function”, and <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library()</a></code> in a test file had no effect. Code now sees the attached packages.</li>

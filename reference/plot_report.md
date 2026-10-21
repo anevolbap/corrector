@@ -11,7 +11,13 @@ Produces three plots in sequence:
 ## Usage
 
 ``` r
-plot_report(results, ask = interactive(), backend = c("base", "ggplot2"))
+plot_report(
+  results,
+  ask = interactive(),
+  backend = c("base", "ggplot2"),
+  scoring = c("all", "partial"),
+  weights = NULL
+)
 ```
 
 ## Arguments
@@ -32,6 +38,12 @@ plot_report(results, ask = interactive(), backend = c("base", "ggplot2"))
   `"base"` (default) uses base graphics, no extra dependencies.
   `"ggplot2"` uses ggplot2 when installed and falls back to base R with
   a warning otherwise.
+
+- scoring, weights:
+
+  How the two bar charts score students and exercises. See
+  [`grade_report()`](https://anevolbap.github.io/corrector/reference/grade_report.md).
+  The heatmap always shows pass/fail.
 
 ## Value
 

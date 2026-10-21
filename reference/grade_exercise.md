@@ -23,7 +23,11 @@ grade_exercise(
 
 - file:
 
-  Path to the student's R file (e.g. `"ejercicio1.R"`).
+  Path to the student's file: an R script (e.g. `"ejercicio1.R"`) or an
+  R Markdown or Quarto document (`.Rmd`, `.qmd`), whose R chunks are
+  extracted with
+  [`knitr::purl()`](https://rdrr.io/pkg/knitr/man/knit.html). The
+  matching test file is found ignoring case.
 
 - test_dir:
 
@@ -31,9 +35,9 @@ grade_exercise(
 
 - timeout:
 
-  Maximum seconds allowed per test function. Tests that exceed this
-  limit are recorded with status `timeout`. Default 10. Use `Inf` for no
-  limit.
+  Maximum seconds allowed per test function, and for loading the
+  student's file. Tests that exceed it are recorded with status
+  `timeout`. Default 10. Use `Inf` for no limit.
 
 - student:
 
@@ -67,6 +71,14 @@ A
 object with one row per test. If the student file fails to parse, one
 row with `status = source_error`. If no matching test file is found, one
 row with `status = missing` and a warning.
+
+## Details
+
+A test passes if it returns `TRUE`. Tests can also use testthat
+expectations (call [`library(testthat)`](https://testthat.r-lib.org) at
+the top of the test file): the test passes when at least one expectation
+succeeds and none fails, and a failed expectation is recorded as `fail`
+with its message.
 
 ## Examples
 

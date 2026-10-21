@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">corrector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -137,27 +137,54 @@ missing submissions.</p>
 per-student breakdown of every test.</p>
 </div>
 <div class="section level2">
+<h2 id="partial-credit-weights-and-feedback">Partial credit, weights and feedback<a class="anchor" aria-label="anchor" href="#partial-credit-weights-and-feedback"></a>
+</h2>
+<p><code><a href="../reference/student_scores.html">student_scores()</a></code> gives each exercise the fraction of its
+tests that pass, with optional weights per test or per exercise, and a
+<code>total</code> grade where a missing exercise counts as 0.
+<code>grade_report(scoring = "partial")</code> uses the same rules.
+<code><a href="../reference/export_feedback.html">export_feedback()</a></code> writes one Markdown file per student.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">grades</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/student_scores.html">student_scores</a></span><span class="op">(</span><span class="va">results</span>, weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>ejercicio2 <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/export_feedback.html">export_feedback</a></span><span class="op">(</span><span class="va">results</span>, <span class="st">"feedback/"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="testthat-r-markdown-and-quarto">testthat, R Markdown and Quarto<a class="anchor" aria-label="anchor" href="#testthat-r-markdown-and-quarto"></a>
+</h2>
+<p>Test functions can use testthat expectations
+(<code><a href="https://testthat.r-lib.org" class="external-link">library(testthat)</a></code> at the top of the test file). Students
+can hand in <code>.R</code>, <code>.Rmd</code> or <code>.qmd</code>
+files, and file names are matched ignoring case.</p>
+</div>
+<div class="section level2">
 <h2 id="timeouts-and-untrusted-code">Timeouts and untrusted code<a class="anchor" aria-label="anchor" href="#timeouts-and-untrusted-code"></a>
 </h2>
 <p>The default engine, <code>"callr"</code>, runs each exercise in a
 fresh R subprocess with a temporary working directory. Each test gets
-<code>timeout</code> seconds (default 10), and the subprocess is killed
-when the budget runs out, even inside a busy loop. Use
+<code>timeout</code> seconds (default 10), and so does loading the
+student’s file. If a test does not respond to the limit (for example
+inside <code><a href="https://rdrr.io/r/base/Sys.sleep.html" class="external-link">Sys.sleep()</a></code>), the subprocess is killed once the
+whole exercise passes <code>timeout</code> × number of tests + 5
+seconds; tests that already finished keep their result. Use
 <code>timeout = Inf</code> for no limit.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"submissions/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>, timeout <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span></code></pre></div>
 <p><code>engine = "inproc"</code> runs tests in the current R session.
 It is faster, but <code><a href="https://rdrr.io/r/base/setTimeLimit.html" class="external-link">setTimeLimit()</a></code> does not interrupt every
 loop, and student code can change your global environment.</p>
 <p>For large classes, <code>workers</code> runs several subprocesses at
 the same time:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"submissions/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>, workers <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
 <p>corrector is not a sandbox. The <code>callr</code> engine protects
 your R session, not your computer: student code can read and write any
 file your user can, use the network, or run system commands. For code
 from people you do not trust, run corrector inside a container or
-virtual machine without your credentials.</p>
+virtual machine without your credentials. The protection against
+cheating covers the common cases (redefining base R functions, writing
+them into the global environment, calling <code><a href="https://rdrr.io/r/base/quit.html" class="external-link">quit()</a></code>), not a
+student who sets out to break the grader, so check odd grades by
+hand.</p>
 </div>
 <div class="section level2">
 <h2 id="renaming-students">Renaming students<a class="anchor" aria-label="anchor" href="#renaming-students"></a>
@@ -166,13 +193,23 @@ virtual machine without your credentials.</p>
 underscore-separated segment and applies title case (so
 <code>garcia_juan_12345</code> becomes <code>Garcia</code>). Pass
 <code>student_name_fn</code> to override:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span></span>
 <span>  <span class="st">"submissions/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>,</span>
 <span>  student_name_fn <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">folder</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"_.*$"</span>, <span class="st">""</span>, <span class="va">folder</span><span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="moodle">Moodle<a class="anchor" aria-label="anchor" href="#moodle"></a>
+</h2>
+<p><code>layout = "moodle"</code> reads the <code>.zip</code> from
+Moodle’s “Download all submissions”, with or without “Download
+submissions in folders”:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"assignment1.zip"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>,</span>
+<span>                             layout <span class="op">=</span> <span class="st">"moodle"</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -8,7 +8,7 @@ readable console summary.
 ## Usage
 
 ``` r
-grade_report(results)
+grade_report(results, scoring = c("all", "partial"), weights = NULL)
 ```
 
 ## Arguments
@@ -22,19 +22,31 @@ grade_report(results)
   or
   [`grade_exercise()`](https://anevolbap.github.io/corrector/reference/grade_exercise.md).
 
+- scoring:
+
+  `"all"` (default): an exercise counts as passed only if every test
+  passes. `"partial"`: it scores the fraction of tests that pass. See
+  [`student_scores()`](https://anevolbap.github.io/corrector/reference/student_scores.md).
+
+- weights:
+
+  Optional named numeric vector of test or exercise weights. See
+  [`student_scores()`](https://anevolbap.github.io/corrector/reference/student_scores.md).
+
 ## Value
 
 A `grade_report` object (a list) with components:
 
 - `pass_rate_by_exercise`:
 
-  Named numeric vector (0-1). Fraction of students whose every test
-  passed.
+  Named numeric vector (0-1). Mean exercise score across students.
 
 - `score_by_student`:
 
-  Named numeric vector (0-1). Mean pass rate across the student's
-  exercises.
+  Named numeric vector (0-1). Mean score across the student's submitted
+  exercises (missing ones are left out; use
+  [`student_scores()`](https://anevolbap.github.io/corrector/reference/student_scores.md)
+  to count them as 0).
 
 - `overall_mean`:
 
@@ -42,8 +54,8 @@ A `grade_report` object (a list) with components:
 
 - `issue_counts`:
 
-  Named integer vector with counts of `error`, `timeout`, and `missing`
-  rows.
+  Named integer vector with counts of `error`, `timeout`, `missing`, and
+  `source_error` rows.
 
 ## Examples
 

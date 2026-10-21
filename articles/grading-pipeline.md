@@ -83,12 +83,39 @@ export_to_html(results, "report.html")
 The HTML report colour-codes each cell by status and includes a
 per-student breakdown of every test.
 
+## Partial credit, weights and feedback
+
+[`student_scores()`](https://anevolbap.github.io/corrector/reference/student_scores.md)
+gives each exercise the fraction of its tests that pass, with optional
+weights per test or per exercise, and a `total` grade where a missing
+exercise counts as 0. `grade_report(scoring = "partial")` uses the same
+rules.
+[`export_feedback()`](https://anevolbap.github.io/corrector/reference/export_feedback.md)
+writes one Markdown file per student.
+
+``` r
+
+grades <- student_scores(results, weights = c(ejercicio2 = 2))
+export_feedback(results, "feedback/")
+```
+
+## testthat, R Markdown and Quarto
+
+Test functions can use testthat expectations
+([`library(testthat)`](https://testthat.r-lib.org) at the top of the
+test file). Students can hand in `.R`, `.Rmd` or `.qmd` files, and file
+names are matched ignoring case.
+
 ## Timeouts and untrusted code
 
 The default engine, `"callr"`, runs each exercise in a fresh R
 subprocess with a temporary working directory. Each test gets `timeout`
-seconds (default 10), and the subprocess is killed when the budget runs
-out, even inside a busy loop. Use `timeout = Inf` for no limit.
+seconds (default 10), and so does loading the student’s file. If a test
+does not respond to the limit (for example inside
+[`Sys.sleep()`](https://rdrr.io/r/base/Sys.sleep.html)), the subprocess
+is killed once the whole exercise passes `timeout` × number of tests + 5
+seconds; tests that already finished keep their result. Use
+`timeout = Inf` for no limit.
 
 ``` r
 
@@ -111,7 +138,10 @@ corrector is not a sandbox. The `callr` engine protects your R session,
 not your computer: student code can read and write any file your user
 can, use the network, or run system commands. For code from people you
 do not trust, run corrector inside a container or virtual machine
-without your credentials.
+without your credentials. The protection against cheating covers the
+common cases (redefining base R functions, writing them into the global
+environment, calling [`quit()`](https://rdrr.io/r/base/quit.html)), not
+a student who sets out to break the grader, so check odd grades by hand.
 
 ## Renaming students
 
@@ -127,4 +157,15 @@ results <- grade_submissions(
     sub("_.*$", "", folder)
   }
 )
+```
+
+## Moodle
+
+`layout = "moodle"` reads the `.zip` from Moodle’s “Download all
+submissions”, with or without “Download submissions in folders”:
+
+``` r
+
+results <- grade_submissions("assignment1.zip", test_dir = "tests/",
+                             layout = "moodle")
 ```

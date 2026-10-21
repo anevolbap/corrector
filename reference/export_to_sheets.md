@@ -1,6 +1,8 @@
 # Export grading results to a Google Sheet
 
-Writes results to an existing Google Sheet, replacing its contents.
+Writes results to an existing Google Sheet, replacing its contents. Text
+cells that could run as formulas get a leading `'`, as in
+[`export_to_csv()`](https://anevolbap.github.io/corrector/reference/export_to_csv.md).
 Requires the googlesheets4 package and prior authentication; call
 [`googlesheets4::gs4_auth()`](https://googlesheets4.tidyverse.org/reference/gs4_auth.html)
 once per session before using this function.

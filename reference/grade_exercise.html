@@ -13,7 +13,7 @@ object."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">corrector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,10 @@ object.</p>
 
 
 <dl><dt id="arg-file">file<a class="anchor" aria-label="anchor" href="#arg-file"></a></dt>
-<dd><p>Path to the student's R file (e.g. <code>"ejercicio1.R"</code>).</p></dd>
+<dd><p>Path to the student's file: an R script (e.g. <code>"ejercicio1.R"</code>)
+or an R Markdown or Quarto document (<code>.Rmd</code>, <code>.qmd</code>), whose R chunks are
+extracted with <code><a href="https://rdrr.io/pkg/knitr/man/knit.html" class="external-link">knitr::purl()</a></code>. The matching test file is found ignoring
+case.</p></dd>
 
 
 <dt id="arg-test-dir">test_dir<a class="anchor" aria-label="anchor" href="#arg-test-dir"></a></dt>
@@ -75,9 +78,9 @@ object.</p>
 
 
 <dt id="arg-timeout">timeout<a class="anchor" aria-label="anchor" href="#arg-timeout"></a></dt>
-<dd><p>Maximum seconds allowed per test function. Tests that exceed
-this limit are recorded with status <code>timeout</code>. Default 10. Use <code>Inf</code> for
-no limit.</p></dd>
+<dd><p>Maximum seconds allowed per test function, and for loading
+the student's file. Tests that exceed it are recorded with status
+<code>timeout</code>. Default 10. Use <code>Inf</code> for no limit.</p></dd>
 
 
 <dt id="arg-student">student<a class="anchor" aria-label="anchor" href="#arg-student"></a></dt>
@@ -108,6 +111,13 @@ names are listed in the <code>message</code> column.</p></dd>
     <p>A <a href="grade_results.html">grade_results</a> object with one row per test. If the student file
 fails to parse, one row with <code>status = source_error</code>. If no matching test
 file is found, one row with <code>status = missing</code> and a warning.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>A test passes if it returns <code>TRUE</code>. Tests can also use <span class="pkg">testthat</span>
+expectations (call <code><a href="https://testthat.r-lib.org" class="external-link">library(testthat)</a></code> at the top of the test file): the
+test passes when at least one expectation succeeds and none fails, and a
+failed expectation is recorded as <code>fail</code> with its message.</p>
     </div>
 
     <div class="section level2">

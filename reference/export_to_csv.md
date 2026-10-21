@@ -1,6 +1,8 @@
 # Export grading results to a CSV file
 
-Export grading results to a CSV file
+Text cells that start with `=`, `+`, `-` or `@` get a leading `'`, so a
+spreadsheet app does not run them as formulas (error messages come from
+student code).
 
 ## Usage
 

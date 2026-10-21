@@ -50,6 +50,12 @@ environment, runs every function whose name starts with
 \verb{test_<exercise>_}, and returns the per-test outcome as a \link{grade_results}
 object.
 }
+\details{
+A test passes if it returns \code{TRUE}. Tests can also use \pkg{testthat}
+expectations (call \code{library(testthat)} at the top of the test file): the
+test passes when at least one expectation succeeds and none fails, and a
+failed expectation is recorded as \code{fail} with its message.
+}
 \examples{
 # The package ships test files for five sample exercises.
 tests <- system.file("examples", package = "corrector")

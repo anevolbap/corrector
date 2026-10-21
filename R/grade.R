@@ -5,6 +5,11 @@
 #' `test_<exercise>_`, and returns the per-test outcome as a [grade_results]
 #' object.
 #'
+#' A test passes if it returns `TRUE`. Tests can also use \pkg{testthat}
+#' expectations (call `library(testthat)` at the top of the test file): the
+#' test passes when at least one expectation succeeds and none fails, and a
+#' failed expectation is recorded as `fail` with its message.
+#'
 #' @param file Path to the student's R file (e.g. `"ejercicio1.R"`).
 #' @param test_dir Directory that contains the test files.
 #' @param timeout Maximum seconds allowed per test function. Tests that exceed
@@ -272,12 +277,21 @@ run_one_test_inproc <- function(fn, timeout) {
   on.exit(setTimeLimit(elapsed = Inf, transient = FALSE), add = TRUE)
   if (is.finite(timeout)) setTimeLimit(elapsed = timeout, transient = FALSE)
 
+  # Count passed testthat expectations; a failed one arrives as an error.
+  n_ok <- 0L
   out <- tryCatch(
-    list(value = fn(), err = NULL),
+    list(value = withCallingHandlers(fn(), expectation_success = function(c) {
+      n_ok <<- n_ok + 1L
+      tryInvokeRestart("continue_test")
+    }), err = NULL),
     error = function(e) list(value = NULL, err = e)
   )
   duration <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
 
+  if (inherits(out$err, "expectation_failure")) {
+    return(list(status = "fail", message = conditionMessage(out$err),
+                duration = duration))
+  }
   if (!is.null(out$err)) {
     msg <- conditionMessage(out$err)
     is_timeout <- grepl("elapsed time limit|CPU time limit", msg)
@@ -292,6 +306,9 @@ run_one_test_inproc <- function(fn, timeout) {
   }
   if (isFALSE(out$value)) {
     return(list(status = "fail", message = NA_character_, duration = duration))
+  }
+  if (n_ok > 0) {
+    return(list(status = "pass", message = NA_character_, duration = duration))
   }
   list(
     status   = "fail",
@@ -309,6 +326,7 @@ source_encoding <- function(path) {
 # Names a student may not redefine: base plus the packages attached by default.
 protected_names <- function() {
   pkgs <- c("stats", "utils", "methods", "graphics", "grDevices")
+  if (requireNamespace("testthat", quietly = TRUE)) pkgs <- c(pkgs, "testthat")
   unique(c(ls(baseenv(), all.names = TRUE),
            unlist(lapply(pkgs, getNamespaceExports), use.names = FALSE)))
 }

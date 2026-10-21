@@ -61,10 +61,19 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       for (fn in test_fns) {
         t0 <- Sys.time()
         if (is.finite(timeout)) setTimeLimit(elapsed = timeout, transient = FALSE)
-        out <- tryCatch(list(v = get(fn, envir = env)(), err = NULL),
-                        error = function(e) list(v = NULL, err = conditionMessage(e)))
+        # Same testthat handling as run_one_test_inproc().
+        n_ok <- 0L
+        out <- tryCatch(
+          list(v = withCallingHandlers(get(fn, envir = env)(),
+                                       expectation_success = function(c) {
+                                         n_ok <<- n_ok + 1L
+                                         tryInvokeRestart("continue_test")
+                                       }),
+               err = NULL, failed = FALSE),
+          error = function(e) list(v = NULL, err = conditionMessage(e),
+                                   failed = inherits(e, "expectation_failure")))
         setTimeLimit(elapsed = Inf, transient = FALSE)
-        results[[fn]] <- c(out, list(duration = as.numeric(difftime(Sys.time(), t0, units = "secs"))))
+        results[[fn]] <- c(out, list(n_ok = n_ok, duration = as.numeric(difftime(Sys.time(), t0, units = "secs"))))
       }
       list(kind = "tests", results = results, masked = masked)
     },
@@ -135,13 +144,14 @@ callr_to_rows <- function(out, test_fns, timeout, student, exercise) {
     }
     if (!is.null(r$err)) {
       is_timeout <- grepl("elapsed time limit|CPU time limit", r$err)
+      status <- if (isTRUE(r$failed)) "fail" else if (is_timeout) "timeout" else "error"
       return(data.frame(
         student = student, exercise = exercise, test = fn,
-        status = if (is_timeout) "timeout" else "error",
+        status = status,
         message = r$err, duration = r$duration, stringsAsFactors = FALSE
       ))
     }
-    if (isTRUE(r$v)) {
+    if (isTRUE(r$v) || isTRUE(r$n_ok > 0 && !isFALSE(r$v))) {
       return(data.frame(student = student, exercise = exercise, test = fn,
                         status = "pass", message = NA_character_,
                         duration = r$duration, stringsAsFactors = FALSE))

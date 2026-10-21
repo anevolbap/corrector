@@ -195,6 +195,9 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
     warning("No test files found in: ", test_dir)
     return(empty_grade_results())
   }
+  # Check every test file once, before grading anyone: a broken one stops
+  # here, and a file without tests warns once instead of once per student.
+  for (ex in exercises) discover_test_fns(find_test_file(ex, test_dir), ex)
 
   use_cli <- requireNamespace("cli", quietly = TRUE) && length(students) > 1
   progress_id <- if (use_cli) {
@@ -249,13 +252,15 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
           stringsAsFactors = FALSE
         ))
       } else if (engine == "inproc") {
-        results[[i]] <- grade_exercise(file, test_dir = test_dir,
-                                       timeout = timeout, student = name,
-                                       engine = "inproc",
-                                       allow_masking = allow_masking)
+        results[[i]] <- quiet_no_tests(grade_exercise(
+          file, test_dir = test_dir, timeout = timeout, student = name,
+          engine = "inproc", allow_masking = allow_masking
+        ))
       } else {
-        job <- start_grading_callr(file, find_test_file(tasks$exercise[[i]], test_dir),
-                                   timeout, name, protected)
+        job <- quiet_no_tests(start_grading_callr(
+          file, find_test_file(tasks$exercise[[i]], test_dir),
+          timeout, name, protected
+        ))
         if (inherits(job, "grade_results")) {
           results[[i]] <- job
         } else {
@@ -421,11 +426,30 @@ discover_test_fns <- function(test_file, exercise) {
   # Provide a stub for any function called at top-level by the test file that
   # could fail without the student definitions; tests should only define
   # functions, so sourcing here should be safe.
-  src <- tryCatch({source(test_file, local = env, encoding = source_encoding(test_file)); TRUE}, error = function(e) FALSE)
-  if (!isTRUE(src)) return(character())
+  src <- tryCatch({source(test_file, local = env, encoding = source_encoding(test_file)); TRUE},
+                  error = function(e) conditionMessage(e))
+  if (!isTRUE(src)) {
+    stop("Test file ", basename(test_file), " could not be loaded: ", src,
+         call. = FALSE)
+  }
   prefix <- paste0("test_", exercise, "_")
   fns <- ls(envir = env)
-  fns[startsWith(fns, prefix)]
+  fns <- fns[startsWith(fns, prefix)]
+  if (length(fns) == 0) {
+    warning(structure(
+      class = c("corrector_no_tests", "warning", "condition"),
+      list(message = paste0("No functions named ", prefix, "* in ",
+                            basename(test_file)), call = NULL)
+    ))
+  }
+  fns
+}
+
+# grade_submissions() already warned once per test file without tests.
+quiet_no_tests <- function(expr) {
+  withCallingHandlers(expr, corrector_no_tests = function(w) {
+    invokeRestart("muffleWarning")
+  })
 }
 
 # Sub-folders of `dir`, without hidden folders or macOS zip metadata.

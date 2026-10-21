@@ -54,7 +54,8 @@ test_that("callr engine returns no rows when the test file has no tests", {
   tests <- withr::local_tempdir()
   writeLines("ayuda <- function() 1", file.path(tests, "test_ejercicio1.R"))
   file <- test_path("fixtures/student_ok/ejercicio1.R")
-  result <- grade_exercise(file, tests, engine = "callr")
+  expect_warning(result <- grade_exercise(file, tests, engine = "callr"),
+                 "No functions named")
   expect_s3_class(result, "grade_results")
   expect_equal(nrow(result), 0)
 })

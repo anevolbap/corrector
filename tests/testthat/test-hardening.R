@@ -52,6 +52,47 @@ for (engine in c("callr", "inproc")) {
   })
 }
 
+one_file <- function(lines, envir = parent.frame()) {
+  dir <- withr::local_tempdir(.local_envir = envir)
+  writeLines(lines, file.path(dir, "ejercicio1.R"))
+  file.path(dir, "ejercicio1.R")
+}
+
+for (engine in c("callr", "inproc")) {
+  test_that(paste("a student file that never finishes loading times out, engine", engine), {
+    file <- one_file(c("sumar <- function(a, b) a + b", "repeat {}"))
+    t0 <- Sys.time()
+    res <- grade_exercise(file, test_path("fixtures/tests"), timeout = 1, engine = engine)
+    expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 15)
+    expect_true(all(res$status == "timeout"))
+    expect_equal(nrow(res), 2)
+    expect_match(res$message, "load", all = TRUE)
+  })
+
+  test_that(paste("quit() in student code is an error, engine", engine), {
+    expect_warning(
+      top <- grade_exercise(one_file(c("sumar <- function(a, b) a + b", "quit()")),
+                            test_path("fixtures/tests"), engine = engine),
+      "quit"
+    )
+    expect_equal(as.character(top$status), "source_error")
+    inside <- grade_exercise(one_file("sumar <- function(a, b) q()"),
+                             test_path("fixtures/tests"), engine = engine)
+    expect_true(all(inside$status == "error"))
+    expect_match(inside$message, "not allowed", all = TRUE)
+  })
+}
+
+test_that("inproc restores the working directory and options", {
+  file <- one_file(c("setwd(tempdir())", "options(digits = 1)",
+                     "sumar <- function(a, b) a + b"))
+  wd <- getwd()
+  digits <- getOption("digits")
+  grade_exercise(file, test_path("fixtures/tests"), engine = "inproc")
+  expect_equal(getwd(), wd)
+  expect_equal(getOption("digits"), digits)
+})
+
 test_that("bad paths and arguments give clear errors", {
   subs  <- make_student()
   tests <- test_path("fixtures/tests")

@@ -51,8 +51,18 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       # Files the student writes land in the subprocess's own temp dir.
       setwd(tempdir())
       student_env <- new.env(parent = globalenv())
+      # Same stubs as add_quit_stubs().
+      stub <- function(...) stop("quit() is not allowed while grading", call. = FALSE)
+      attr(stub, "corrector_stub") <- TRUE
+      assign("quit", stub, envir = student_env)
+      assign("q", stub, envir = student_env)
+      if (is.finite(timeout)) setTimeLimit(elapsed = timeout, transient = FALSE)
       src <- tryCatch({source(student_file, local = student_env, encoding = encodings[[1]]); TRUE},
                       error = function(e) conditionMessage(e))
+      setTimeLimit(elapsed = Inf, transient = FALSE)
+      if (!isTRUE(src) && grepl("elapsed time limit|CPU time limit", src)) {
+        return(list(kind = "load_timeout"))
+      }
       if (!isTRUE(src)) {
         return(list(kind = "source_error", message = src))
       }
@@ -61,6 +71,9 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       nms <- ls(student_env, all.names = TRUE)
       masked <- intersect(nms, protected)
       for (nm in setdiff(nms, masked)) assign(nm, get(nm, envir = student_env), envir = env)
+      masked <- masked[!vapply(masked, function(nm) {
+        isTRUE(attr(get(nm, envir = student_env), "corrector_stub"))
+      }, logical(1))]
       source(test_file, local = env, encoding = encodings[[2]])
       parent.env(env) <- parent.env(globalenv())
       results <- list()
@@ -118,6 +131,9 @@ callr_to_rows <- function(out, test_fns, timeout, student, exercise) {
       duration = NA_real_,
       stringsAsFactors = FALSE
     ))
+  }
+  if (identical(out$kind, "load_timeout")) {
+    return(as.data.frame(load_timeout_result(student, exercise, test_fns, timeout)))
   }
   if (identical(out$kind, "killed")) {
     return(data.frame(

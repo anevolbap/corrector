@@ -55,6 +55,9 @@ grade_exercise <- function(file, test_dir, timeout = 10,
   if (!file.exists(file)) stop("Student file does not exist: ", file, call. = FALSE)
   check_test_dir(test_dir)
   check_timeout(timeout)
+  # Absolute paths, so a student's setwd() cannot break the lookup.
+  file <- normalizePath(file)
+  test_dir <- normalizePath(test_dir)
   protected <- setdiff(protected_names(), allow_masking)
   exercise <- tools::file_path_sans_ext(basename(file))
   test_file <- find_test_file(exercise, test_dir)
@@ -83,13 +86,30 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 
   test_fns <- discover_test_fns(test_file, exercise)
 
+  # Undo what student code may change in this session.
+  old_wd <- getwd()
+  old_options <- options()
+  on.exit({
+    setwd(old_wd)
+    options(old_options)
+  }, add = TRUE)
+
   student_env <- new.env(parent = globalenv())
+  add_quit_stubs(student_env)
   src <- tryCatch({
     code <- r_code_path(file)
+    if (is.finite(timeout)) setTimeLimit(elapsed = timeout, transient = FALSE)
     source(code, local = student_env, encoding = source_encoding(code))
+    setTimeLimit(elapsed = Inf, transient = FALSE)
     list(ok = TRUE)
-  }, error = function(e) list(ok = FALSE, message = conditionMessage(e)))
+  }, error = function(e) {
+    setTimeLimit(elapsed = Inf, transient = FALSE)
+    list(ok = FALSE, message = conditionMessage(e))
+  })
 
+  if (!isTRUE(src$ok) && is_time_limit(src$message)) {
+    return(load_timeout_result(student, exercise, test_fns, timeout))
+  }
   if (!isTRUE(src$ok)) {
     warning("Failed to source ", basename(file), ": ", src$message)
     return(source_error_result(student, exercise, src$message))
@@ -186,11 +206,12 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
   }
   check_test_dir(test_dir)
   check_timeout(timeout)
+  test_dir <- normalizePath(test_dir)
   if (!is.numeric(workers) || length(workers) != 1 || is.na(workers) ||
       workers < 1 || workers != round(workers)) {
     stop("workers must be a whole number of 1 or more", call. = FALSE)
   }
-  dir <- extract_if_zip(submissions_path)
+  dir <- normalizePath(extract_if_zip(submissions_path))
   if (layout == "moodle") {
     dir <- moodle_to_folders(dir)
     if (missing(student_name_fn)) student_name_fn <- moodle_student_name
@@ -371,7 +392,10 @@ copy_student_objects <- function(from, to, protected) {
   nms <- ls(from, all.names = TRUE)
   masked <- intersect(nms, protected)
   for (nm in setdiff(nms, masked)) assign(nm, get(nm, envir = from), envir = to)
-  masked
+  is_stub <- vapply(masked, function(nm) {
+    isTRUE(attr(get(nm, envir = from), "corrector_stub"))
+  }, logical(1))
+  masked[!is_stub]
 }
 
 add_masking_note <- function(df, masked) {
@@ -417,6 +441,29 @@ r_code_path <- function(file) {
   file.copy(file, input)
   knitr::purl(input, output = tempfile(fileext = ".R"), quiet = TRUE,
               documentation = 0)
+}
+
+is_time_limit <- function(msg) grepl("elapsed time limit|CPU time limit", msg)
+
+load_timeout_result <- function(student, exercise, test_fns, timeout) {
+  new_grade_results(data.frame(
+    student  = student,
+    exercise = exercise,
+    test     = test_fns,
+    status   = "timeout",
+    message  = sprintf("student file took longer than %g s to load", timeout),
+    duration = NA_real_,
+    stringsAsFactors = FALSE
+  ))
+}
+
+# quit() and q() in student code would end the grading session. The stubs
+# are marked so they are not reported as masked base functions.
+add_quit_stubs <- function(env) {
+  stub <- function(...) stop("quit() is not allowed while grading", call. = FALSE)
+  attr(stub, "corrector_stub") <- TRUE
+  assign("quit", stub, envir = env)
+  assign("q", stub, envir = env)
 }
 
 source_error_result <- function(student, exercise, message) {

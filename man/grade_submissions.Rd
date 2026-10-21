@@ -10,7 +10,8 @@ grade_submissions(
   timeout = 10,
   engine = c("callr", "inproc"),
   student_name_fn = default_student_name,
-  allow_masking = character()
+  allow_masking = character(),
+  workers = 1L
 )
 }
 \arguments{
@@ -29,6 +30,11 @@ name keep their folder name, with a warning.}
 
 \item{allow_masking}{Base function names students may redefine. See
 \code{\link[=grade_exercise]{grade_exercise()}}.}
+
+\item{workers}{Number of callr subprocesses to run at the same time.
+Default 1. Values above 1 speed up large classes; a value near
+\code{parallel::detectCores()} is a good upper bound. Ignored by the
+\code{"inproc"} engine.}
 }
 \value{
 A \link{grade_results} object.

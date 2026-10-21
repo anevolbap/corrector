@@ -50,15 +50,14 @@ grade_exercise <- function(file, test_dir, timeout = 10,
     )))
   }
 
-  test_fns <- discover_test_fns(test_file, exercise)
   if (engine == "callr") {
-    out <- run_exercise_callr(file, test_file, test_fns, timeout, protected)
-    if (identical(out$kind, "source_error")) {
-      warning("Failed to source ", basename(file), ": ", out$message)
-    }
-    df <- callr_to_rows(out, test_fns, timeout, student, exercise)
-    return(new_grade_results(add_masking_note(df, out$masked)))
+    job <- start_grading_callr(file, test_file, timeout, student, protected)
+    if (inherits(job, "grade_results")) return(job)
+    job$proc$wait(timeout = wait_ms(job))
+    return(finish_grading_callr(job))
   }
+
+  test_fns <- discover_test_fns(test_file, exercise)
 
   student_env <- new.env(parent = baseenv())
   src <- tryCatch({
@@ -125,14 +124,20 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 #'   name keep their folder name, with a warning.
 #' @param allow_masking Base function names students may redefine. See
 #'   [grade_exercise()].
+#' @param workers Number of callr subprocesses to run at the same time.
+#'   Default 1. Values above 1 speed up large classes; a value near
+#'   `parallel::detectCores()` is a good upper bound. Ignored by the
+#'   `"inproc"` engine.
 #' @return A [grade_results] object.
 #' @importFrom utils unzip
 #' @export
 grade_submissions <- function(submissions_path, test_dir, timeout = 10,
                               engine = c("callr", "inproc"),
                               student_name_fn = default_student_name,
-                              allow_masking = character()) {
+                              allow_masking = character(),
+                              workers = 1L) {
   engine <- match.arg(engine)
+  stopifnot(length(workers) == 1, workers >= 1)
   dir <- extract_if_zip(submissions_path)
   students <- student_dirs(dir)
   # A zip of the parent folder holds one folder with the student folders inside.
@@ -163,38 +168,73 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
     display[clash] <- students[clash]
   }
 
-  slices <- lapply(seq_along(students), function(i) {
-    student <- students[[i]]
-    name <- display[[i]]
-    if (use_cli) {
-      cli::cli_progress_update(id = progress_id, status = name)
-    } else {
-      message("Grading: ", name)
-    }
+  # One task per (student, exercise), in output order.
+  tasks <- data.frame(
+    folder   = rep(students, each = length(exercises)),
+    name     = rep(display, each = length(exercises)),
+    exercise = rep(exercises, times = length(students)),
+    stringsAsFactors = FALSE
+  )
+  tasks$file <- file.path(dir, tasks$folder, paste0(tasks$exercise, ".R"))
+  protected <- setdiff(protected_names(), allow_masking)
 
-    per_student <- lapply(exercises, function(ex) {
-      file <- file.path(dir, student, paste0(ex, ".R"))
+  results <- vector("list", nrow(tasks))
+  running <- list()
+  i <- 0L
+  while (i < nrow(tasks) || length(running) > 0) {
+    # Start tasks until every worker is busy. inproc tasks finish right away.
+    while (i < nrow(tasks) && length(running) < workers) {
+      i <- i + 1L
+      name <- tasks$name[[i]]
+      file <- tasks$file[[i]]
+      if (i == 1L || tasks$folder[[i]] != tasks$folder[[i - 1L]]) {
+        if (use_cli) {
+          cli::cli_progress_update(id = progress_id, status = name)
+        } else {
+          message("Grading: ", name)
+        }
+      }
+
       if (!file.exists(file)) {
-        return(new_grade_results(data.frame(
+        results[[i]] <- new_grade_results(data.frame(
           student  = name,
-          exercise = ex,
+          exercise = tasks$exercise[[i]],
           test     = NA_character_,
           status   = "missing",
           message  = "no submission",
           duration = NA_real_,
           stringsAsFactors = FALSE
-        )))
+        ))
+      } else if (engine == "inproc") {
+        results[[i]] <- grade_exercise(file, test_dir = test_dir,
+                                       timeout = timeout, student = name,
+                                       engine = "inproc",
+                                       allow_masking = allow_masking)
+      } else {
+        job <- start_grading_callr(file, find_test_file(file, test_dir),
+                                   timeout, name, protected)
+        if (inherits(job, "grade_results")) {
+          results[[i]] <- job
+        } else {
+          running[[as.character(i)]] <- job
+        }
       }
-      grade_exercise(file, test_dir = test_dir, timeout = timeout,
-                     student = name, engine = engine,
-                     allow_masking = allow_masking)
-    })
-    do.call(rbind, lapply(per_student, unclass_df))
-  })
+    }
+
+    # Collect callr jobs that ended or ran past their deadline.
+    for (key in names(running)) {
+      job <- running[[key]]
+      if (!job$proc$is_alive() || past_deadline(job)) {
+        results[[as.integer(key)]] <- finish_grading_callr(job)
+        running[[key]] <- NULL
+      }
+    }
+    if (length(running) > 0) Sys.sleep(0.02)
+  }
 
   if (use_cli) cli::cli_progress_done(id = progress_id)
 
-  combined <- do.call(rbind, slices)
+  combined <- do.call(rbind, lapply(results, unclass_df))
   new_grade_results(combined)
 }
 

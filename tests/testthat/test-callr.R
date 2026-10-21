@@ -50,6 +50,15 @@ test_that("default engine keeps student side effects out of the session", {
   expect_false(file.exists(file.path(wd, "salida.txt")))
 })
 
+test_that("callr engine returns no rows when the test file has no tests", {
+  tests <- withr::local_tempdir()
+  writeLines("ayuda <- function() 1", file.path(tests, "test_ejercicio1.R"))
+  file <- test_path("fixtures/student_ok/ejercicio1.R")
+  result <- grade_exercise(file, tests, engine = "callr")
+  expect_s3_class(result, "grade_results")
+  expect_equal(nrow(result), 0)
+})
+
 test_that("grading defaults to callr with a finite timeout", {
   for (f in list(grade_exercise, grade_submissions)) {
     expect_equal(eval(formals(f)$engine)[[1]], "callr")

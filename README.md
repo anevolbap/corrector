@@ -236,7 +236,7 @@ system.file("examples", package = "corrector")
 Otros paquetes de R que resuelven problemas similares, cada uno con un alcance
 distinto:
 
-- **[gradethis](https://pkgs.rstudio.com/gradethis/)**: verifica código dentro
+- **[gradethis](https://rstudio.github.io/gradethis/)**: verifica código dentro
   de tutoriales interactivos de [learnr](https://rstudio.github.io/learnr/).
   Ideal para práctica guiada, pero requiere un servidor Shiny.
 - **[exams](https://www.r-exams.org/)**: genera preguntas de examen

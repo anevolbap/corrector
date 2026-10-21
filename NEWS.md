@@ -1,3 +1,26 @@
+# corrector 0.4.0
+
+## New features
+
+* Test functions can use testthat expectations. A failed `expect_*()` is
+  recorded as `fail` with its message, and a test whose expectations all
+  pass counts as `pass`. Students cannot redefine testthat functions.
+* `grade_submissions(layout = "moodle")` reads the export from Moodle's
+  "Download all submissions", with or without "Download submissions in
+  folders". New `moodle_student_name()`.
+* New `student_scores()`: partial credit per exercise, weights per test or
+  per exercise, and a `total` where missing exercises count as 0.
+  `grade_report()` gains `scoring` and `weights`; its defaults are unchanged.
+* New `export_feedback()` writes one Markdown file per student.
+* Students can hand in `.Rmd` or `.qmd` files; their R chunks are graded.
+* Student and test file names are matched ignoring case.
+
+## Other
+
+* The three pattern arguments listed by mistake in the 0.2.0 notes
+  (`exercise_pattern`, `test_file_template`, `test_fn_pattern`) will not be
+  added: exercise names already come from the test file names.
+
 # corrector 0.3.1
 
 * Fixed: student and test code could only use base R. Calls such as

@@ -137,6 +137,22 @@ ignorarlo en silencio.
 El código del estudiante y los tests se cargan en un entorno nuevo y aislado
 para cada ejercicio, así las entregas no se interfieren entre sí.
 
+Los tests también pueden usar expectativas de testthat. Un `expect_*` que
+falla cuenta como `fail` y su mensaje queda en la columna `message`:
+
+```r
+# tests/test_ejercicio1.R
+library(testthat)
+
+test_ejercicio1_raices <- function() {
+  expect_equal(ceros_cuadratica(1, 0, -1), c(-1, 1))
+}
+```
+
+El estudiante puede entregar `ejercicio1.R`, `ejercicio1.Rmd` o
+`ejercicio1.qmd` (de los dos últimos se corren los bloques de código R). Las
+mayúsculas no importan: `Ejercicio1.R` cuenta como `ejercicio1`.
+
 ## Uso
 
 ```r
@@ -170,6 +186,29 @@ export_to_html(resultados, "informe.html")           # tabla con colores y detal
 # Exportar a Google Sheets (requiere googlesheets4)
 googlesheets4::gs4_auth()
 export_to_sheets(resultados, "https://docs.google.com/spreadsheets/d/...")
+```
+
+## Puntaje parcial y pesos
+
+Por defecto un ejercicio está aprobado solo si pasan todos sus tests.
+`student_scores()` da puntaje parcial (la fracción de tests que pasan) y
+acepta pesos por test o por ejercicio. La columna `total` es la nota: un
+ejercicio no entregado cuenta como 0.
+
+```r
+notas <- student_scores(resultados,
+                        weights = c(test_ejercicio1_raices = 2, ejercicio2 = 3))
+grade_report(resultados, scoring = "partial")
+```
+
+## Devolución a cada estudiante
+
+`export_feedback()` escribe un archivo Markdown por estudiante con su nota,
+el puntaje de cada ejercicio y el resultado de cada test, con el mensaje de
+error cuando lo hay:
+
+```r
+export_feedback(resultados, "devoluciones/")
 ```
 
 ## Gráficos
@@ -270,3 +309,15 @@ resultados <- grade_submissions(
 
 Las entregas también se pueden entregar como un único archivo `.zip`; el paquete
 lo descomprime automáticamente antes de corregir.
+
+### Moodle
+
+Para corregir directamente el `.zip` de "Descargar todas las entregas" de
+Moodle, usá `layout = "moodle"`. Funciona con y sin la opción "Descargar
+entregas en carpetas", corrige solo las entregas de archivos (ignora el texto
+en línea) y usa el nombre completo del estudiante:
+
+```r
+resultados <- grade_submissions("tarea1-entregas.zip", test_dir = "tests/",
+                                layout = "moodle")
+```

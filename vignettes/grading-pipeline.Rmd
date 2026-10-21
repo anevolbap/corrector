@@ -89,6 +89,24 @@ export_to_html(results, "report.html")
 The HTML report colour-codes each cell by status and includes a per-student
 breakdown of every test.
 
+## Partial credit, weights and feedback
+
+`student_scores()` gives each exercise the fraction of its tests that pass,
+with optional weights per test or per exercise, and a `total` grade where a
+missing exercise counts as 0. `grade_report(scoring = "partial")` uses the
+same rules. `export_feedback()` writes one Markdown file per student.
+
+```r
+grades <- student_scores(results, weights = c(ejercicio2 = 2))
+export_feedback(results, "feedback/")
+```
+
+## testthat, R Markdown and Quarto
+
+Test functions can use testthat expectations (`library(testthat)` at the top
+of the test file). Students can hand in `.R`, `.Rmd` or `.qmd` files, and file
+names are matched ignoring case.
+
 ## Timeouts and untrusted code
 
 The default engine, `"callr"`, runs each exercise in a fresh R subprocess
@@ -128,4 +146,14 @@ results <- grade_submissions(
     sub("_.*$", "", folder)
   }
 )
+```
+
+## Moodle
+
+`layout = "moodle"` reads the `.zip` from Moodle's "Download all
+submissions", with or without "Download submissions in folders":
+
+```r
+results <- grade_submissions("assignment1.zip", test_dir = "tests/",
+                             layout = "moodle")
 ```

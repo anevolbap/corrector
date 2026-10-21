@@ -20,7 +20,7 @@
 #'       out; use [student_scores()] to count them as 0).}
 #'     \item{`overall_mean`}{Scalar numeric (0-1).}
 #'     \item{`issue_counts`}{Named integer vector with counts of `error`,
-#'       `timeout`, and `missing` rows.}
+#'       `timeout`, `missing`, and `source_error` rows.}
 #'   }
 #' @export
 #' @examples

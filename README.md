@@ -134,8 +134,11 @@ La lista de ejercicios esperados sale del directorio de tests: cada archivo
 existe en `test_dir/`, se registra una fila con `status = missing` en lugar de
 ignorarlo en silencio.
 
-El código del estudiante y los tests se cargan en un entorno nuevo y aislado
-para cada ejercicio, así las entregas no se interfieren entre sí.
+El código del estudiante y los tests se cargan en entornos nuevos para cada
+ejercicio. Los tests no ven las funciones de base R que el estudiante
+redefine (como `all()` o `==`), salvo las que pases en `allow_masking`. Con el
+motor `callr` (el que se usa por defecto) cada ejercicio corre en un proceso
+aparte, así las entregas no se afectan entre sí.
 
 Los tests también pueden usar expectativas de testthat. Un `expect_*` que
 falla cuenta como `fail` y su mensaje queda en la columna `message`:
@@ -233,10 +236,13 @@ plot_report(resultados, backend = "ggplot2")
 
 ## Tiempo límite por test
 
-Cada test tiene un límite de `timeout` segundos (10 por defecto). Por defecto
-el corrector usa el motor `callr`: corre cada ejercicio en un subproceso nuevo,
-con una carpeta de trabajo temporal, y lo mata cuando excede el límite, incluso
-dentro de un bucle infinito. Para cambiar el límite:
+Cada test tiene un límite de `timeout` segundos (10 por defecto), y la carga
+del archivo del estudiante también. El motor `callr` corre cada ejercicio en un
+subproceso nuevo, con una carpeta de trabajo temporal. Si un test no responde
+al límite (por ejemplo dentro de `Sys.sleep()`), el subproceso se corta cuando
+el ejercicio completo pasa `timeout` × cantidad de tests + 5 segundos: los
+tests que ya terminaron conservan su resultado y el resto queda como
+`timeout`. Para cambiar el límite:
 
 ```r
 resultados <- grade_submissions("entregas/", test_dir = "tests/", timeout = 30)
@@ -259,6 +265,12 @@ computadora: el código del estudiante puede leer y escribir cualquier archivo
 al que tenga acceso tu usuario, usar la red o ejecutar comandos del sistema.
 Si no confiás en quien escribió el código, corré el corrector dentro de un
 contenedor o una máquina virtual sin tus credenciales.
+
+La protección contra trampas cubre los casos comunes: redefinir funciones de
+base R en el archivo, escribirlas en el entorno global, o llamar a `quit()`.
+Un estudiante que conozca R a fondo todavía puede engañar al corrector (por
+ejemplo con `attach()` o modificando el paquete base), así que revisá a mano
+las notas que te llamen la atención.
 
 ## Archivos de tests de ejemplo
 

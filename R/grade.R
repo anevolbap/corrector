@@ -15,9 +15,9 @@
 #'   extracted with `knitr::purl()`. The matching test file is found ignoring
 #'   case.
 #' @param test_dir Directory that contains the test files.
-#' @param timeout Maximum seconds allowed per test function. Tests that exceed
-#'   this limit are recorded with status `timeout`. Default 10. Use `Inf` for
-#'   no limit.
+#' @param timeout Maximum seconds allowed per test function, and for loading
+#'   the student's file. Tests that exceed it are recorded with status
+#'   `timeout`. Default 10. Use `Inf` for no limit.
 #' @param student Optional student display name. Defaults to `NA`.
 #' @param engine `"callr"` (default) runs each exercise in a fresh R
 #'   subprocess via the \pkg{callr} package, with a temporary working

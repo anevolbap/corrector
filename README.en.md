@@ -132,8 +132,11 @@ file defines an exercise. If a student does not submit an exercise that has a
 test file, a row with `status = missing` is recorded rather than silently
 skipping it.
 
-Student code and test code are sourced into a fresh, isolated environment for
-each exercise, so submissions cannot interfere with each other.
+Student code and test code are sourced into fresh environments for each
+exercise. Tests do not see base R functions the student redefines (such as
+`all()` or `==`), except the ones you list in `allow_masking`. With the
+default `callr` engine each exercise runs in its own process, so submissions
+cannot affect each other.
 
 Tests can also use testthat expectations. A failed `expect_*` counts as
 `fail`, and its message goes in the `message` column:
@@ -220,10 +223,13 @@ plot_report(results, backend = "ggplot2")
 
 ## Timeout
 
-Each test gets `timeout` seconds (default 10). The default engine, `callr`,
-runs each exercise in a fresh subprocess with a temporary working directory,
-and kills it when the budget runs out, even inside a busy loop. To change the
-limit:
+Each test gets `timeout` seconds (default 10), and so does loading the
+student's file. The default engine, `callr`, runs each exercise in a fresh
+subprocess with a temporary working directory. If a test does not respond to
+the limit (for example inside `Sys.sleep()`), the subprocess is killed once
+the whole exercise passes `timeout` × number of tests + 5 seconds: tests that
+already finished keep their result, and the rest are marked `timeout`. To
+change the limit:
 
 ```r
 results <- grade_submissions("submissions/", test_dir = "tests/", timeout = 30)
@@ -245,6 +251,12 @@ corrector is not a sandbox. The `callr` engine protects your R session, not
 your computer: student code can read and write any file your user can, use
 the network, or run system commands. For code from people you do not trust,
 run corrector inside a container or virtual machine without your credentials.
+
+The protection against cheating covers the common cases: redefining base R
+functions in the file, writing them into the global environment, or calling
+`quit()`. A student who knows R in depth can still fool the grader (for
+example with `attach()` or by changing the base package), so check any grade
+that looks wrong by hand.
 
 ## Example test files
 

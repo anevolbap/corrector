@@ -9,8 +9,11 @@
 #'     records a `missing` submission or a `source_error`.}
 #'   \item{`status`}{Factor with levels `pass`, `fail`, `error`, `timeout`,
 #'     `missing`, `source_error`.}
-#'   \item{`message`}{Character. Error message when `status` is `error`,
-#'     `source_error`, or `timeout`; `NA` otherwise.}
+#'   \item{`message`}{Character. The error message for `error`,
+#'     `source_error` and `timeout`; the testthat message or "test returned
+#'     non-logical" for some `fail` rows; a note listing ignored student
+#'     definitions (see `allow_masking` in [grade_exercise()]); `NA`
+#'     otherwise.}
 #'   \item{`duration`}{Numeric. Seconds elapsed running the test, or `NA`
 #'     when the test was not run.}
 #' }

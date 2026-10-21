@@ -27,7 +27,7 @@ across the student's submitted exercises (missing ones are left
 out; use \code{\link[=student_scores]{student_scores()}} to count them as 0).}
 \item{\code{overall_mean}}{Scalar numeric (0-1).}
 \item{\code{issue_counts}}{Named integer vector with counts of \code{error},
-\code{timeout}, and \code{missing} rows.}
+\code{timeout}, \code{missing}, and \code{source_error} rows.}
 }
 }
 \description{

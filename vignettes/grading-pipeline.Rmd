@@ -111,8 +111,10 @@ names are matched ignoring case.
 
 The default engine, `"callr"`, runs each exercise in a fresh R subprocess
 with a temporary working directory. Each test gets `timeout` seconds (default
-10), and the subprocess is killed when the budget runs out, even inside a busy
-loop. Use `timeout = Inf` for no limit.
+10), and so does loading the student's file. If a test does not respond to
+the limit (for example inside `Sys.sleep()`), the subprocess is killed once
+the whole exercise passes `timeout` × number of tests + 5 seconds; tests that
+already finished keep their result. Use `timeout = Inf` for no limit.
 
 ```r
 results <- grade_submissions("submissions/", test_dir = "tests/", timeout = 30)
@@ -132,6 +134,9 @@ corrector is not a sandbox. The `callr` engine protects your R session, not
 your computer: student code can read and write any file your user can, use
 the network, or run system commands. For code from people you do not trust,
 run corrector inside a container or virtual machine without your credentials.
+The protection against cheating covers the common cases (redefining base R
+functions, writing them into the global environment, calling `quit()`), not a
+student who sets out to break the grader, so check odd grades by hand.
 
 ## Renaming students
 

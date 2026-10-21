@@ -21,9 +21,9 @@ case.}
 
 \item{test_dir}{Directory that contains the test files.}
 
-\item{timeout}{Maximum seconds allowed per test function. Tests that exceed
-this limit are recorded with status \code{timeout}. Default 10. Use \code{Inf} for
-no limit.}
+\item{timeout}{Maximum seconds allowed per test function, and for loading
+the student's file. Tests that exceed it are recorded with status
+\code{timeout}. Default 10. Use \code{Inf} for no limit.}
 
 \item{student}{Optional student display name. Defaults to \code{NA}.}
 

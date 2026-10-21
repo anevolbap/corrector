@@ -14,6 +14,35 @@
 * New `export_feedback()` writes one Markdown file per student.
 * Students can hand in `.Rmd` or `.qmd` files; their R chunks are graded.
 * Student and test file names are matched ignoring case.
+* `export_to_html()` and `plot_report()` gain `scoring` and `weights`, like
+  `grade_report()`.
+
+## Hardening
+
+* Tests look up names in the attached packages instead of the global
+  environment, so a student can no longer forge passes by assigning
+  functions there.
+* The callr engine discards student output. Before, more than about 64 KB of
+  printed output stalled the subprocess, and every test timed out.
+* The time limit also applies while loading the student's file. A file that
+  never finishes loading gives `timeout` on every test; before, the inproc
+  engine hung.
+* `quit()` and `q()` in student code raise an error instead of ending the
+  session. The inproc engine restores the working directory and options.
+* When the callr engine kills an exercise, tests that already finished keep
+  their result.
+* A test file that fails to load stops grading with a clear error before
+  anyone is graded; before, the callr engine returned zero rows in silence. A
+  test file without `test_<exercise>_*` functions warns once.
+* testthat `skip()` in a test is recorded as `error` instead of aborting.
+* Zip entries that point outside the extraction folder are refused.
+* CSV and Google Sheets exports put a `'` before text that a spreadsheet
+  would run as a formula.
+* Clear errors for missing paths and bad `timeout` or `workers` values, and
+  a warning when there are no student folders.
+* Fixed edge cases: `NA` student names, a single student folder with only
+  `.Rmd` files, empty results in `grade_report()` and `plot_report()`,
+  colliding feedback file names, and exercises named `student` or `total`.
 
 ## Other
 

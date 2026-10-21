@@ -90,7 +90,10 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
                                        }),
                err = NULL, failed = FALSE),
           error = function(e) list(v = NULL, err = conditionMessage(e),
-                                   failed = inherits(e, "expectation_failure")))
+                                   failed = inherits(e, "expectation_failure")),
+          skip = function(e) list(v = NULL, failed = FALSE,
+                                  err = paste("test skipped:",
+                                              sub("^Reason: ", "", conditionMessage(e)))))
         setTimeLimit(elapsed = Inf, transient = FALSE)
         results[[fn]] <- c(out, list(n_ok = n_ok, duration = as.numeric(difftime(Sys.time(), t0, units = "secs"))))
       }

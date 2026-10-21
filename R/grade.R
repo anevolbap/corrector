@@ -339,7 +339,12 @@ run_one_test_inproc <- function(fn, timeout) {
       n_ok <<- n_ok + 1L
       tryInvokeRestart("continue_test")
     }), err = NULL),
-    error = function(e) list(value = NULL, err = e)
+    error = function(e) list(value = NULL, err = e),
+    # testthat::skip() is not an error; record it so the teacher sees it.
+    skip = function(e) {
+      list(value = NULL, err = simpleError(paste(
+        "test skipped:", sub("^Reason: ", "", conditionMessage(e)))))
+    }
   )
   duration <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
 

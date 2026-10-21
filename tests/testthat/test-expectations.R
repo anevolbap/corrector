@@ -12,6 +12,19 @@ make_expect_tests <- function(envir = parent.frame()) {
 }
 
 for (engine in c("callr", "inproc")) {
+  test_that(paste("a skip() in a test is recorded, engine", engine), {
+    tests <- withr::local_tempdir()
+    writeLines(c(
+      'test_ejercicio1_a <- function() testthat::skip("no data")',
+      'test_ejercicio1_b <- function() sumar(1, 1) == 2'
+    ), file.path(tests, "test_ejercicio1.R"))
+    res <- grade_exercise(test_path("fixtures/student_ok/ejercicio1.R"), tests,
+                          engine = engine)
+    expect_equal(as.character(res$status[res$test == "test_ejercicio1_a"]), "error")
+    expect_match(res$message[res$test == "test_ejercicio1_a"], "skipped: no data")
+    expect_equal(as.character(res$status[res$test == "test_ejercicio1_b"]), "pass")
+  })
+
   test_that(paste("testthat expectations pass and fail, engine", engine), {
     tests <- make_expect_tests()
     ok   <- grade_exercise(test_path("fixtures/student_ok/ejercicio1.R"), tests,

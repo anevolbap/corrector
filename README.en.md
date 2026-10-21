@@ -52,8 +52,8 @@ results <- grade_submissions("submissions/", test_dir = "tests/")
 results
 # <grade_results> 4 rows, 2 students, 1 exercises
 # Status:
-#   pass  2
-#   fail  2
+#   pass          3
+#   fail          1
 
 # --- 3. Summarise and export ---
 grade_report(results)

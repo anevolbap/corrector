@@ -93,6 +93,51 @@ test_that("inproc restores the working directory and options", {
   expect_equal(getOption("digits"), digits)
 })
 
+test_that("results with an NA student name still score and export", {
+  res <- grade_exercise(test_path("fixtures/student_ok/ejercicio1.R"),
+                        test_path("fixtures/tests"))
+  expect_true(is.na(res$student[[1]]))
+  expect_equal(student_scores(res)$ejercicio1, 1)
+  expect_true(as.data.frame(res, format = "wide")$ejercicio1)
+  html <- withr::local_tempfile(fileext = ".html")
+  export_to_html(res, html)
+  expect_match(paste(readLines(html), collapse = ""), "100%")
+})
+
+test_that("a single student folder with an Rmd and a subfolder is a student", {
+  skip_if_not_installed("knitr")
+  root <- withr::local_tempdir()
+  stu <- file.path(root, "garcia_juan")
+  dir.create(file.path(stu, "datos"), recursive = TRUE)
+  writeLines(c("```{r}", "sumar <- function(a, b) a + b", "```"),
+             file.path(stu, "ejercicio1.Rmd"))
+  res <- suppressMessages(grade_submissions(root, test_path("fixtures/tests")))
+  expect_equal(unique(res$student), "Garcia")
+  expect_true(all(res$status == "pass"))
+})
+
+test_that("empty results do not break the report or the plots", {
+  empty <- empty_grade_results()
+  expect_output(print(grade_report(empty)), "No results")
+  pdf(NULL)
+  on.exit(dev.off())
+  expect_warning(plot_report(empty, ask = FALSE), "No results")
+})
+
+test_that("export_feedback keeps students whose safe names collide", {
+  res <- example_results()
+  res$student[res$student == "Garcia"] <- "a/b"
+  res$student[res$student == "Lopez"] <- "a:b"
+  paths <- export_feedback(res, withr::local_tempdir())
+  expect_equal(length(unique(paths)), length(unique(res$student)))
+})
+
+test_that("exercises named like summary columns give a clear error", {
+  res <- example_results()
+  res$exercise[res$exercise == "ejercicio1"] <- "total"
+  expect_error(student_scores(res), "total")
+})
+
 test_that("bad paths and arguments give clear errors", {
   subs  <- make_student()
   tests <- test_path("fixtures/tests")

@@ -55,8 +55,8 @@ files are accepted when there is no \code{.R} file.
 \details{
 If \code{submissions_path} ends in \code{.zip} it is extracted into a \code{tempdir()}
 subfolder first. Loose files, hidden folders and \verb{__MACOSX} are ignored.
-If the path holds a single folder with no \code{.R} files but with sub-folders,
-those sub-folders are taken as the students.
+If the path holds a single folder with no \code{.R}, \code{.Rmd} or \code{.qmd} files but
+with sub-folders, those sub-folders are taken as the students.
 }
 \examples{
 # One folder per student, one test file per exercise.

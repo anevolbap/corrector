@@ -153,8 +153,8 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 #'
 #' If `submissions_path` ends in `.zip` it is extracted into a `tempdir()`
 #' subfolder first. Loose files, hidden folders and `__MACOSX` are ignored.
-#' If the path holds a single folder with no `.R` files but with sub-folders,
-#' those sub-folders are taken as the students.
+#' If the path holds a single folder with no `.R`, `.Rmd` or `.qmd` files but
+#' with sub-folders, those sub-folders are taken as the students.
 #'
 #' @param submissions_path Path to a directory or `.zip` archive of submissions.
 #' @param test_dir Directory that contains the test files.
@@ -219,7 +219,8 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
   students <- student_dirs(dir)
   # A zip of the parent folder holds one folder with the student folders inside.
   if (length(students) == 1 &&
-      length(list.files(file.path(dir, students), pattern = "\\.R$")) == 0 &&
+      length(list.files(file.path(dir, students), pattern = "\\.(r|rmd|qmd)$",
+                 ignore.case = TRUE)) == 0 &&
       length(student_dirs(file.path(dir, students))) > 0) {
     dir <- file.path(dir, students)
     students <- student_dirs(dir)

@@ -21,12 +21,14 @@ export_feedback <- function(results, dir, scoring = c("partial", "all"),
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   pct <- function(v) if (is.na(v)) "not graded" else sprintf("%.0f%%", v * 100)
 
+  # Safe file names; students whose safe names collide get a numeric suffix.
+  file_names <- make.unique(gsub("[/\\\\:*?\"<>|]", "_", scores$student), sep = "_")
   paths <- vapply(seq_len(nrow(scores)), function(i) {
     student <- scores$student[[i]]
     lines <- c(paste0("# ", student), "",
                paste0("Total score: ", pct(scores$total[[i]])), "")
     for (ex in exercises) {
-      rows <- results[results$student == student & results$exercise == ex, , drop = FALSE]
+      rows <- results[results$student %in% student & results$exercise == ex, , drop = FALSE]
       lines <- c(lines, paste0("## ", ex, ": ", pct(scores[[ex]][[i]])), "")
       for (j in seq_len(nrow(rows))) {
         label <- if (is.na(rows$test[[j]])) ex else rows$test[[j]]
@@ -38,7 +40,7 @@ export_feedback <- function(results, dir, scoring = c("partial", "all"),
       }
       lines <- c(lines, "")
     }
-    path <- file.path(dir, paste0(gsub("[/\\\\:*?\"<>|]", "_", student), ".md"))
+    path <- file.path(dir, paste0(file_names[[i]], ".md"))
     writeLines(lines, path, useBytes = TRUE)
     path
   }, character(1))

@@ -95,7 +95,7 @@ as.data.frame.grade_results <- function(x, row.names = NULL, optional = FALSE,
   wide <- data.frame(student = students, stringsAsFactors = FALSE)
   for (ex in exercises) {
     wide[[ex]] <- vapply(students, function(st) {
-      rows <- x[x$student == st & x$exercise == ex, , drop = FALSE]
+      rows <- x[x$student %in% st & x$exercise == ex, , drop = FALSE]
       if (nrow(rows) == 0) return(NA)
       if (any(rows$status %in% c("missing", "source_error"))) return(NA)
       all(rows$status == "pass")

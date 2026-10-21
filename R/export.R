@@ -99,7 +99,7 @@ export_to_html <- function(results, path, include_details = TRUE,
     student <- wide$student[[i]]
     cells <- paste(
       vapply(exercise_cols, function(ex) {
-        rows <- results[results$student == student & results$exercise == ex, , drop = FALSE]
+        rows <- results[results$student %in% student & results$exercise == ex, , drop = FALSE]
         status_cell(rows)
       }, character(1)),
       collapse = ""
@@ -189,7 +189,7 @@ status_cell <- function(rows) {
 }
 
 details_row <- function(results, student, ncols) {
-  rows <- results[results$student == student, , drop = FALSE]
+  rows <- results[results$student %in% student, , drop = FALSE]
   if (nrow(rows) == 0) return("")
   items <- vapply(seq_len(nrow(rows)), function(i) {
     test  <- if (is.na(rows$test[[i]])) rows$exercise[[i]] else rows$test[[i]]

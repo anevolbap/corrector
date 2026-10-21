@@ -57,6 +57,10 @@ print.grade_report <- function(x, ...) {
   pct <- function(v) sprintf("%.0f%%", v * 100)
 
   cat("=== Grade Report ===\n\n")
+  if (length(x$score_by_student) == 0) {
+    cat("No results.\n")
+    return(invisible(x))
+  }
 
   cat("Pass rate by exercise:\n")
   for (ex in names(x$pass_rate_by_exercise)) {

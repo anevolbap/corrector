@@ -32,12 +32,19 @@ student_scores <- function(results, scoring = c("partial", "all"), weights = NUL
     w
   }
 
+  reserved <- intersect(unique(results$exercise), c("student", "total"))
+  if (length(reserved) > 0) {
+    stop("Exercise names clash with output columns: ",
+         paste(reserved, collapse = ", "), ". Rename the test files.",
+         call. = FALSE)
+  }
+
   students  <- unique(results$student)
   exercises <- unique(results$exercise)
   out <- data.frame(student = students, stringsAsFactors = FALSE)
   for (ex in exercises) {
     out[[ex]] <- vapply(students, function(st) {
-      rows <- results[results$student == st & results$exercise == ex, , drop = FALSE]
+      rows <- results[results$student %in% st & results$exercise == ex, , drop = FALSE]
       if (nrow(rows) == 0) return(NA_real_)
       if (any(rows$status %in% c("missing", "source_error"))) return(NA_real_)
       pass <- rows$status == "pass"

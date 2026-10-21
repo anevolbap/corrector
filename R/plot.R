@@ -25,6 +25,10 @@ plot_report <- function(results, ask = interactive(), backend = c("base", "ggplo
                         scoring = c("all", "partial"), weights = NULL) {
   results <- ensure_grade_results(results)
   backend <- match.arg(backend)
+  if (nrow(results) == 0) {
+    warning("No results to plot.")
+    return(invisible(results))
+  }
   summ <- summary_scores(results, match.arg(scoring), weights)
 
   if (backend == "ggplot2" && !requireNamespace("ggplot2", quietly = TRUE)) {

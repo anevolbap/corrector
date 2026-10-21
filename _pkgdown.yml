@@ -8,6 +8,7 @@ reference:
     contents:
       - grade_exercise
       - grade_submissions
+      - scan_code
   - title: Summarising
     contents:
       - grade_report

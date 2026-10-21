@@ -24,12 +24,14 @@ A \code{grade_report} object (a list) with components:
 exercise score across students.}
 \item{\code{score_by_student}}{Named numeric vector (0-1). The student's
 \code{total} from \code{\link[=student_scores]{student_scores()}}.}
-
-In both, a \code{missing} exercise or one with a \code{source_error} counts as 0.
 \item{\code{overall_mean}}{Scalar numeric (0-1).}
 \item{\code{issue_counts}}{Named integer vector with counts of \code{error},
 \code{timeout}, \code{missing}, and \code{source_error} rows.}
+\item{\code{flagged}}{Character vector of students with suspicious code
+or tampering noted in the \code{message} column (see \code{\link[=scan_code]{scan_code()}}).}
 }
+In \code{pass_rate_by_exercise} and \code{score_by_student}, a \code{missing} exercise
+or one with a \code{source_error} counts as 0.
 }
 \description{
 Computes pass rate per exercise and score per student, plus counts of

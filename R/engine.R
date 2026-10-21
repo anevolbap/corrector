@@ -7,7 +7,8 @@
 #' `wait_ms(job)` or poll `job$proc$is_alive()`.
 #'
 #' @noRd
-start_grading_callr <- function(file, test_file, timeout, student, protected) {
+start_grading_callr <- function(file, test_file, timeout, student, protected,
+                                allow_masking = character()) {
   exercise <- test_exercise(test_file)
   test_fns <- discover_test_fns(test_file, exercise)
   if (length(test_fns) == 0) return(empty_grade_results())
@@ -21,9 +22,10 @@ start_grading_callr <- function(file, test_file, timeout, student, protected) {
   progress <- tempfile("corrector_progress", fileext = ".rds")
   list(
     proc     = start_exercise_callr(code, test_file, test_fns, timeout, protected,
-                                    progress),
+                                    progress, allow_masking),
     deadline = as.numeric(Sys.time()) + budget,
     progress = progress,
+    suspicious = scan_code(code),
     file = file, test_fns = test_fns, timeout = timeout,
     student = student, exercise = exercise
   )
@@ -44,7 +46,12 @@ finish_grading_callr <- function(job) {
     warning("Failed to source ", basename(job$file), ": ", out$message)
   }
   df <- callr_to_rows(out, job$test_fns, job$timeout, job$student, job$exercise)
-  new_grade_results(add_masking_note(df, out$masked))
+  df <- add_masking_note(df, out$masked)
+  if (identical(out$kind, "tests")) {
+    df <- add_note(df, "suspicious code: ", job$suspicious)
+    df <- add_note(df, "tampering: ", out$tampered)
+  }
+  new_grade_results(df)
 }
 
 # Milliseconds left before the job's deadline, as proc$wait() expects.
@@ -56,10 +63,12 @@ wait_ms <- function(job) {
 past_deadline <- function(job) as.numeric(Sys.time()) > job$deadline
 
 start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
-                                 protected = character(), progress_file = tempfile()) {
+                                 protected = character(), progress_file = tempfile(),
+                                 allow_masking = character()) {
   callr::r_bg(
     func = function(student_file, test_file, test_fns, timeout, protected,
-                    encodings, progress_file) {
+                    encodings, progress_file, allow, method_pattern,
+                    snapshot, changes) {
       # Files the student writes land in the subprocess's own temp dir.
       setwd(tempdir())
       student_env <- new.env(parent = globalenv())
@@ -68,6 +77,7 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       attr(stub, "corrector_stub") <- TRUE
       assign("quit", stub, envir = student_env)
       assign("q", stub, envir = student_env)
+      snap <- snapshot()
       if (is.finite(timeout)) setTimeLimit(elapsed = timeout, transient = FALSE)
       src <- tryCatch({source(student_file, local = student_env, encoding = encodings[[1]]); TRUE},
                       error = function(e) conditionMessage(e))
@@ -81,13 +91,16 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       # Same isolation as the inproc engine (see copy_student_objects()).
       env <- new.env(parent = globalenv())
       nms <- ls(student_env, all.names = TRUE)
-      masked <- intersect(nms, protected)
+      masked <- union(intersect(nms, protected),
+                      setdiff(grep(method_pattern, nms, value = TRUE), allow))
       for (nm in setdiff(nms, masked)) assign(nm, get(nm, envir = student_env), envir = env)
       masked <- masked[!vapply(masked, function(nm) {
         isTRUE(attr(get(nm, envir = student_env), "corrector_stub"))
       }, logical(1))]
       source(test_file, local = env, encoding = encodings[[2]])
       parent.env(env) <- parent.env(globalenv())
+      tampered <- changes(snap)
+      snap_tests <- snapshot()
       results <- list()
       for (fn in test_fns) {
         t0 <- Sys.time()
@@ -112,7 +125,8 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
         saveRDS(list(results = results, masked = masked), paste0(progress_file, ".tmp"))
         file.rename(paste0(progress_file, ".tmp"), progress_file)
       }
-      list(kind = "tests", results = results, masked = masked)
+      list(kind = "tests", results = results, masked = masked,
+           tampered = unique(c(tampered, changes(snap_tests))))
     },
     args = list(
       student_file = normalizePath(student_file),
@@ -121,7 +135,11 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       timeout      = timeout,
       protected    = protected,
       encodings    = c(source_encoding(student_file), source_encoding(test_file)),
-      progress_file = progress_file
+      progress_file = progress_file,
+      allow        = allow_masking,
+      method_pattern = comparison_methods,
+      snapshot     = portable(integrity_snapshot),
+      changes      = portable(integrity_changes)
     ),
     # Discard student output: an unread pipe fills up and stalls the child.
     stdout = NULL,

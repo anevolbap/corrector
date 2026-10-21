@@ -17,12 +17,14 @@
 #'       exercise score across students.}
 #'     \item{`score_by_student`}{Named numeric vector (0-1). The student's
 #'       `total` from [student_scores()].}
-#'
-#'   In both, a `missing` exercise or one with a `source_error` counts as 0.
 #'     \item{`overall_mean`}{Scalar numeric (0-1).}
 #'     \item{`issue_counts`}{Named integer vector with counts of `error`,
 #'       `timeout`, `missing`, and `source_error` rows.}
+#'     \item{`flagged`}{Character vector of students with suspicious code
+#'       or tampering noted in the `message` column (see [scan_code()]).}
 #'   }
+#'   In `pass_rate_by_exercise` and `score_by_student`, a `missing` exercise
+#'   or one with a `source_error` counts as 0.
 #' @export
 #' @examples
 #' report <- grade_report(example_results())
@@ -47,7 +49,8 @@ grade_report <- function(results, scoring = c("all", "partial"), weights = NULL)
       pass_rate_by_exercise = pass_rate,
       score_by_student      = student_scores,
       overall_mean          = mean(student_scores, na.rm = TRUE),
-      issue_counts          = issue_counts
+      issue_counts          = issue_counts,
+      flagged               = flagged_students(results)
     ),
     class = "grade_report"
   )
@@ -86,7 +89,18 @@ print.grade_report <- function(x, ...) {
     cat(sprintf("  %-20s %-*s %s\n", nm, bar_width, bar, pct(sorted[[nm]])))
   }
 
+  if (length(x$flagged) > 0) {
+    cat("\nCheck by hand (suspicious code or tampering, see the message column):\n")
+    for (nm in x$flagged) cat("  ", nm, "\n", sep = "")
+  }
+
   invisible(x)
+}
+
+# Students with a "suspicious code" or "tampering" note on any row.
+flagged_students <- function(results) {
+  hit <- grepl("(^|; )(suspicious code|tampering): ", results$message)
+  unique(results$student[hit])
 }
 
 # Pass rate per exercise and score per student, shared by grade_report(),

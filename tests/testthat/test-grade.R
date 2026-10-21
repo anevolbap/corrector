@@ -29,17 +29,6 @@ test_that("grade_exercise warns and returns missing when no test file found", {
   expect_equal(as.character(result$status), "missing")
 })
 
-test_that("grade_exercise records timeout status", {
-  # setTimeLimit is unreliable for Sys.sleep on some platforms; the callr
-  # engine added in 0.2.0 is the robust path. Replaced in test-callr.R.
-  skip_on_cran()
-  skip("setTimeLimit + Sys.sleep is unreliable; covered by callr engine tests")
-  file <- test_path("fixtures/student_timeout/ejercicio1.R")
-  result <- grade_exercise(file, test_dir, timeout = 1)
-  row <- result[result$test == "test_ejercicio1_suma", ]
-  expect_equal(as.character(row$status), "timeout")
-})
-
 test_that("as.data.frame(format = 'wide') returns the legacy view", {
   file <- test_path("fixtures/student_ok/ejercicio1.R")
   result <- grade_exercise(file, test_dir, student = "Alice")

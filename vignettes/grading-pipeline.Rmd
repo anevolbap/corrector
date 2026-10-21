@@ -11,6 +11,8 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
+*[Versión en español](corregir-entregas.html)*
+
 This vignette walks through a complete grading run end to end: writing tests,
 gathering submissions, grading, summarising, and exporting.
 

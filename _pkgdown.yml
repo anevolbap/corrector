@@ -1,38 +1,47 @@
 url: https://anevolbap.github.io/corrector/
 
+# The site is in Spanish first; the English articles are listed under
+# "In English" and README.en.md is linked from the home page.
+lang: es
+
 template:
   bootstrap: 5
 
 reference:
-  - title: Grading
+  - title: Corregir
     contents:
       - grade_exercise
       - grade_submissions
       - scan_code
-  - title: Summarising
+  - title: Resumir
     contents:
       - grade_report
       - student_scores
       - plot_report
-  - title: Exporting
+  - title: Exportar
     contents:
       - export_to_csv
       - export_to_html
       - export_to_sheets
       - export_feedback
-  - title: Result object
+  - title: Objeto de resultados
     contents:
       - grade_results
       - as.data.frame.grade_results
-  - title: Helpers
+  - title: Auxiliares
     contents:
       - default_student_name
       - moodle_student_name
       - example_results
 
 articles:
-  - title: Guides
+  - title: Guías
     navbar: ~
+    contents:
+      - corregir-entregas
+      - evaluacion-anti-trampas
+  - title: In English
+    navbar: In English
     contents:
       - grading-pipeline
       - cheat-resistant-grading

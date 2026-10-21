@@ -11,6 +11,8 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
+*[Versión en español](evaluacion-anti-trampas.html)*
+
 A student file is R code, and R code can change how other R code behaves.
 This article shows what corrector does about that, which engine to pick, and
 how to write tests that are hard to fool.

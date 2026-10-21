@@ -23,21 +23,11 @@ test_that("grade_exercise returns source_error for unparseble file", {
 })
 
 test_that("grade_exercise warns and returns missing when no test file found", {
-  file <- test_path("fixtures/student_ok/ejercicio99.R")
+  file <- file.path(withr::local_tempdir(), "ejercicio99.R")
+  writeLines("x <- 1", file)
   expect_warning(result <- grade_exercise(file, test_dir), "No test file found")
   expect_equal(nrow(result), 1)
   expect_equal(as.character(result$status), "missing")
-})
-
-test_that("grade_exercise records timeout status", {
-  # setTimeLimit is unreliable for Sys.sleep on some platforms; the callr
-  # engine added in 0.2.0 is the robust path. Replaced in test-callr.R.
-  skip_on_cran()
-  skip("setTimeLimit + Sys.sleep is unreliable; covered by callr engine tests")
-  file <- test_path("fixtures/student_timeout/ejercicio1.R")
-  result <- grade_exercise(file, test_dir, timeout = 1)
-  row <- result[result$test == "test_ejercicio1_suma", ]
-  expect_equal(as.character(row$status), "timeout")
 })
 
 test_that("as.data.frame(format = 'wide') returns the legacy view", {
@@ -74,6 +64,24 @@ for (engine in c("callr", "inproc")) {
                file.path(tests, "test_ejercicio1.R"))
     res <- grade_exercise(file.path(dir, "ejercicio1.R"), tests, engine = engine)
     expect_equal(as.character(res$status), "pass")
+  })
+}
+
+for (engine in c("callr", "inproc")) {
+  test_that(paste("students cannot plant functions in the global env, engine", engine), {
+    dir <- withr::local_tempdir()
+    writeLines(c(
+      'assign("==", function(e1, e2) TRUE, envir = globalenv())',
+      'sumar <- function(a, b) {',
+      '  assign("==", function(e1, e2) TRUE, envir = globalenv())',
+      '  1',
+      '}'
+    ), file.path(dir, "ejercicio1.R"))
+    res <- grade_exercise(file.path(dir, "ejercicio1.R"), test_dir, engine = engine)
+    if (exists("==", envir = globalenv(), inherits = FALSE)) {
+      rm("==", envir = globalenv())
+    }
+    expect_true(all(res$status == "fail"))
   })
 }
 

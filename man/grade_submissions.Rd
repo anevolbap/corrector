@@ -11,7 +11,8 @@ grade_submissions(
   engine = c("callr", "inproc"),
   student_name_fn = default_student_name,
   allow_masking = character(),
-  workers = 1L
+  workers = 1L,
+  layout = c("folders", "moodle")
 )
 }
 \arguments{
@@ -35,6 +36,11 @@ name keep their folder name, with a warning.}
 Default 1. Values above 1 speed up large classes; a value near
 \code{parallel::detectCores()} is a good upper bound. Ignored by the
 \code{"inproc"} engine.}
+
+\item{layout}{\code{"folders"} (default): one folder per student. \code{"moodle"}:
+the zip or folder from Moodle's "Download all submissions", with or
+without "Download submissions in folders". Only file submissions are
+graded, and \code{student_name_fn} defaults to \code{\link[=moodle_student_name]{moodle_student_name()}}.}
 }
 \value{
 A \link{grade_results} object.
@@ -42,13 +48,15 @@ A \link{grade_results} object.
 \description{
 Expects one sub-folder per student inside \code{submissions_path}. Every student
 is graded on every exercise that has a test file in \code{test_dir}; a student
-who omits an exercise gets a \code{missing} row.
+who omits an exercise gets a \code{missing} row. The student's file is matched
+ignoring case (\code{Ejercicio1.R} counts as \code{ejercicio1}), and \code{.Rmd} or \code{.qmd}
+files are accepted when there is no \code{.R} file.
 }
 \details{
 If \code{submissions_path} ends in \code{.zip} it is extracted into a \code{tempdir()}
 subfolder first. Loose files, hidden folders and \verb{__MACOSX} are ignored.
-If the path holds a single folder with no \code{.R} files but with sub-folders,
-those sub-folders are taken as the students.
+If the path holds a single folder with no \code{.R}, \code{.Rmd} or \code{.qmd} files but
+with sub-folders, those sub-folders are taken as the students.
 }
 \examples{
 # One folder per student, one test file per exercise.

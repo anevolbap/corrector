@@ -11,12 +11,14 @@ reference:
   - title: Summarising
     contents:
       - grade_report
+      - student_scores
       - plot_report
   - title: Exporting
     contents:
       - export_to_csv
       - export_to_html
       - export_to_sheets
+      - export_feedback
   - title: Result object
     contents:
       - grade_results
@@ -24,6 +26,7 @@ reference:
   - title: Helpers
     contents:
       - default_student_name
+      - moodle_student_name
       - example_results
 
 articles:

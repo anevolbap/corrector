@@ -4,22 +4,30 @@
 \alias{grade_report}
 \title{Summarise grading results}
 \usage{
-grade_report(results)
+grade_report(results, scoring = c("all", "partial"), weights = NULL)
 }
 \arguments{
 \item{results}{A \link{grade_results} object returned by \code{\link[=grade_submissions]{grade_submissions()}}
 or \code{\link[=grade_exercise]{grade_exercise()}}.}
+
+\item{scoring}{\code{"all"} (default): an exercise counts as passed only if
+every test passes. \code{"partial"}: it scores the fraction of tests that
+pass. See \code{\link[=student_scores]{student_scores()}}.}
+
+\item{weights}{Optional named numeric vector of test or exercise weights.
+See \code{\link[=student_scores]{student_scores()}}.}
 }
 \value{
 A \code{grade_report} object (a list) with components:
 \describe{
-\item{\code{pass_rate_by_exercise}}{Named numeric vector (0-1). Fraction of
-students whose every test passed.}
-\item{\code{score_by_student}}{Named numeric vector (0-1). Mean pass rate
-across the student's exercises.}
+\item{\code{pass_rate_by_exercise}}{Named numeric vector (0-1). Mean
+exercise score across students.}
+\item{\code{score_by_student}}{Named numeric vector (0-1). Mean score
+across the student's submitted exercises (missing ones are left
+out; use \code{\link[=student_scores]{student_scores()}} to count them as 0).}
 \item{\code{overall_mean}}{Scalar numeric (0-1).}
 \item{\code{issue_counts}}{Named integer vector with counts of \code{error},
-\code{timeout}, and \code{missing} rows.}
+\code{timeout}, \code{missing}, and \code{source_error} rows.}
 }
 }
 \description{

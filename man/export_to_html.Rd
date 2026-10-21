@@ -4,7 +4,13 @@
 \alias{export_to_html}
 \title{Export grading results to an HTML report}
 \usage{
-export_to_html(results, path, include_details = TRUE)
+export_to_html(
+  results,
+  path,
+  include_details = TRUE,
+  scoring = c("all", "partial"),
+  weights = NULL
+)
 }
 \arguments{
 \item{results}{A \link{grade_results} object.}
@@ -13,6 +19,9 @@ export_to_html(results, path, include_details = TRUE)
 
 \item{include_details}{If \code{TRUE}, append a per-test breakdown under each
 student (errors and timeouts include the message). Default \code{TRUE}.}
+
+\item{scoring, weights}{How the score column and pass-rate row are
+computed. See \code{\link[=grade_report]{grade_report()}}.}
 }
 \value{
 \code{results}, invisibly.

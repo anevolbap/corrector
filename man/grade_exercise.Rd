@@ -14,13 +14,16 @@ grade_exercise(
 )
 }
 \arguments{
-\item{file}{Path to the student's R file (e.g. \code{"ejercicio1.R"}).}
+\item{file}{Path to the student's file: an R script (e.g. \code{"ejercicio1.R"})
+or an R Markdown or Quarto document (\code{.Rmd}, \code{.qmd}), whose R chunks are
+extracted with \code{knitr::purl()}. The matching test file is found ignoring
+case.}
 
 \item{test_dir}{Directory that contains the test files.}
 
-\item{timeout}{Maximum seconds allowed per test function. Tests that exceed
-this limit are recorded with status \code{timeout}. Default 10. Use \code{Inf} for
-no limit.}
+\item{timeout}{Maximum seconds allowed per test function, and for loading
+the student's file. Tests that exceed it are recorded with status
+\code{timeout}. Default 10. Use \code{Inf} for no limit.}
 
 \item{student}{Optional student display name. Defaults to \code{NA}.}
 
@@ -49,6 +52,12 @@ Sources the student's file and the matching test file into an isolated
 environment, runs every function whose name starts with
 \verb{test_<exercise>_}, and returns the per-test outcome as a \link{grade_results}
 object.
+}
+\details{
+A test passes if it returns \code{TRUE}. Tests can also use \pkg{testthat}
+expectations (call \code{library(testthat)} at the top of the test file): the
+test passes when at least one expectation succeeds and none fails, and a
+failed expectation is recorded as \code{fail} with its message.
 }
 \examples{
 # The package ships test files for five sample exercises.

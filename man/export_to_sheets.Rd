@@ -19,7 +19,9 @@ export_to_sheets(results, sheet_url, sheet = 1, format = c("wide", "long"))
 \code{results}, invisibly.
 }
 \description{
-Writes results to an existing Google Sheet, replacing its contents. Requires
+Writes results to an existing Google Sheet, replacing its contents. Text
+cells that could run as formulas get a leading \verb{'}, as in
+\code{\link[=export_to_csv]{export_to_csv()}}. Requires
 the \pkg{googlesheets4} package and prior authentication; call
 \code{googlesheets4::gs4_auth()} once per session before using this function.
 }

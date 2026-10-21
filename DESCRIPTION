@@ -1,6 +1,6 @@
 Package: corrector
 Title: Automatic Grading of R Coding Exercises
-Version: 0.3.1
+Version: 0.4.0
 Authors@R: person("Pablo", "Vena", email = "vena.pablo@gmail.com",
     role = c("aut", "cre"))
 Author: Pablo Vena [aut, cre]
@@ -8,8 +8,10 @@ Maintainer: Pablo Vena <vena.pablo@gmail.com>
 Description: Grades student R coding exercises against professor-written test
     functions. Accepts a directory or zip archive of submissions, matches each
     exercise file to its test file, runs the tests in a separate R process
-    with a time limit, and returns one row per test with its status.
-    Provides summaries, plots, and export to CSV, HTML or Google Sheets.
+    with a time limit, and returns one row per test with its status. Reads
+    'Moodle' submission exports and accepts R Markdown and Quarto files.
+    Provides partial-credit scores, summaries, plots, per-student feedback
+    files, and export to CSV, HTML or Google Sheets.
 License: MIT + file LICENSE
 URL: https://anevolbap.github.io/corrector/, https://github.com/anevolbap/corrector
 BugReports: https://github.com/anevolbap/corrector/issues

@@ -18,7 +18,9 @@ column per exercise. \code{"long"} writes the per-test detail.}
 \code{results}, invisibly.
 }
 \description{
-Export grading results to a CSV file
+Text cells that start with \code{=}, \code{+}, \code{-} or \code{@} get a leading \verb{'}, so a
+spreadsheet app does not run them as formulas (error messages come from
+student code).
 }
 \examples{
 path <- tempfile(fileext = ".csv")

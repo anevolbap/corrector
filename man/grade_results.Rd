@@ -13,8 +13,11 @@ A \code{grade_results} object is a data frame in long format with one row per
 records a \code{missing} submission or a \code{source_error}.}
 \item{\code{status}}{Factor with levels \code{pass}, \code{fail}, \code{error}, \code{timeout},
 \code{missing}, \code{source_error}.}
-\item{\code{message}}{Character. Error message when \code{status} is \code{error},
-\code{source_error}, or \code{timeout}; \code{NA} otherwise.}
+\item{\code{message}}{Character. The error message for \code{error},
+\code{source_error} and \code{timeout}; the testthat message or "test returned
+non-logical" for some \code{fail} rows; a note listing ignored student
+definitions (see \code{allow_masking} in \code{\link[=grade_exercise]{grade_exercise()}}); \code{NA}
+otherwise.}
 \item{\code{duration}}{Numeric. Seconds elapsed running the test, or \code{NA}
 when the test was not run.}
 }

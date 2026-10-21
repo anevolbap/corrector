@@ -52,8 +52,8 @@ resultados <- grade_submissions("entregas/", test_dir = "tests/")
 resultados
 # <grade_results> 4 rows, 2 students, 1 exercises
 # Status:
-#   pass  2
-#   fail  2
+#   pass          3
+#   fail          1
 
 # --- 3. Vista resumida y exportación ---
 grade_report(resultados)
@@ -134,8 +134,27 @@ La lista de ejercicios esperados sale del directorio de tests: cada archivo
 existe en `test_dir/`, se registra una fila con `status = missing` en lugar de
 ignorarlo en silencio.
 
-El código del estudiante y los tests se cargan en un entorno nuevo y aislado
-para cada ejercicio, así las entregas no se interfieren entre sí.
+El código del estudiante y los tests se cargan en entornos nuevos para cada
+ejercicio. Los tests no ven las funciones de base R que el estudiante
+redefine (como `all()` o `==`), salvo las que pases en `allow_masking`. Con el
+motor `callr` (el que se usa por defecto) cada ejercicio corre en un proceso
+aparte, así las entregas no se afectan entre sí.
+
+Los tests también pueden usar expectativas de testthat. Un `expect_*` que
+falla cuenta como `fail` y su mensaje queda en la columna `message`:
+
+```r
+# tests/test_ejercicio1.R
+library(testthat)
+
+test_ejercicio1_raices <- function() {
+  expect_equal(ceros_cuadratica(1, 0, -1), c(-1, 1))
+}
+```
+
+El estudiante puede entregar `ejercicio1.R`, `ejercicio1.Rmd` o
+`ejercicio1.qmd` (de los dos últimos se corren los bloques de código R). Las
+mayúsculas no importan: `Ejercicio1.R` cuenta como `ejercicio1`.
 
 ## Uso
 
@@ -172,6 +191,29 @@ googlesheets4::gs4_auth()
 export_to_sheets(resultados, "https://docs.google.com/spreadsheets/d/...")
 ```
 
+## Puntaje parcial y pesos
+
+Por defecto un ejercicio está aprobado solo si pasan todos sus tests.
+`student_scores()` da puntaje parcial (la fracción de tests que pasan) y
+acepta pesos por test o por ejercicio. La columna `total` es la nota: un
+ejercicio no entregado cuenta como 0.
+
+```r
+notas <- student_scores(resultados,
+                        weights = c(test_ejercicio1_raices = 2, ejercicio2 = 3))
+grade_report(resultados, scoring = "partial")
+```
+
+## Devolución a cada estudiante
+
+`export_feedback()` escribe un archivo Markdown por estudiante con su nota,
+el puntaje de cada ejercicio y el resultado de cada test, con el mensaje de
+error cuando lo hay:
+
+```r
+export_feedback(resultados, "devoluciones/")
+```
+
 ## Gráficos
 
 `plot_report()` genera tres gráficos en secuencia: puntajes de los estudiantes
@@ -194,10 +236,13 @@ plot_report(resultados, backend = "ggplot2")
 
 ## Tiempo límite por test
 
-Cada test tiene un límite de `timeout` segundos (10 por defecto). Por defecto
-el corrector usa el motor `callr`: corre cada ejercicio en un subproceso nuevo,
-con una carpeta de trabajo temporal, y lo mata cuando excede el límite, incluso
-dentro de un bucle infinito. Para cambiar el límite:
+Cada test tiene un límite de `timeout` segundos (10 por defecto), y la carga
+del archivo del estudiante también. El motor `callr` corre cada ejercicio en un
+subproceso nuevo, con una carpeta de trabajo temporal. Si un test no responde
+al límite (por ejemplo dentro de `Sys.sleep()`), el subproceso se corta cuando
+el ejercicio completo pasa `timeout` × cantidad de tests + 5 segundos: los
+tests que ya terminaron conservan su resultado y el resto queda como
+`timeout`. Para cambiar el límite:
 
 ```r
 resultados <- grade_submissions("entregas/", test_dir = "tests/", timeout = 30)
@@ -220,6 +265,12 @@ computadora: el código del estudiante puede leer y escribir cualquier archivo
 al que tenga acceso tu usuario, usar la red o ejecutar comandos del sistema.
 Si no confiás en quien escribió el código, corré el corrector dentro de un
 contenedor o una máquina virtual sin tus credenciales.
+
+La protección contra trampas cubre los casos comunes: redefinir funciones de
+base R en el archivo, escribirlas en el entorno global, o llamar a `quit()`.
+Un estudiante que conozca R a fondo todavía puede engañar al corrector (por
+ejemplo con `attach()` o modificando el paquete base), así que revisá a mano
+las notas que te llamen la atención.
 
 ## Archivos de tests de ejemplo
 
@@ -270,3 +321,15 @@ resultados <- grade_submissions(
 
 Las entregas también se pueden entregar como un único archivo `.zip`; el paquete
 lo descomprime automáticamente antes de corregir.
+
+### Moodle
+
+Para corregir directamente el `.zip` de "Descargar todas las entregas" de
+Moodle, usá `layout = "moodle"`. Funciona con y sin la opción "Descargar
+entregas en carpetas", corrige solo las entregas de archivos (ignora el texto
+en línea) y usa el nombre completo del estudiante:
+
+```r
+resultados <- grade_submissions("tarea1-entregas.zip", test_dir = "tests/",
+                                layout = "moodle")
+```

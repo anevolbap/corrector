@@ -50,11 +50,34 @@ test_that("default engine keeps student side effects out of the session", {
   expect_false(file.exists(file.path(wd, "salida.txt")))
 })
 
+test_that("a killed exercise keeps the results of tests that finished", {
+  skip_on_cran()
+  tests <- withr::local_tempdir()
+  writeLines(c(
+    'test_ejercicio1_a <- function() sumar(1, 1) == 2',
+    'test_ejercicio1_b <- function() { Sys.sleep(60); TRUE }'
+  ), file.path(tests, "test_ejercicio1.R"))
+  res <- grade_exercise(test_path("fixtures/student_ok/ejercicio1.R"), tests,
+                        timeout = 1, engine = "callr")
+  expect_equal(as.character(res$status[res$test == "test_ejercicio1_a"]), "pass")
+  expect_equal(as.character(res$status[res$test == "test_ejercicio1_b"]), "timeout")
+})
+
+test_that("lots of student output does not stall the callr engine", {
+  dir <- withr::local_tempdir()
+  writeLines(c('cat(strrep("x", 2e5))',
+               'sumar <- function(a, b) { message(strrep("y", 1e5)); a + b }'),
+             file.path(dir, "ejercicio1.R"))
+  result <- grade_exercise(file.path(dir, "ejercicio1.R"), test_dir, timeout = 3)
+  expect_true(all(result$status == "pass"))
+})
+
 test_that("callr engine returns no rows when the test file has no tests", {
   tests <- withr::local_tempdir()
   writeLines("ayuda <- function() 1", file.path(tests, "test_ejercicio1.R"))
   file <- test_path("fixtures/student_ok/ejercicio1.R")
-  result <- grade_exercise(file, tests, engine = "callr")
+  expect_warning(result <- grade_exercise(file, tests, engine = "callr"),
+                 "No functions named")
   expect_s3_class(result, "grade_results")
   expect_equal(nrow(result), 0)
 })

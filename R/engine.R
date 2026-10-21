@@ -8,14 +8,22 @@
 #'
 #' @noRd
 start_grading_callr <- function(file, test_file, timeout, student, protected) {
-  exercise <- tools::file_path_sans_ext(basename(file))
+  exercise <- test_exercise(test_file)
   test_fns <- discover_test_fns(test_file, exercise)
   if (length(test_fns) == 0) return(empty_grade_results())
+  code <- tryCatch(r_code_path(file), error = function(e) e)
+  if (inherits(code, "error")) {
+    warning("Failed to source ", basename(file), ": ", conditionMessage(code))
+    return(source_error_result(student, exercise, conditionMessage(code)))
+  }
   n <- max(length(test_fns), 1L)
   budget <- if (is.finite(timeout)) timeout * n + 5 else Inf
+  progress <- tempfile("corrector_progress", fileext = ".rds")
   list(
-    proc     = start_exercise_callr(file, test_file, test_fns, timeout, protected),
+    proc     = start_exercise_callr(code, test_file, test_fns, timeout, protected,
+                                    progress),
     deadline = as.numeric(Sys.time()) + budget,
+    progress = progress,
     file = file, test_fns = test_fns, timeout = timeout,
     student = student, exercise = exercise
   )
@@ -23,6 +31,15 @@ start_grading_callr <- function(file, test_file, timeout, student, protected) {
 
 finish_grading_callr <- function(job) {
   out <- finish_exercise_callr(job$proc)
+  # A killed subprocess saved the tests it finished; keep those results.
+  saved <- if (identical(out$kind, "killed") && file.exists(job$progress)) {
+    tryCatch(readRDS(job$progress), error = function(e) NULL)
+  }
+  if (!is.null(saved)) {
+    out <- list(kind = "tests", results = saved$results, masked = saved$masked,
+                killed = TRUE)
+  }
+  unlink(c(job$progress, paste0(job$progress, ".tmp")))
   if (identical(out$kind, "source_error")) {
     warning("Failed to source ", basename(job$file), ": ", out$message)
   }
@@ -39,15 +56,25 @@ wait_ms <- function(job) {
 past_deadline <- function(job) as.numeric(Sys.time()) > job$deadline
 
 start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
-                                 protected = character()) {
+                                 protected = character(), progress_file = tempfile()) {
   callr::r_bg(
     func = function(student_file, test_file, test_fns, timeout, protected,
-                    encodings) {
+                    encodings, progress_file) {
       # Files the student writes land in the subprocess's own temp dir.
       setwd(tempdir())
       student_env <- new.env(parent = globalenv())
+      # Same stubs as add_quit_stubs().
+      stub <- function(...) stop("quit() is not allowed while grading", call. = FALSE)
+      attr(stub, "corrector_stub") <- TRUE
+      assign("quit", stub, envir = student_env)
+      assign("q", stub, envir = student_env)
+      if (is.finite(timeout)) setTimeLimit(elapsed = timeout, transient = FALSE)
       src <- tryCatch({source(student_file, local = student_env, encoding = encodings[[1]]); TRUE},
                       error = function(e) conditionMessage(e))
+      setTimeLimit(elapsed = Inf, transient = FALSE)
+      if (!isTRUE(src) && grepl("elapsed time limit|CPU time limit", src)) {
+        return(list(kind = "load_timeout"))
+      }
       if (!isTRUE(src)) {
         return(list(kind = "source_error", message = src))
       }
@@ -56,15 +83,34 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       nms <- ls(student_env, all.names = TRUE)
       masked <- intersect(nms, protected)
       for (nm in setdiff(nms, masked)) assign(nm, get(nm, envir = student_env), envir = env)
+      masked <- masked[!vapply(masked, function(nm) {
+        isTRUE(attr(get(nm, envir = student_env), "corrector_stub"))
+      }, logical(1))]
       source(test_file, local = env, encoding = encodings[[2]])
+      parent.env(env) <- parent.env(globalenv())
       results <- list()
       for (fn in test_fns) {
         t0 <- Sys.time()
         if (is.finite(timeout)) setTimeLimit(elapsed = timeout, transient = FALSE)
-        out <- tryCatch(list(v = get(fn, envir = env)(), err = NULL),
-                        error = function(e) list(v = NULL, err = conditionMessage(e)))
+        # Same testthat handling as run_one_test_inproc().
+        n_ok <- 0L
+        out <- tryCatch(
+          list(v = withCallingHandlers(get(fn, envir = env)(),
+                                       expectation_success = function(c) {
+                                         n_ok <<- n_ok + 1L
+                                         tryInvokeRestart("continue_test")
+                                       }),
+               err = NULL, failed = FALSE),
+          error = function(e) list(v = NULL, err = conditionMessage(e),
+                                   failed = inherits(e, "expectation_failure")),
+          skip = function(e) list(v = NULL, failed = FALSE,
+                                  err = paste("test skipped:",
+                                              sub("^Reason: ", "", conditionMessage(e)))))
         setTimeLimit(elapsed = Inf, transient = FALSE)
-        results[[fn]] <- c(out, list(duration = as.numeric(difftime(Sys.time(), t0, units = "secs"))))
+        results[[fn]] <- c(out, list(n_ok = n_ok, duration = as.numeric(difftime(Sys.time(), t0, units = "secs"))))
+        # Write then rename, so a kill never leaves a half-written file.
+        saveRDS(list(results = results, masked = masked), paste0(progress_file, ".tmp"))
+        file.rename(paste0(progress_file, ".tmp"), progress_file)
       }
       list(kind = "tests", results = results, masked = masked)
     },
@@ -74,8 +120,12 @@ start_exercise_callr <- function(student_file, test_file, test_fns, timeout,
       test_fns     = test_fns,
       timeout      = timeout,
       protected    = protected,
-      encodings    = c(source_encoding(student_file), source_encoding(test_file))
-    )
+      encodings    = c(source_encoding(student_file), source_encoding(test_file)),
+      progress_file = progress_file
+    ),
+    # Discard student output: an unread pipe fills up and stalls the child.
+    stdout = NULL,
+    stderr = NULL
   )
 }
 
@@ -100,6 +150,9 @@ callr_to_rows <- function(out, test_fns, timeout, student, exercise) {
       duration = NA_real_,
       stringsAsFactors = FALSE
     ))
+  }
+  if (identical(out$kind, "load_timeout")) {
+    return(as.data.frame(load_timeout_result(student, exercise, test_fns, timeout)))
   }
   if (identical(out$kind, "killed")) {
     return(data.frame(
@@ -126,6 +179,14 @@ callr_to_rows <- function(out, test_fns, timeout, student, exercise) {
   # tests
   rows <- lapply(test_fns, function(fn) {
     r <- out$results[[fn]]
+    if (is.null(r) && isTRUE(out$killed)) {
+      return(data.frame(
+        student = student, exercise = exercise, test = fn,
+        status = "timeout",
+        message = sprintf("exceeded wall-clock budget (~%g s per test)", timeout),
+        duration = NA_real_, stringsAsFactors = FALSE
+      ))
+    }
     if (is.null(r)) {
       return(data.frame(
         student = student, exercise = exercise, test = fn,
@@ -135,13 +196,14 @@ callr_to_rows <- function(out, test_fns, timeout, student, exercise) {
     }
     if (!is.null(r$err)) {
       is_timeout <- grepl("elapsed time limit|CPU time limit", r$err)
+      status <- if (isTRUE(r$failed)) "fail" else if (is_timeout) "timeout" else "error"
       return(data.frame(
         student = student, exercise = exercise, test = fn,
-        status = if (is_timeout) "timeout" else "error",
+        status = status,
         message = r$err, duration = r$duration, stringsAsFactors = FALSE
       ))
     }
-    if (isTRUE(r$v)) {
+    if (isTRUE(r$v) || isTRUE(r$n_ok > 0 && !isFALSE(r$v))) {
       return(data.frame(student = student, exercise = exercise, test = fn,
                         status = "pass", message = NA_character_,
                         duration = r$duration, stringsAsFactors = FALSE))

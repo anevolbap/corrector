@@ -6,35 +6,33 @@
 #'
 #' @param results A [grade_results] object returned by [grade_submissions()]
 #'   or [grade_exercise()].
+#' @param scoring `"all"` (default): an exercise counts as passed only if
+#'   every test passes. `"partial"`: it scores the fraction of tests that
+#'   pass. See [student_scores()].
+#' @param weights Optional named numeric vector of test or exercise weights.
+#'   See [student_scores()].
 #' @return A `grade_report` object (a list) with components:
 #'   \describe{
-#'     \item{`pass_rate_by_exercise`}{Named numeric vector (0-1). Fraction of
-#'       students whose every test passed.}
-#'     \item{`score_by_student`}{Named numeric vector (0-1). Mean pass rate
-#'       across the student's exercises.}
+#'     \item{`pass_rate_by_exercise`}{Named numeric vector (0-1). Mean
+#'       exercise score across students.}
+#'     \item{`score_by_student`}{Named numeric vector (0-1). Mean score
+#'       across the student's submitted exercises (missing ones are left
+#'       out; use [student_scores()] to count them as 0).}
 #'     \item{`overall_mean`}{Scalar numeric (0-1).}
 #'     \item{`issue_counts`}{Named integer vector with counts of `error`,
-#'       `timeout`, and `missing` rows.}
+#'       `timeout`, `missing`, and `source_error` rows.}
 #'   }
 #' @export
 #' @examples
 #' report <- grade_report(example_results())
 #' report
 #' report$score_by_student
-grade_report <- function(results) {
+grade_report <- function(results, scoring = c("all", "partial"), weights = NULL) {
   results <- ensure_grade_results(results)
-  wide <- as.data.frame(results, format = "wide")
-  exercise_cols <- setdiff(names(wide), "student")
-
-  pass_rate <- vapply(exercise_cols, function(ex) {
-    mean(wide[[ex]], na.rm = TRUE)
-  }, numeric(1))
-  names(pass_rate) <- exercise_cols
-
-  student_scores <- vapply(seq_len(nrow(wide)), function(i) {
-    mean(unlist(wide[i, exercise_cols, drop = FALSE]), na.rm = TRUE)
-  }, numeric(1))
-  names(student_scores) <- wide$student
+  scoring <- match.arg(scoring)
+  summ <- summary_scores(results, scoring, weights)
+  pass_rate <- summ$pass_rate
+  student_scores <- summ$by_student
 
   issue_counts <- c(
     error   = sum(results$status == "error"),
@@ -59,6 +57,10 @@ print.grade_report <- function(x, ...) {
   pct <- function(v) sprintf("%.0f%%", v * 100)
 
   cat("=== Grade Report ===\n\n")
+  if (length(x$score_by_student) == 0) {
+    cat("No results.\n")
+    return(invisible(x))
+  }
 
   cat("Pass rate by exercise:\n")
   for (ex in names(x$pass_rate_by_exercise)) {
@@ -84,6 +86,29 @@ print.grade_report <- function(x, ...) {
   }
 
   invisible(x)
+}
+
+# Pass rate per exercise and score per student (missing exercises left out),
+# shared by grade_report(), export_to_html() and plot_report().
+summary_scores <- function(results, scoring = "all", weights = NULL) {
+  scores <- student_scores(results, scoring = scoring, weights = weights)
+  exercise_cols <- setdiff(names(scores), c("student", "total"))
+  ex_weights <- vapply(exercise_cols, function(ex) {
+    if (ex %in% names(weights)) weights[[ex]] else 1
+  }, numeric(1))
+
+  pass_rate <- vapply(exercise_cols, function(ex) {
+    mean(scores[[ex]], na.rm = TRUE)
+  }, numeric(1))
+  names(pass_rate) <- exercise_cols
+
+  by_student <- vapply(seq_len(nrow(scores)), function(i) {
+    stats::weighted.mean(unlist(scores[i, exercise_cols, drop = FALSE]),
+                         ex_weights, na.rm = TRUE)
+  }, numeric(1))
+  names(by_student) <- scores$student
+
+  list(pass_rate = pass_rate, by_student = by_student)
 }
 
 ensure_grade_results <- function(x) {

@@ -52,8 +52,8 @@ results <- grade_submissions("submissions/", test_dir = "tests/")
 results
 # <grade_results> 4 rows, 2 students, 1 exercises
 # Status:
-#   pass  2
-#   fail  2
+#   pass          3
+#   fail          1
 
 # --- 3. Summarise and export ---
 grade_report(results)
@@ -132,8 +132,27 @@ file defines an exercise. If a student does not submit an exercise that has a
 test file, a row with `status = missing` is recorded rather than silently
 skipping it.
 
-Student code and test code are sourced into a fresh, isolated environment for
-each exercise, so submissions cannot interfere with each other.
+Student code and test code are sourced into fresh environments for each
+exercise. Tests do not see base R functions the student redefines (such as
+`all()` or `==`), except the ones you list in `allow_masking`. With the
+default `callr` engine each exercise runs in its own process, so submissions
+cannot affect each other.
+
+Tests can also use testthat expectations. A failed `expect_*` counts as
+`fail`, and its message goes in the `message` column:
+
+```r
+# tests/test_ejercicio1.R
+library(testthat)
+
+test_ejercicio1_roots <- function() {
+  expect_equal(ceros_cuadratica(1, 0, -1), c(-1, 1))
+}
+```
+
+Students can hand in `ejercicio1.R`, `ejercicio1.Rmd` or `ejercicio1.qmd`
+(for the last two, the R code chunks run). Case does not matter:
+`Ejercicio1.R` counts as `ejercicio1`.
 
 ## Usage
 
@@ -159,6 +178,29 @@ googlesheets4::gs4_auth()
 export_to_sheets(results, "https://docs.google.com/spreadsheets/d/...")
 ```
 
+## Partial credit and weights
+
+By default an exercise passes only when all its tests pass.
+`student_scores()` gives partial credit (the fraction of tests that pass) and
+takes weights per test or per exercise. The `total` column is the grade: a
+missing exercise counts as 0.
+
+```r
+grades <- student_scores(results,
+                         weights = c(test_ejercicio1_roots = 2, ejercicio2 = 3))
+grade_report(results, scoring = "partial")
+```
+
+## Feedback for each student
+
+`export_feedback()` writes one Markdown file per student with their grade,
+the score of each exercise, and the result of each test, with the error
+message when there is one:
+
+```r
+export_feedback(results, "feedback/")
+```
+
 ## Plots
 
 `plot_report()` produces three sequential plots: student scores ranked,
@@ -181,10 +223,13 @@ plot_report(results, backend = "ggplot2")
 
 ## Timeout
 
-Each test gets `timeout` seconds (default 10). The default engine, `callr`,
-runs each exercise in a fresh subprocess with a temporary working directory,
-and kills it when the budget runs out, even inside a busy loop. To change the
-limit:
+Each test gets `timeout` seconds (default 10), and so does loading the
+student's file. The default engine, `callr`, runs each exercise in a fresh
+subprocess with a temporary working directory. If a test does not respond to
+the limit (for example inside `Sys.sleep()`), the subprocess is killed once
+the whole exercise passes `timeout` × number of tests + 5 seconds: tests that
+already finished keep their result, and the rest are marked `timeout`. To
+change the limit:
 
 ```r
 results <- grade_submissions("submissions/", test_dir = "tests/", timeout = 30)
@@ -206,6 +251,12 @@ corrector is not a sandbox. The `callr` engine protects your R session, not
 your computer: student code can read and write any file your user can, use
 the network, or run system commands. For code from people you do not trust,
 run corrector inside a container or virtual machine without your credentials.
+
+The protection against cheating covers the common cases: redefining base R
+functions in the file, writing them into the global environment, or calling
+`quit()`. A student who knows R in depth can still fool the grader (for
+example with `attach()` or by changing the base package), so check any grade
+that looks wrong by hand.
 
 ## Example test files
 
@@ -241,6 +292,18 @@ results <- grade_submissions(
 
 Submissions can also be handed in as a single `.zip`; the package extracts it
 into a temporary directory before grading.
+
+### Moodle
+
+To grade the `.zip` from Moodle's "Download all submissions" directly, use
+`layout = "moodle"`. It works with and without "Download submissions in
+folders", grades only file submissions (online text is skipped), and uses the
+student's full name:
+
+```r
+results <- grade_submissions("assignment1-submissions.zip", test_dir = "tests/",
+                             layout = "moodle")
+```
 
 ## Contributing
 

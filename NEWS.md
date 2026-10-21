@@ -1,3 +1,12 @@
+# corrector 0.5.0
+
+## Breaking changes
+
+* `grade_report()`, `export_to_html()` and `plot_report()` count a missing
+  exercise, or one with a `source_error`, as 0. Before, they left it out, so
+  a student who handed in 1 of 5 exercises, all correct, showed 100%. The
+  student score is now the same as `student_scores()$total`.
+
 # corrector 0.4.0
 
 ## New features

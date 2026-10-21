@@ -22,9 +22,10 @@ A \code{grade_report} object (a list) with components:
 \describe{
 \item{\code{pass_rate_by_exercise}}{Named numeric vector (0-1). Mean
 exercise score across students.}
-\item{\code{score_by_student}}{Named numeric vector (0-1). Mean score
-across the student's submitted exercises (missing ones are left
-out; use \code{\link[=student_scores]{student_scores()}} to count them as 0).}
+\item{\code{score_by_student}}{Named numeric vector (0-1). The student's
+\code{total} from \code{\link[=student_scores]{student_scores()}}.}
+
+In both, a \code{missing} exercise or one with a \code{source_error} counts as 0.
 \item{\code{overall_mean}}{Scalar numeric (0-1).}
 \item{\code{issue_counts}}{Named integer vector with counts of \code{error},
 \code{timeout}, \code{missing}, and \code{source_error} rows.}

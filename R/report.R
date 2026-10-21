@@ -6,12 +6,18 @@
 #'
 #' @param results A [grade_results] object returned by [grade_submissions()]
 #'   or [grade_exercise()].
+#' @param scoring `"all"` (default): an exercise counts as passed only if
+#'   every test passes. `"partial"`: it scores the fraction of tests that
+#'   pass. See [student_scores()].
+#' @param weights Optional named numeric vector of test or exercise weights.
+#'   See [student_scores()].
 #' @return A `grade_report` object (a list) with components:
 #'   \describe{
-#'     \item{`pass_rate_by_exercise`}{Named numeric vector (0-1). Fraction of
-#'       students whose every test passed.}
-#'     \item{`score_by_student`}{Named numeric vector (0-1). Mean pass rate
-#'       across the student's exercises.}
+#'     \item{`pass_rate_by_exercise`}{Named numeric vector (0-1). Mean
+#'       exercise score across students.}
+#'     \item{`score_by_student`}{Named numeric vector (0-1). Mean score
+#'       across the student's submitted exercises (missing ones are left
+#'       out; use [student_scores()] to count them as 0).}
 #'     \item{`overall_mean`}{Scalar numeric (0-1).}
 #'     \item{`issue_counts`}{Named integer vector with counts of `error`,
 #'       `timeout`, and `missing` rows.}
@@ -21,10 +27,14 @@
 #' report <- grade_report(example_results())
 #' report
 #' report$score_by_student
-grade_report <- function(results) {
+grade_report <- function(results, scoring = c("all", "partial"), weights = NULL) {
   results <- ensure_grade_results(results)
-  wide <- as.data.frame(results, format = "wide")
-  exercise_cols <- setdiff(names(wide), "student")
+  scoring <- match.arg(scoring)
+  wide <- student_scores(results, scoring = scoring, weights = weights)
+  exercise_cols <- setdiff(names(wide), c("student", "total"))
+  ex_weights <- vapply(exercise_cols, function(ex) {
+    if (ex %in% names(weights)) weights[[ex]] else 1
+  }, numeric(1))
 
   pass_rate <- vapply(exercise_cols, function(ex) {
     mean(wide[[ex]], na.rm = TRUE)
@@ -32,7 +42,8 @@ grade_report <- function(results) {
   names(pass_rate) <- exercise_cols
 
   student_scores <- vapply(seq_len(nrow(wide)), function(i) {
-    mean(unlist(wide[i, exercise_cols, drop = FALSE]), na.rm = TRUE)
+    stats::weighted.mean(unlist(wide[i, exercise_cols, drop = FALSE]),
+                         ex_weights, na.rm = TRUE)
   }, numeric(1))
   names(student_scores) <- wide$student
 

@@ -11,6 +11,7 @@ reference:
   - title: Summarising
     contents:
       - grade_report
+      - student_scores
       - plot_report
   - title: Exporting
     contents:

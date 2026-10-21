@@ -1,3 +1,11 @@
+# corrector 0.3.1
+
+* Every exported function has examples.
+* A pkgdown site is built and deployed to
+  <https://anevolbap.github.io/corrector/>.
+* DESCRIPTION describes the current per-test results and the callr engine.
+* Prepared for the first CRAN submission (`cran-comments.md`).
+
 # corrector 0.3.0
 
 ## Breaking changes

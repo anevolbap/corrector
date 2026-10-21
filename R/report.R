@@ -30,22 +30,9 @@
 grade_report <- function(results, scoring = c("all", "partial"), weights = NULL) {
   results <- ensure_grade_results(results)
   scoring <- match.arg(scoring)
-  wide <- student_scores(results, scoring = scoring, weights = weights)
-  exercise_cols <- setdiff(names(wide), c("student", "total"))
-  ex_weights <- vapply(exercise_cols, function(ex) {
-    if (ex %in% names(weights)) weights[[ex]] else 1
-  }, numeric(1))
-
-  pass_rate <- vapply(exercise_cols, function(ex) {
-    mean(wide[[ex]], na.rm = TRUE)
-  }, numeric(1))
-  names(pass_rate) <- exercise_cols
-
-  student_scores <- vapply(seq_len(nrow(wide)), function(i) {
-    stats::weighted.mean(unlist(wide[i, exercise_cols, drop = FALSE]),
-                         ex_weights, na.rm = TRUE)
-  }, numeric(1))
-  names(student_scores) <- wide$student
+  summ <- summary_scores(results, scoring, weights)
+  pass_rate <- summ$pass_rate
+  student_scores <- summ$by_student
 
   issue_counts <- c(
     error   = sum(results$status == "error"),
@@ -95,6 +82,29 @@ print.grade_report <- function(x, ...) {
   }
 
   invisible(x)
+}
+
+# Pass rate per exercise and score per student (missing exercises left out),
+# shared by grade_report(), export_to_html() and plot_report().
+summary_scores <- function(results, scoring = "all", weights = NULL) {
+  scores <- student_scores(results, scoring = scoring, weights = weights)
+  exercise_cols <- setdiff(names(scores), c("student", "total"))
+  ex_weights <- vapply(exercise_cols, function(ex) {
+    if (ex %in% names(weights)) weights[[ex]] else 1
+  }, numeric(1))
+
+  pass_rate <- vapply(exercise_cols, function(ex) {
+    mean(scores[[ex]], na.rm = TRUE)
+  }, numeric(1))
+  names(pass_rate) <- exercise_cols
+
+  by_student <- vapply(seq_len(nrow(scores)), function(i) {
+    stats::weighted.mean(unlist(scores[i, exercise_cols, drop = FALSE]),
+                         ex_weights, na.rm = TRUE)
+  }, numeric(1))
+  names(by_student) <- scores$student
+
+  list(pass_rate = pass_rate, by_student = by_student)
 }
 
 ensure_grade_results <- function(x) {

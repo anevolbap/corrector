@@ -36,6 +36,24 @@ test_that("unknown weight names warn", {
   expect_warning(student_scores(make_scored(), weights = c(nope = 2)), "nope")
 })
 
+test_that("export_to_html uses the chosen scoring", {
+  res <- make_scored()
+  all_path  <- withr::local_tempfile(fileext = ".html")
+  part_path <- withr::local_tempfile(fileext = ".html")
+  export_to_html(res, all_path)
+  export_to_html(res, part_path, scoring = "partial")
+  expect_match(paste(readLines(all_path), collapse = ""), "Ana</td>.*?>50%<")
+  expect_match(paste(readLines(part_path), collapse = ""), "Ana</td>.*?>75%<")
+})
+
+test_that("plot_report accepts partial scoring on both backends", {
+  pdf(NULL)
+  on.exit(dev.off())
+  expect_silent(plot_report(make_scored(), ask = FALSE, scoring = "partial"))
+  skip_if_not_installed("ggplot2")
+  expect_no_error(plot_report(make_scored(), backend = "ggplot2", scoring = "partial"))
+})
+
 test_that("grade_report defaults are unchanged and accept partial scoring", {
   res <- make_scored()
   old <- grade_report(res)

@@ -4,7 +4,13 @@
 \alias{plot_report}
 \title{Plot a visual summary of grading results}
 \usage{
-plot_report(results, ask = interactive(), backend = c("base", "ggplot2"))
+plot_report(
+  results,
+  ask = interactive(),
+  backend = c("base", "ggplot2"),
+  scoring = c("all", "partial"),
+  weights = NULL
+)
 }
 \arguments{
 \item{results}{A \link{grade_results} object.}
@@ -15,6 +21,9 @@ Pass \code{FALSE} when rendering to a file device (PDF, PNG, etc.).}
 \item{backend}{\code{"base"} (default) uses base graphics, no extra dependencies.
 \code{"ggplot2"} uses ggplot2 when installed and falls back to base R with a
 warning otherwise.}
+
+\item{scoring, weights}{How the two bar charts score students and
+exercises. See \code{\link[=grade_report]{grade_report()}}. The heatmap always shows pass/fail.}
 }
 \value{
 \code{results}, invisibly.

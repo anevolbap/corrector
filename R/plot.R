@@ -13,15 +13,19 @@
 #' @param backend `"base"` (default) uses base graphics, no extra dependencies.
 #'   `"ggplot2"` uses ggplot2 when installed and falls back to base R with a
 #'   warning otherwise.
+#' @param scoring,weights How the two bar charts score students and
+#'   exercises. See [grade_report()]. The heatmap always shows pass/fail.
 #' @return `results`, invisibly.
 #' @importFrom graphics abline axis barplot box image legend par
-#' @importFrom stats setNames aggregate
+#' @importFrom stats aggregate
 #' @export
 #' @examples
 #' plot_report(example_results(), ask = FALSE)
-plot_report <- function(results, ask = interactive(), backend = c("base", "ggplot2")) {
+plot_report <- function(results, ask = interactive(), backend = c("base", "ggplot2"),
+                        scoring = c("all", "partial"), weights = NULL) {
   results <- ensure_grade_results(results)
   backend <- match.arg(backend)
+  summ <- summary_scores(results, match.arg(scoring), weights)
 
   if (backend == "ggplot2" && !requireNamespace("ggplot2", quietly = TRUE)) {
     warning("ggplot2 not installed; falling back to base graphics.")
@@ -29,25 +33,20 @@ plot_report <- function(results, ask = interactive(), backend = c("base", "ggplo
   }
 
   if (backend == "ggplot2") {
-    plot_report_ggplot(results)
+    plot_report_ggplot(results, summ)
     return(invisible(results))
   }
 
-  plot_report_base(results, ask = ask)
+  plot_report_base(results, summ, ask = ask)
   invisible(results)
 }
 
-plot_report_base <- function(results, ask) {
+plot_report_base <- function(results, summ, ask) {
   wide <- as.data.frame(results, format = "wide")
   exercise_cols <- setdiff(names(wide), "student")
 
-  pass_rate <- vapply(exercise_cols, function(ex) mean(wide[[ex]], na.rm = TRUE), numeric(1))
-  student_scores <- setNames(
-    vapply(seq_len(nrow(wide)), function(i) {
-      mean(unlist(wide[i, exercise_cols, drop = FALSE]), na.rm = TRUE)
-    }, numeric(1)),
-    wide$student
-  )
+  pass_rate <- summ$pass_rate
+  student_scores <- summ$by_student
 
   old_par <- par(ask = ask)
   on.exit(par(old_par))
@@ -102,22 +101,20 @@ plot_report_base <- function(results, ask) {
   box()
 }
 
-plot_report_ggplot <- function(results) {
+plot_report_ggplot <- function(results, summ) {
   wide <- as.data.frame(results, format = "wide")
   exercise_cols <- setdiff(names(wide), "student")
 
   pass_rate <- data.frame(
     exercise  = exercise_cols,
-    pass_rate = vapply(exercise_cols, function(ex) mean(wide[[ex]], na.rm = TRUE), numeric(1)),
+    pass_rate = unname(summ$pass_rate),
     stringsAsFactors = FALSE
   )
   pass_rate$exercise <- factor(pass_rate$exercise, levels = pass_rate$exercise)
 
   scores <- data.frame(
     student = wide$student,
-    score   = vapply(seq_len(nrow(wide)), function(i) {
-      mean(unlist(wide[i, exercise_cols, drop = FALSE]), na.rm = TRUE)
-    }, numeric(1)),
+    score   = unname(summ$by_student),
     stringsAsFactors = FALSE
   )
   scores$student <- factor(scores$student, levels = scores$student[order(scores$score)])

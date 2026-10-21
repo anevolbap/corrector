@@ -70,21 +70,23 @@ export_to_sheets <- function(results, sheet_url, sheet = 1, format = c("wide", "
 #' @param path Output file path (e.g. `"report.html"`).
 #' @param include_details If `TRUE`, append a per-test breakdown under each
 #'   student (errors and timeouts include the message). Default `TRUE`.
+#' @param scoring,weights How the score column and pass-rate row are
+#'   computed. See [grade_report()].
 #' @return `results`, invisibly.
 #' @export
 #' @examples
 #' path <- tempfile(fileext = ".html")
 #' export_to_html(example_results(), path)
 #' file.exists(path)
-export_to_html <- function(results, path, include_details = TRUE) {
+export_to_html <- function(results, path, include_details = TRUE,
+                           scoring = c("all", "partial"), weights = NULL) {
   results <- ensure_grade_results(results)
   wide <- as.data.frame(results, format = "wide")
   exercise_cols <- setdiff(names(wide), "student")
 
-  pass_rate <- vapply(exercise_cols, function(ex) mean(wide[[ex]], na.rm = TRUE), numeric(1))
-  student_scores <- vapply(seq_len(nrow(wide)), function(i) {
-    mean(unlist(wide[i, exercise_cols, drop = FALSE]), na.rm = TRUE)
-  }, numeric(1))
+  summ <- summary_scores(results, match.arg(scoring), weights)
+  pass_rate <- summ$pass_rate
+  student_scores <- unname(summ$by_student)
 
   header_cells <- paste(
     c('<th>Student</th>',

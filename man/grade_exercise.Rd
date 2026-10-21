@@ -9,7 +9,7 @@ grade_exercise(
   test_dir,
   timeout = 10,
   student = NA_character_,
-  engine = c("callr", "inproc"),
+  engine = c("callr", "inproc", "isolated"),
   allow_masking = character()
 )
 }
@@ -33,7 +33,13 @@ directory. The timeout is a hard wall-clock limit, and assignments with
 \verb{<<-} or files the student writes do not reach your session or folder.
 \code{"inproc"} runs tests in the current R session. It is faster, but its
 \code{setTimeLimit()} timeout does not interrupt every kind of loop, and
-student code can see and change your global environment.}
+student code can see and change your global environment.
+\code{"isolated"} runs the tests in one subprocess and the student code in
+another. Each student function the tests call runs in the student
+process and only its result (plain data) comes back, so tricks such as
+\code{attach()}, S3 methods for comparisons or replaced base functions do
+not change the grade. It is slower, and a student function may not
+return a function or an environment. Use it when cheating matters.}
 
 \item{allow_masking}{Character vector of function names from base R and
 the default packages (stats, utils, methods, graphics, grDevices) that

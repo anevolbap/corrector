@@ -8,7 +8,7 @@ grade_submissions(
   submissions_path,
   test_dir,
   timeout = 10,
-  engine = c("callr", "inproc"),
+  engine = c("callr", "inproc", "isolated"),
   student_name_fn = default_student_name,
   allow_masking = character(),
   workers = 1L,
@@ -22,7 +22,8 @@ grade_submissions(
 
 \item{timeout}{Maximum seconds allowed per test function. Default 10.}
 
-\item{engine}{\code{"callr"} (default) or \code{"inproc"}. See \code{\link[=grade_exercise]{grade_exercise()}}.}
+\item{engine}{\code{"callr"} (default), \code{"inproc"} or \code{"isolated"}. See
+\code{\link[=grade_exercise]{grade_exercise()}}.}
 
 \item{student_name_fn}{Function applied to each student folder name to
 produce the display name. Defaults to taking the first underscore-

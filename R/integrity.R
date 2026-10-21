@@ -153,3 +153,8 @@ portable <- function(f) {
   environment(f) <- baseenv()
   f
 }
+
+# What callr runs in a subprocess. callr gives the function it runs the
+# global environment, where names can be masked by attach() in student code,
+# so the real code arrives as `.f`, which keeps its base environment.
+run_in_child <- function(.f, ...) .f(...)

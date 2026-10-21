@@ -9,7 +9,8 @@ grade_submissions(
   test_dir,
   timeout = Inf,
   engine = c("inproc", "callr"),
-  student_name_fn = default_student_name
+  student_name_fn = default_student_name,
+  allow_masking = character()
 )
 }
 \arguments{
@@ -24,6 +25,9 @@ grade_submissions(
 \item{student_name_fn}{Function applied to each student folder name to
 produce the display name. Defaults to taking the first underscore-
 separated token and applying title case.}
+
+\item{allow_masking}{Base function names students may redefine. See
+\code{\link[=grade_exercise]{grade_exercise()}}.}
 }
 \value{
 A \link{grade_results} object.

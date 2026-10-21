@@ -5,20 +5,26 @@
 #' the subprocess exceeds the budget.
 #'
 #' @noRd
-run_exercise_callr <- function(student_file, test_file, test_fns, timeout) {
+run_exercise_callr <- function(student_file, test_file, test_fns, timeout,
+                               protected = character()) {
   if (!requireNamespace("callr", quietly = TRUE)) {
     stop("Package 'callr' is required for engine = 'callr'. ",
          "Install with: install.packages('callr')")
   }
 
   proc <- callr::r_bg(
-    func = function(student_file, test_file, test_fns, timeout) {
-      env <- new.env(parent = baseenv())
-      src <- tryCatch({source(student_file, local = env); TRUE},
+    func = function(student_file, test_file, test_fns, timeout, protected) {
+      student_env <- new.env(parent = baseenv())
+      src <- tryCatch({source(student_file, local = student_env); TRUE},
                       error = function(e) conditionMessage(e))
       if (!isTRUE(src)) {
         return(list(kind = "source_error", message = src))
       }
+      # Same isolation as the inproc engine (see copy_student_objects()).
+      env <- new.env(parent = baseenv())
+      nms <- ls(student_env, all.names = TRUE)
+      masked <- intersect(nms, protected)
+      for (nm in setdiff(nms, masked)) assign(nm, get(nm, envir = student_env), envir = env)
       source(test_file, local = env)
       results <- list()
       for (fn in test_fns) {
@@ -29,13 +35,14 @@ run_exercise_callr <- function(student_file, test_file, test_fns, timeout) {
         setTimeLimit(elapsed = Inf, transient = FALSE)
         results[[fn]] <- c(out, list(duration = as.numeric(difftime(Sys.time(), t0, units = "secs"))))
       }
-      list(kind = "tests", results = results)
+      list(kind = "tests", results = results, masked = masked)
     },
     args = list(
       student_file = student_file,
       test_file    = test_file,
       test_fns     = test_fns,
-      timeout      = timeout
+      timeout      = timeout,
+      protected    = protected
     )
   )
 

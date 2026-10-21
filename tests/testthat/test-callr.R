@@ -32,3 +32,14 @@ test_that("callr engine actually kills a Sys.sleep timeout", {
   expect_lt(elapsed, 15)
   expect_true(any(as.character(result$status) == "timeout"))
 })
+
+test_that("callr engine does not let students mask base functions", {
+  skip_if_not_installed("callr")
+  dir <- withr::local_tempdir()
+  writeLines(c('sumar <- function(a, b) 1', '`==` <- function(e1, e2) TRUE'),
+             file.path(dir, "ejercicio1.R"))
+  result <- grade_exercise(file.path(dir, "ejercicio1.R"), test_dir,
+                           engine = "callr")
+  expect_true(all(result$status == "fail"))
+  expect_match(result$message, "==", fixed = TRUE)
+})

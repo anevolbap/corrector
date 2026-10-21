@@ -14,14 +14,22 @@
 #'   `setTimeLimit()`. `"callr"` runs each exercise in a fresh subprocess via
 #'   the \pkg{callr} package, giving a hard wall-clock timeout that interrupts
 #'   busy loops. Requires the `callr` package.
+#' @param allow_masking Character vector of function names from base R and
+#'   the default packages (stats, utils, methods, graphics, grDevices) that
+#'   the student may redefine, e.g. `"factorial"` when the exercise asks for
+#'   it. Any other student object with such a name is not visible to the
+#'   tests, so a student cannot pass by redefining `all()` or `==`. Ignored
+#'   names are listed in the `message` column.
 #' @return A [grade_results] object with one row per test. If the student file
 #'   fails to parse, one row with `status = source_error`. If no matching test
 #'   file is found, one row with `status = missing` and a warning.
 #' @export
 grade_exercise <- function(file, test_dir, timeout = Inf,
                            student = NA_character_,
-                           engine = c("inproc", "callr")) {
+                           engine = c("inproc", "callr"),
+                           allow_masking = character()) {
   engine <- match.arg(engine)
+  protected <- setdiff(protected_names(), allow_masking)
   exercise <- tools::file_path_sans_ext(basename(file))
   test_file <- find_test_file(file, test_dir)
 
@@ -40,14 +48,14 @@ grade_exercise <- function(file, test_dir, timeout = Inf,
 
   test_fns <- discover_test_fns(test_file, exercise)
   if (engine == "callr") {
-    out <- run_exercise_callr(file, test_file, test_fns, timeout)
+    out <- run_exercise_callr(file, test_file, test_fns, timeout, protected)
     df <- callr_to_rows(out, test_fns, timeout, student, exercise)
-    return(new_grade_results(df))
+    return(new_grade_results(add_masking_note(df, out$masked)))
   }
 
-  env <- new.env(parent = baseenv())
+  student_env <- new.env(parent = baseenv())
   src <- tryCatch({
-    source(file, local = env)
+    source(file, local = student_env)
     list(ok = TRUE)
   }, error = function(e) list(ok = FALSE, message = conditionMessage(e)))
 
@@ -64,16 +72,17 @@ grade_exercise <- function(file, test_dir, timeout = Inf,
     )))
   }
 
+  # Tests run in their own environment. Student objects are copied in, except
+  # those that would mask a protected function the tests rely on.
+  env <- new.env(parent = baseenv())
+  masked <- copy_student_objects(student_env, env, protected)
   source(test_file, local = env)
-  prefix <- paste0("test_", exercise, "_")
-  test_fns_in_env <- ls(envir = env)
-  test_fns_in_env <- test_fns_in_env[startsWith(test_fns_in_env, prefix)]
 
-  if (length(test_fns_in_env) == 0) {
+  if (length(test_fns) == 0) {
     return(empty_grade_results())
   }
 
-  rows <- lapply(test_fns_in_env, function(fn) {
+  rows <- lapply(test_fns, function(fn) {
     out <- run_one_test_inproc(get(fn, envir = env), timeout)
     data.frame(
       student  = student,
@@ -85,7 +94,7 @@ grade_exercise <- function(file, test_dir, timeout = Inf,
       stringsAsFactors = FALSE
     )
   })
-  new_grade_results(do.call(rbind, rows))
+  new_grade_results(add_masking_note(do.call(rbind, rows), masked))
 }
 
 #' Grade all student submissions in a directory or zip archive
@@ -104,12 +113,15 @@ grade_exercise <- function(file, test_dir, timeout = Inf,
 #' @param student_name_fn Function applied to each student folder name to
 #'   produce the display name. Defaults to taking the first underscore-
 #'   separated token and applying title case.
+#' @param allow_masking Base function names students may redefine. See
+#'   [grade_exercise()].
 #' @return A [grade_results] object.
 #' @importFrom utils unzip
 #' @export
 grade_submissions <- function(submissions_path, test_dir, timeout = Inf,
                               engine = c("inproc", "callr"),
-                              student_name_fn = default_student_name) {
+                              student_name_fn = default_student_name,
+                              allow_masking = character()) {
   engine <- match.arg(engine)
   dir <- extract_if_zip(submissions_path)
   students <- list.files(dir)
@@ -148,7 +160,8 @@ grade_submissions <- function(submissions_path, test_dir, timeout = Inf,
         )))
       }
       grade_exercise(file, test_dir = test_dir, timeout = timeout,
-                     student = name, engine = engine)
+                     student = name, engine = engine,
+                     allow_masking = allow_masking)
     })
     do.call(rbind, lapply(per_student, unclass_df))
   })
@@ -192,6 +205,30 @@ run_one_test_inproc <- function(fn, timeout) {
     message  = paste0("test returned non-logical: ", class(out$value)[[1]]),
     duration = duration
   )
+}
+
+# Names a student may not redefine: base plus the packages attached by default.
+protected_names <- function() {
+  pkgs <- c("stats", "utils", "methods", "graphics", "grDevices")
+  unique(c(ls(baseenv(), all.names = TRUE),
+           unlist(lapply(pkgs, getNamespaceExports), use.names = FALSE)))
+}
+
+# Copies objects from `from` into `to`, skipping protected names. Returns the
+# skipped names.
+copy_student_objects <- function(from, to, protected) {
+  nms <- ls(from, all.names = TRUE)
+  masked <- intersect(nms, protected)
+  for (nm in setdiff(nms, masked)) assign(nm, get(nm, envir = from), envir = to)
+  masked
+}
+
+add_masking_note <- function(df, masked) {
+  if (length(masked) == 0 || nrow(df) == 0) return(df)
+  note <- paste0("ignored student definitions that mask base functions: ",
+                 paste(masked, collapse = ", "))
+  df$message <- ifelse(is.na(df$message), note, paste0(df$message, "; ", note))
+  df
 }
 
 find_test_file <- function(file, test_dir) {

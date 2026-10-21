@@ -47,3 +47,38 @@ test_that("as.data.frame(format = 'wide') returns the legacy view", {
   expect_equal(wide$student, "Alice")
   expect_true(wide$ejercicio1)
 })
+
+make_cheat <- function(envir = parent.frame()) {
+  dir <- withr::local_tempdir(.local_envir = envir)
+  writeLines(c(
+    'sumar <- function(a, b) 1',
+    '`==` <- function(e1, e2) TRUE',
+    'test_ejercicio1_extra <- function() TRUE'
+  ), file.path(dir, "ejercicio1.R"))
+  file.path(dir, "ejercicio1.R")
+}
+
+test_that("student definitions do not mask base functions used by tests", {
+  result <- grade_exercise(make_cheat(), test_dir)
+  expect_true(all(result$status == "fail"))
+  expect_match(result$message, "==", fixed = TRUE)
+})
+
+test_that("tests defined in the student file are not run", {
+  result <- grade_exercise(make_cheat(), test_dir)
+  expect_false("test_ejercicio1_extra" %in% result$test)
+})
+
+test_that("allow_masking lets students redefine named base functions", {
+  dir   <- withr::local_tempdir()
+  tests <- withr::local_tempdir()
+  writeLines("factorial <- function(n) if (n <= 1) 1 else n * factorial(n - 1)",
+             file.path(dir, "ejercicio1.R"))
+  writeLines("test_ejercicio1_propia <- function() !identical(factorial, base::factorial)",
+             file.path(tests, "test_ejercicio1.R"))
+  file <- file.path(dir, "ejercicio1.R")
+  expect_equal(as.character(grade_exercise(file, tests)$status), "fail")
+  allowed <- grade_exercise(file, tests, allow_masking = "factorial")
+  expect_equal(as.character(allowed$status), "pass")
+  expect_true(is.na(allowed$message))
+})

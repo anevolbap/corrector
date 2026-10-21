@@ -9,7 +9,8 @@ grade_exercise(
   test_dir,
   timeout = Inf,
   student = NA_character_,
-  engine = c("inproc", "callr")
+  engine = c("inproc", "callr"),
+  allow_masking = character()
 )
 }
 \arguments{
@@ -26,6 +27,13 @@ this limit are recorded with status \code{timeout}. Default \code{Inf}.}
 \code{setTimeLimit()}. \code{"callr"} runs each exercise in a fresh subprocess via
 the \pkg{callr} package, giving a hard wall-clock timeout that interrupts
 busy loops. Requires the \code{callr} package.}
+
+\item{allow_masking}{Character vector of function names from base R and
+the default packages (stats, utils, methods, graphics, grDevices) that
+the student may redefine, e.g. \code{"factorial"} when the exercise asks for
+it. Any other student object with such a name is not visible to the
+tests, so a student cannot pass by redefining \code{all()} or \code{==}. Ignored
+names are listed in the \code{message} column.}
 }
 \value{
 A \link{grade_results} object with one row per test. If the student file

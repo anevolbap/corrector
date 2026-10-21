@@ -65,6 +65,20 @@ test_that("grade_submissions accepts a .zip archive", {
   expect_true(nrow(res) >= 3)
 })
 
+test_that("grade_submissions ignores stray files and steps into a lone top folder", {
+  subs <- make_submissions()
+  outer <- withr::local_tempdir()
+  file.copy(subs, outer, recursive = TRUE)
+  top <- file.path(outer, basename(subs))
+  writeLines("notas", file.path(top, "LEEME.txt"))
+  dir.create(file.path(outer, "__MACOSX"))
+  dir.create(file.path(top, ".hidden"))
+
+  tests <- make_test_dir()
+  res <- suppressMessages(grade_submissions(outer, test_dir = tests))
+  expect_setequal(unique(res$student), c("Alice", "Bob"))
+})
+
 test_that("grade_submissions warns when test_dir has no test files", {
   subs  <- make_submissions()
   empty <- withr::local_tempdir()

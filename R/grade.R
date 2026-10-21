@@ -104,7 +104,9 @@ grade_exercise <- function(file, test_dir, timeout = Inf,
 #' who omits an exercise gets a `missing` row.
 #'
 #' If `submissions_path` ends in `.zip` it is extracted into a `tempdir()`
-#' subfolder first.
+#' subfolder first. Loose files, hidden folders and `__MACOSX` are ignored.
+#' If the path holds a single folder with no `.R` files but with sub-folders,
+#' those sub-folders are taken as the students.
 #'
 #' @param submissions_path Path to a directory or `.zip` archive of submissions.
 #' @param test_dir Directory that contains the test files.
@@ -125,7 +127,14 @@ grade_submissions <- function(submissions_path, test_dir, timeout = Inf,
                               allow_masking = character()) {
   engine <- match.arg(engine)
   dir <- extract_if_zip(submissions_path)
-  students <- list.files(dir)
+  students <- student_dirs(dir)
+  # A zip of the parent folder holds one folder with the student folders inside.
+  if (length(students) == 1 &&
+      length(list.files(file.path(dir, students), pattern = "\\.R$")) == 0 &&
+      length(student_dirs(file.path(dir, students))) > 0) {
+    dir <- file.path(dir, students)
+    students <- student_dirs(dir)
+  }
 
   exercises <- expected_exercises(test_dir)
   if (length(exercises) == 0) {
@@ -272,6 +281,12 @@ discover_test_fns <- function(test_file, exercise) {
   prefix <- paste0("test_", exercise, "_")
   fns <- ls(envir = env)
   fns[startsWith(fns, prefix)]
+}
+
+# Sub-folders of `dir`, without hidden folders or macOS zip metadata.
+student_dirs <- function(dir) {
+  dirs <- list.dirs(dir, full.names = FALSE, recursive = FALSE)
+  dirs[!startsWith(dirs, ".") & dirs != "__MACOSX"]
 }
 
 extract_if_zip <- function(path) {

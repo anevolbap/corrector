@@ -40,5 +40,7 @@ who omits an exercise gets a \code{missing} row.
 }
 \details{
 If \code{submissions_path} ends in \code{.zip} it is extracted into a \code{tempdir()}
-subfolder first.
+subfolder first. Loose files, hidden folders and \verb{__MACOSX} are ignored.
+If the path holds a single folder with no \code{.R} files but with sub-folders,
+those sub-folders are taken as the students.
 }

@@ -13,6 +13,7 @@ reference:
       - grade_exercise
       - grade_submissions
       - scan_code
+      - compare_submissions
   - title: Resumir
     contents:
       - grade_report

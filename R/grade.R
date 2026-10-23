@@ -318,20 +318,12 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
       workers < 1 || workers != round(workers)) {
     stop("workers must be a whole number of 1 or more", call. = FALSE)
   }
-  dir <- normalizePath(extract_if_zip(submissions_path))
-  if (layout == "moodle") {
-    dir <- moodle_to_folders(dir)
-    if (missing(student_name_fn)) student_name_fn <- moodle_student_name
+  if (layout == "moodle" && missing(student_name_fn)) {
+    student_name_fn <- moodle_student_name
   }
-  students <- student_dirs(dir)
-  # A zip of the parent folder holds one folder with the student folders inside.
-  if (length(students) == 1 &&
-      length(list.files(file.path(dir, students), pattern = "\\.(r|rmd|qmd)$",
-                 ignore.case = TRUE)) == 0 &&
-      length(student_dirs(file.path(dir, students))) > 0) {
-    dir <- file.path(dir, students)
-    students <- student_dirs(dir)
-  }
+  found <- locate_students(submissions_path, layout)
+  dir <- found$dir
+  students <- found$students
   if (length(students) == 0) {
     warning("No student folders found in: ", submissions_path)
     return(empty_grade_results())
@@ -352,13 +344,7 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
                           .auto_close = FALSE)
   } else NULL
 
-  display <- vapply(students, student_name_fn, character(1), USE.NAMES = FALSE)
-  clash <- duplicated(display) | duplicated(display, fromLast = TRUE)
-  if (any(clash)) {
-    warning("Folders with the same display name; using folder names instead: ",
-            paste(students[clash], collapse = ", "))
-    display[clash] <- students[clash]
-  }
+  display <- display_names(students, student_name_fn)
 
   # One task per (student, exercise), in output order.
   tasks <- data.frame(
@@ -646,6 +632,35 @@ quiet_no_tests <- function(expr) {
   withCallingHandlers(expr, corrector_no_tests = function(w) {
     invokeRestart("muffleWarning")
   })
+}
+
+# The folder that holds the student folders, and their names. Used by
+# grade_submissions() and compare_submissions().
+locate_students <- function(submissions_path, layout) {
+  dir <- normalizePath(extract_if_zip(submissions_path))
+  if (layout == "moodle") dir <- moodle_to_folders(dir)
+  students <- student_dirs(dir)
+  # A zip of the parent folder holds one folder with the student folders inside.
+  if (length(students) == 1 &&
+      length(list.files(file.path(dir, students), pattern = "\\.(r|rmd|qmd)$",
+                 ignore.case = TRUE)) == 0 &&
+      length(student_dirs(file.path(dir, students))) > 0) {
+    dir <- file.path(dir, students)
+    students <- student_dirs(dir)
+  }
+  list(dir = dir, students = students)
+}
+
+# Display names; folders that map to the same name keep their folder name.
+display_names <- function(students, student_name_fn) {
+  display <- vapply(students, student_name_fn, character(1), USE.NAMES = FALSE)
+  clash <- duplicated(display) | duplicated(display, fromLast = TRUE)
+  if (any(clash)) {
+    warning("Folders with the same display name; using folder names instead: ",
+            paste(students[clash], collapse = ", "))
+    display[clash] <- students[clash]
+  }
+  display
 }
 
 # Sub-folders of `dir`, without hidden folders or macOS zip metadata.

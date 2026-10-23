@@ -2,7 +2,7 @@
 % Please edit documentation in R/export.R
 \name{export_to_html}
 \alias{export_to_html}
-\title{Export grading results to an HTML report}
+\title{Exportar los resultados a un informe HTML}
 \usage{
 export_to_html(
   results,
@@ -13,24 +13,41 @@ export_to_html(
 )
 }
 \arguments{
-\item{results}{A \link{grade_results} object.}
+\item{results}{Un objeto \link{grade_results}.
+\emph{English:} A \link{grade_results} object.}
 
-\item{path}{Output file path (e.g. \code{"report.html"}).}
+\item{path}{Ruta del archivo de salida (por ejemplo \code{"report.html"}).
+\emph{English:} Output file path (e.g. \code{"report.html"}).}
 
-\item{include_details}{If \code{TRUE}, append a per-test breakdown under each
+\item{include_details}{Si es \code{TRUE}, agrega el detalle por test debajo de
+cada estudiante (los errores y timeouts incluyen el mensaje). Por defecto
+\code{TRUE}.
+\emph{English:} If \code{TRUE}, append a per-test breakdown under each
 student (errors and timeouts include the message). Default \code{TRUE}.}
 
-\item{scoring, weights}{How the score column and pass-rate row are
+\item{scoring, weights}{Cómo se calculan la columna de puntaje y la fila de
+porcentaje de aprobación. Mirá \code{\link[=grade_report]{grade_report()}}.
+\emph{English:} How the score column and pass-rate row are
 computed. See \code{\link[=grade_report]{grade_report()}}.}
 }
 \value{
-\code{results}, invisibly.
+\code{results}, de forma invisible.
+\emph{English:} \code{results}, invisibly.
 }
 \description{
-Produces a self-contained HTML file with a colour-coded table (green = pass,
-red = fail, amber = error/timeout, grey = missing), per-student score
-column, and a pass-rate summary row.
+Genera un archivo HTML autocontenido con una tabla por colores (verde =
+pass, rojo = fail, ámbar = error/timeout, gris = missing), una columna con
+el puntaje de cada estudiante y una fila final con el porcentaje de
+aprobación.
 }
+\section{English}{
+
+\strong{Export grading results to an HTML report.} Produces a self-contained HTML
+file with a colour-coded table (green = pass, red = fail, amber =
+error/timeout, grey = missing), per-student score column, and a pass-rate
+summary row.
+}
+
 \examples{
 path <- tempfile(fileext = ".html")
 export_to_html(example_results(), path)

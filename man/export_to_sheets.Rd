@@ -2,29 +2,43 @@
 % Please edit documentation in R/export.R
 \name{export_to_sheets}
 \alias{export_to_sheets}
-\title{Export grading results to a Google Sheet}
+\title{Exportar los resultados a una planilla de Google Sheets}
 \usage{
 export_to_sheets(results, sheet_url, sheet = 1, format = c("wide", "long"))
 }
 \arguments{
-\item{results}{A \link{grade_results} object.}
+\item{results}{Un objeto \link{grade_results}.
+\emph{English:} A \link{grade_results} object.}
 
-\item{sheet_url}{URL of the target Google Sheet.}
+\item{sheet_url}{URL de la planilla de Google Sheets de destino.
+\emph{English:} URL of the target Google Sheet.}
 
-\item{sheet}{Name or index of the worksheet tab (default: first sheet).}
+\item{sheet}{Nombre o número de la pestaña (por defecto: la primera).
+\emph{English:} Name or index of the worksheet tab (default: first sheet).}
 
-\item{format}{\code{"wide"} (default) or \code{"long"}.}
+\item{format}{\code{"wide"} (por defecto) o \code{"long"}.
+\emph{English:} \code{"wide"} (default) or \code{"long"}.}
 }
 \value{
-\code{results}, invisibly.
+\code{results}, de forma invisible.
+\emph{English:} \code{results}, invisibly.
 }
 \description{
-Writes results to an existing Google Sheet, replacing its contents. Text
-cells that could run as formulas get a leading \verb{'}, as in
-\code{\link[=export_to_csv]{export_to_csv()}}. Requires
-the \pkg{googlesheets4} package and prior authentication; call
-\code{googlesheets4::gs4_auth()} once per session before using this function.
+Escribe los resultados en una planilla de Google Sheets que ya existe y
+reemplaza su contenido. Las celdas de texto que podrían correr como
+fórmulas reciben un \verb{'} adelante, como en \code{\link[=export_to_csv]{export_to_csv()}}. Necesita el
+paquete \pkg{googlesheets4} y una autenticación previa: corré
+\code{googlesheets4::gs4_auth()} una vez por sesión antes de usar esta función.
 }
+\section{English}{
+
+\strong{Export grading results to a Google Sheet.} Writes results to an existing
+Google Sheet, replacing its contents. Text cells that could run as formulas
+get a leading \verb{'}, as in \code{\link[=export_to_csv]{export_to_csv()}}. Requires the \pkg{googlesheets4}
+package and prior authentication; call \code{googlesheets4::gs4_auth()} once per
+session before using this function.
+}
+
 \examples{
 \dontrun{
 googlesheets4::gs4_auth()

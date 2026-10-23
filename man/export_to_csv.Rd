@@ -2,26 +2,38 @@
 % Please edit documentation in R/export.R
 \name{export_to_csv}
 \alias{export_to_csv}
-\title{Export grading results to a CSV file}
+\title{Exportar los resultados a un archivo CSV}
 \usage{
 export_to_csv(results, path, format = c("wide", "long"))
 }
 \arguments{
-\item{results}{A \link{grade_results} object.}
+\item{results}{Un objeto \link{grade_results}.
+\emph{English:} A \link{grade_results} object.}
 
-\item{path}{Output file path (e.g. \code{"grades.csv"}).}
+\item{path}{Ruta del archivo de salida (por ejemplo \code{"grades.csv"}).
+\emph{English:} Output file path (e.g. \code{"grades.csv"}).}
 
-\item{format}{\code{"wide"} (default) writes one row per student with one logical
+\item{format}{\code{"wide"} (por defecto) escribe una fila por estudiante, con
+una columna lógica por ejercicio. \code{"long"} escribe el detalle por test.
+\emph{English:} \code{"wide"} (default) writes one row per student with one logical
 column per exercise. \code{"long"} writes the per-test detail.}
 }
 \value{
-\code{results}, invisibly.
+\code{results}, de forma invisible.
+\emph{English:} \code{results}, invisibly.
 }
 \description{
-Text cells that start with \code{=}, \code{+}, \code{-} or \code{@} get a leading \verb{'}, so a
-spreadsheet app does not run them as formulas (error messages come from
-student code).
+Las celdas de texto que empiezan con \code{=}, \code{+}, \code{-} o \code{@} reciben un \verb{'}
+adelante, así la planilla no las corre como fórmulas (los mensajes de error
+vienen del código del estudiante).
 }
+\section{English}{
+
+\strong{Export grading results to a CSV file.} Text cells that start with \code{=},
+\code{+}, \code{-} or \code{@} get a leading \verb{'}, so a spreadsheet app does not run them as
+formulas (error messages come from student code).
+}
+
 \examples{
 path <- tempfile(fileext = ".csv")
 export_to_csv(example_results(), path)

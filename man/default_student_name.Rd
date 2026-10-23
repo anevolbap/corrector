@@ -2,21 +2,31 @@
 % Please edit documentation in R/grade.R
 \name{default_student_name}
 \alias{default_student_name}
-\title{Default student-name extractor}
+\title{Extractor por defecto del nombre del estudiante}
 \usage{
 default_student_name(folder)
 }
 \arguments{
-\item{folder}{Character. Submission folder name.}
+\item{folder}{Texto. Nombre de la carpeta de la entrega.
+\emph{English:} Character. Submission folder name.}
 }
 \value{
-Character. Display name.
+Texto. Nombre para mostrar.
+\emph{English:} Character. Display name.
 }
 \description{
-Splits the folder name on underscores, takes the first segment, lower-cases
-it, then applies \code{\link[tools:toTitleCase]{tools::toTitleCase()}}. Examples:
-\code{"garcia_juan_12345"} becomes \code{"Garcia"}; \code{"lopez"} becomes \code{"Lopez"}.
+Divide el nombre de la carpeta en los guiones bajos, toma la primera
+parte, la pasa a minúsculas y después le aplica \code{\link[tools:toTitleCase]{tools::toTitleCase()}}.
+Ejemplos: \code{"garcia_juan_12345"} da \code{"Garcia"}; \code{"lopez"} da \code{"Lopez"}.
 }
+\section{English}{
+
+\strong{Default student-name extractor.} Splits the folder name on underscores,
+takes the first segment, lower-cases it, then applies
+\code{\link[tools:toTitleCase]{tools::toTitleCase()}}. Examples: \code{"garcia_juan_12345"} becomes \code{"Garcia"};
+\code{"lopez"} becomes \code{"Lopez"}.
+}
+
 \examples{
 default_student_name("garcia_juan_12345")
 default_student_name("LOPEZ")

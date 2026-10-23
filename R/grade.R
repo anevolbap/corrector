@@ -1,25 +1,64 @@
-#' Grade a single exercise file against its tests
+#' Corregir un ejercicio contra sus tests
 #'
-#' Sources the student's file and the matching test file into an isolated
-#' environment, runs every function whose name starts with
-#' `test_<exercise>_`, and returns the per-test outcome as a [grade_results]
-#' object.
+#' Carga el archivo del estudiante y el archivo de tests que le corresponde
+#' en un entorno aislado, corre cada función cuyo nombre empieza con
+#' `test_<exercise>_` y devuelve el resultado de cada test como un objeto
+#' [grade_results].
+#'
+#' Un test pasa si devuelve `TRUE`. Los tests también pueden usar
+#' expectativas de \pkg{testthat} (llamá a `library(testthat)` al principio
+#' del archivo de tests): el test pasa cuando al menos una expectativa se
+#' cumple y ninguna falla. Una expectativa que falla queda registrada como
+#' `fail` con su mensaje.
+#'
+#' @section English:
+#' **Grade a single exercise file against its tests.** Sources the student's
+#' file and the matching test file into an isolated environment, runs every
+#' function whose name starts with `test_<exercise>_`, and returns the
+#' per-test outcome as a [grade_results] object.
 #'
 #' A test passes if it returns `TRUE`. Tests can also use \pkg{testthat}
 #' expectations (call `library(testthat)` at the top of the test file): the
 #' test passes when at least one expectation succeeds and none fails, and a
 #' failed expectation is recorded as `fail` with its message.
 #'
-#' @param file Path to the student's file: an R script (e.g. `"ejercicio1.R"`)
+#' @param file Ruta al archivo del estudiante: un script de R (por ejemplo
+#'   `"ejercicio1.R"`) o un documento R Markdown o Quarto (`.Rmd`, `.qmd`),
+#'   del que se extraen los bloques de código R con `knitr::purl()`. El
+#'   archivo de tests que le corresponde se busca sin distinguir mayúsculas
+#'   de minúsculas.
+#'   *English:* Path to the student's file: an R script (e.g. `"ejercicio1.R"`)
 #'   or an R Markdown or Quarto document (`.Rmd`, `.qmd`), whose R chunks are
 #'   extracted with `knitr::purl()`. The matching test file is found ignoring
 #'   case.
-#' @param test_dir Directory that contains the test files.
-#' @param timeout Maximum seconds allowed per test function, and for loading
+#' @param test_dir Carpeta que contiene los archivos de tests.
+#'   *English:* Directory that contains the test files.
+#' @param timeout Máximo de segundos permitido para cada función de test y
+#'   para cargar el archivo del estudiante. Los tests que lo superan quedan
+#'   registrados con estado `timeout`. Por defecto 10. Usá `Inf` para no
+#'   poner límite.
+#'   *English:* Maximum seconds allowed per test function, and for loading
 #'   the student's file. Tests that exceed it are recorded with status
 #'   `timeout`. Default 10. Use `Inf` for no limit.
-#' @param student Optional student display name. Defaults to `NA`.
-#' @param engine `"callr"` (default) runs each exercise in a fresh R
+#' @param student Nombre opcional del estudiante para mostrar. Por defecto
+#'   `NA`.
+#'   *English:* Optional student display name. Defaults to `NA`.
+#' @param engine `"callr"` (por defecto) corre cada ejercicio en un subproceso
+#'   nuevo de R con el paquete \pkg{callr}, con una carpeta de trabajo
+#'   temporal. El timeout es un límite estricto de tiempo real, y las
+#'   asignaciones con `<<-` o los archivos que escribe el estudiante no llegan
+#'   a tu sesión ni a tu carpeta.
+#'   `"inproc"` corre los tests en la sesión de R actual. Es más rápido, pero
+#'   su timeout con `setTimeLimit()` no corta todo tipo de bucle, y el código
+#'   del estudiante puede ver y cambiar tu entorno global.
+#'   `"isolated"` corre los tests en un subproceso y el código del estudiante
+#'   en otro. Cada función del estudiante que llaman los tests corre en el
+#'   proceso del estudiante y solo vuelve su resultado (datos simples). Así,
+#'   trucos como `attach()`, métodos S3 para comparaciones o funciones base
+#'   reemplazadas no cambian la nota. Es más lento, y una función del
+#'   estudiante no puede devolver una función ni un entorno. Usalo cuando
+#'   te importa evitar trampas.
+#'   *English:* `"callr"` (default) runs each exercise in a fresh R
 #'   subprocess via the \pkg{callr} package, with a temporary working
 #'   directory. The timeout is a hard wall-clock limit, and assignments with
 #'   `<<-` or files the student writes do not reach your session or folder.
@@ -32,15 +71,26 @@
 #'   `attach()`, S3 methods for comparisons or replaced base functions do
 #'   not change the grade. It is slower, and a student function may not
 #'   return a function or an environment. Use it when cheating matters.
-#' @param allow_masking Character vector of function names from base R and
+#' @param allow_masking Vector de texto con nombres de funciones de R base y
+#'   de los paquetes por defecto (stats, utils, methods, graphics, grDevices)
+#'   que el estudiante puede redefinir, por ejemplo `"factorial"` cuando el
+#'   ejercicio lo pide. Cualquier otro objeto del estudiante con uno de esos
+#'   nombres no es visible para los tests, así que un estudiante no puede
+#'   pasar los tests redefiniendo `all()` o `==`. Los nombres ignorados
+#'   aparecen en la columna `message`.
+#'   *English:* Character vector of function names from base R and
 #'   the default packages (stats, utils, methods, graphics, grDevices) that
 #'   the student may redefine, e.g. `"factorial"` when the exercise asks for
 #'   it. Any other student object with such a name is not visible to the
 #'   tests, so a student cannot pass by redefining `all()` or `==`. Ignored
 #'   names are listed in the `message` column.
-#' @return A [grade_results] object with one row per test. If the student file
-#'   fails to parse, one row with `status = source_error`. If no matching test
-#'   file is found, one row with `status = missing` and a warning.
+#' @return Un objeto [grade_results] con una fila por test. Si el archivo del
+#'   estudiante tiene errores de sintaxis, una fila con
+#'   `status = source_error`. Si no hay un archivo de tests que le
+#'   corresponda, una fila con `status = missing` y una advertencia.
+#'   *English:* A [grade_results] object with one row per test. If the student
+#'   file fails to parse, one row with `status = source_error`. If no matching
+#'   test file is found, one row with `status = missing` and a warning.
 #' @export
 #' @examples
 #' # The package ships test files for five sample exercises.
@@ -160,11 +210,26 @@ grade_exercise <- function(file, test_dir, timeout = 10,
   new_grade_results(add_note(df, "tampering: ", tampered))
 }
 
-#' Grade all student submissions in a directory or zip archive
+#' Corregir todas las entregas de una carpeta o archivo .zip
 #'
-#' Expects one sub-folder per student inside `submissions_path`. Every student
-#' is graded on every exercise that has a test file in `test_dir`; a student
-#' who omits an exercise gets a `missing` row. The student's file is matched
+#' Espera una subcarpeta por estudiante dentro de `submissions_path`. Cada
+#' estudiante se corrige en cada ejercicio que tiene un archivo de tests en
+#' `test_dir`. Un estudiante que no entrega un ejercicio recibe una fila
+#' `missing`. El archivo del estudiante se busca sin distinguir mayúsculas de
+#' minúsculas (`Ejercicio1.R` cuenta como `ejercicio1`), y se aceptan
+#' archivos `.Rmd` o `.qmd` cuando no hay un archivo `.R`.
+#'
+#' Si `submissions_path` termina en `.zip`, primero se extrae en una
+#' subcarpeta de `tempdir()`. Se ignoran los archivos sueltos, las carpetas
+#' ocultas y `__MACOSX`. Si la ruta tiene una sola carpeta sin archivos `.R`,
+#' `.Rmd` ni `.qmd` pero con subcarpetas, esas subcarpetas se toman como los
+#' estudiantes.
+#'
+#' @section English:
+#' **Grade all student submissions in a directory or zip archive.** Expects
+#' one sub-folder per student inside `submissions_path`. Every student is
+#' graded on every exercise that has a test file in `test_dir`; a student who
+#' omits an exercise gets a `missing` row. The student's file is matched
 #' ignoring case (`Ejercicio1.R` counts as `ejercicio1`), and `.Rmd` or `.qmd`
 #' files are accepted when there is no `.R` file.
 #'
@@ -173,26 +238,50 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 #' If the path holds a single folder with no `.R`, `.Rmd` or `.qmd` files but
 #' with sub-folders, those sub-folders are taken as the students.
 #'
-#' @param submissions_path Path to a directory or `.zip` archive of submissions.
-#' @param test_dir Directory that contains the test files.
-#' @param timeout Maximum seconds allowed per test function. Default 10.
-#' @param engine `"callr"` (default), `"inproc"` or `"isolated"`. See
+#' @param submissions_path Ruta a una carpeta o archivo `.zip` con las
+#'   entregas.
+#'   *English:* Path to a directory or `.zip` archive of submissions.
+#' @param test_dir Carpeta que contiene los archivos de tests.
+#'   *English:* Directory that contains the test files.
+#' @param timeout Máximo de segundos permitido para cada función de test. Por
+#'   defecto 10.
+#'   *English:* Maximum seconds allowed per test function. Default 10.
+#' @param engine `"callr"` (por defecto), `"inproc"` o `"isolated"`. Mirá
 #'   [grade_exercise()].
-#' @param student_name_fn Function applied to each student folder name to
-#'   produce the display name. Defaults to taking the first underscore-
-#'   separated token and applying title case. Folders that map to the same
+#'   *English:* `"callr"` (default), `"inproc"` or `"isolated"`. See
+#'   [grade_exercise()].
+#' @param student_name_fn Función que se aplica al nombre de cada carpeta de
+#'   estudiante para obtener el nombre para mostrar. Por defecto toma la
+#'   primera parte separada por guiones bajos y la pasa a formato título.
+#'   Las carpetas que dan el mismo nombre conservan el nombre de la carpeta,
+#'   con una advertencia.
+#'   *English:* Function applied to each student folder name to
+#'   produce the display name. Defaults to taking the first
+#'   underscore-separated token and applying title case. Folders that map to the same
 #'   name keep their folder name, with a warning.
-#' @param allow_masking Base function names students may redefine. See
+#' @param allow_masking Nombres de funciones base que los estudiantes pueden
+#'   redefinir. Mirá [grade_exercise()].
+#'   *English:* Base function names students may redefine. See
 #'   [grade_exercise()].
-#' @param layout `"folders"` (default): one folder per student. `"moodle"`:
+#' @param layout `"folders"` (por defecto): una carpeta por estudiante.
+#'   `"moodle"`: el archivo .zip o la carpeta de "Descargar todas las
+#'   entregas" de Moodle, con o sin "Descargar entregas en carpetas". Solo se
+#'   corrigen las entregas de archivos, y `student_name_fn` pasa a ser por
+#'   defecto [moodle_student_name()].
+#'   *English:* `"folders"` (default): one folder per student. `"moodle"`:
 #'   the zip or folder from Moodle's "Download all submissions", with or
 #'   without "Download submissions in folders". Only file submissions are
 #'   graded, and `student_name_fn` defaults to [moodle_student_name()].
-#' @param workers Number of callr subprocesses to run at the same time.
+#' @param workers Cantidad de subprocesos de callr que corren al mismo
+#'   tiempo. Por defecto 1. Valores mayores que 1 aceleran la corrección de
+#'   cursos grandes; un valor cercano a `parallel::detectCores()` es un buen
+#'   límite superior. El motor `"inproc"` lo ignora.
+#'   *English:* Number of callr subprocesses to run at the same time.
 #'   Default 1. Values above 1 speed up large classes; a value near
 #'   `parallel::detectCores()` is a good upper bound. Ignored by the
 #'   `"inproc"` engine.
-#' @return A [grade_results] object.
+#' @return Un objeto [grade_results].
+#'   *English:* A [grade_results] object.
 #' @importFrom utils unzip
 #' @export
 #' @examples
@@ -581,14 +670,22 @@ extract_if_zip <- function(path) {
   path
 }
 
-#' Default student-name extractor
+#' Extractor por defecto del nombre del estudiante
 #'
-#' Splits the folder name on underscores, takes the first segment, lower-cases
-#' it, then applies [tools::toTitleCase()]. Examples:
-#' `"garcia_juan_12345"` becomes `"Garcia"`; `"lopez"` becomes `"Lopez"`.
+#' Divide el nombre de la carpeta en los guiones bajos, toma la primera
+#' parte, la pasa a minúsculas y después le aplica [tools::toTitleCase()].
+#' Ejemplos: `"garcia_juan_12345"` da `"Garcia"`; `"lopez"` da `"Lopez"`.
 #'
-#' @param folder Character. Submission folder name.
-#' @return Character. Display name.
+#' @section English:
+#' **Default student-name extractor.** Splits the folder name on underscores,
+#' takes the first segment, lower-cases it, then applies
+#' [tools::toTitleCase()]. Examples: `"garcia_juan_12345"` becomes `"Garcia"`;
+#' `"lopez"` becomes `"Lopez"`.
+#'
+#' @param folder Texto. Nombre de la carpeta de la entrega.
+#'   *English:* Character. Submission folder name.
+#' @return Texto. Nombre para mostrar.
+#'   *English:* Character. Display name.
 #' @export
 #' @examples
 #' default_student_name("garcia_juan_12345")

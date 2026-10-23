@@ -16,18 +16,32 @@ outside_envs <- "globalenv|\\.GlobalEnv|baseenv|topenv|asNamespace|getNamespace|
 # objects with these names are not copied into the test environment.
 comparison_methods <- "^(Ops|==|!=|<|>|<=|>=|all\\.equal|as\\.logical|isTRUE|identical)\\."
 
-#' Find suspicious code in a student file
+#' Buscar código sospechoso en el archivo de un estudiante
 #'
-#' Looks for calls that change how other code behaves (`attach()`,
-#' `unlockBinding()`, `registerS3method()`, `trace()`, `setMethod()` and
-#' similar), writes into the global or base environment, code built from
-#' strings with `parse(text = )`, and replacement of a function's body or
-#' environment. [grade_exercise()] runs it on every submission and puts the
-#' findings in the `message` column as "suspicious code: ...". The code is
-#' only read, never run.
+#' Busca llamadas que cambian cómo se comporta otro código (`attach()`,
+#' `unlockBinding()`, `registerS3method()`, `trace()`, `setMethod()` y
+#' similares), escrituras en el entorno global o en el entorno base, código
+#' armado a partir de texto con `parse(text = )`, y cambios en el cuerpo o
+#' el entorno de una función. [grade_exercise()] la corre sobre cada entrega
+#' y anota lo que encuentra en la columna `message` como
+#' `suspicious code: ...`. El código solo se lee, nunca se ejecuta.
 #'
-#' @param path Path to an R file.
-#' @return Character vector of findings such as `"attach() at line 3"`;
+#' @section English:
+#' **Find suspicious code in a student file.** Looks for calls that change
+#' how other code behaves (`attach()`, `unlockBinding()`,
+#' `registerS3method()`, `trace()`, `setMethod()` and similar), writes into
+#' the global or base environment, code built from strings with
+#' `parse(text = )`, and replacement of a function's body or environment.
+#' [grade_exercise()] runs it on every submission and puts the findings in
+#' the `message` column as "suspicious code: ...". The code is only read,
+#' never run.
+#'
+#' @param path Ruta a un archivo de R.
+#'   *English:* Path to an R file.
+#' @return Vector de texto con lo que encuentra, por ejemplo
+#'   `"attach() at line 3"`; vacío cuando no encuentra nada o cuando el
+#'   archivo no se puede parsear.
+#'   *English:* Character vector of findings such as `"attach() at line 3"`;
 #'   empty when nothing is found or the file does not parse.
 #' @export
 #' @examples

@@ -2,26 +2,42 @@
 % Please edit documentation in R/integrity.R
 \name{scan_code}
 \alias{scan_code}
-\title{Find suspicious code in a student file}
+\title{Buscar código sospechoso en el archivo de un estudiante}
 \usage{
 scan_code(path)
 }
 \arguments{
-\item{path}{Path to an R file.}
+\item{path}{Ruta a un archivo de R.
+\emph{English:} Path to an R file.}
 }
 \value{
-Character vector of findings such as \code{"attach() at line 3"};
+Vector de texto con lo que encuentra, por ejemplo
+\code{"attach() at line 3"}; vacío cuando no encuentra nada o cuando el
+archivo no se puede parsear.
+\emph{English:} Character vector of findings such as \code{"attach() at line 3"};
 empty when nothing is found or the file does not parse.
 }
 \description{
-Looks for calls that change how other code behaves (\code{attach()},
-\code{unlockBinding()}, \code{registerS3method()}, \code{trace()}, \code{setMethod()} and
-similar), writes into the global or base environment, code built from
-strings with \code{parse(text = )}, and replacement of a function's body or
-environment. \code{\link[=grade_exercise]{grade_exercise()}} runs it on every submission and puts the
-findings in the \code{message} column as "suspicious code: ...". The code is
-only read, never run.
+Busca llamadas que cambian cómo se comporta otro código (\code{attach()},
+\code{unlockBinding()}, \code{registerS3method()}, \code{trace()}, \code{setMethod()} y
+similares), escrituras en el entorno global o en el entorno base, código
+armado a partir de texto con \code{parse(text = )}, y cambios en el cuerpo o
+el entorno de una función. \code{\link[=grade_exercise]{grade_exercise()}} la corre sobre cada entrega
+y anota lo que encuentra en la columna \code{message} como
+\verb{suspicious code: ...}. El código solo se lee, nunca se ejecuta.
 }
+\section{English}{
+
+\strong{Find suspicious code in a student file.} Looks for calls that change
+how other code behaves (\code{attach()}, \code{unlockBinding()},
+\code{registerS3method()}, \code{trace()}, \code{setMethod()} and similar), writes into
+the global or base environment, code built from strings with
+\code{parse(text = )}, and replacement of a function's body or environment.
+\code{\link[=grade_exercise]{grade_exercise()}} runs it on every submission and puts the findings in
+the \code{message} column as "suspicious code: ...". The code is only read,
+never run.
+}
+
 \examples{
 file <- tempfile(fileext = ".R")
 writeLines(c("f <- function(x) x", 'attach(list(isTRUE = function(x) TRUE))'), file)

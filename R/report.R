@@ -1,17 +1,46 @@
-#' Summarise grading results
+#' Resumen de los resultados de la corrección
 #'
-#' Computes pass rate per exercise and score per student, plus counts of
-#' errors, timeouts, and missing submissions. The returned object has a
-#' [print()] method that renders a readable console summary.
+#' Calcula el porcentaje de aprobación por ejercicio y el puntaje por
+#' estudiante, y cuenta los errores, los timeouts y las entregas que faltan.
+#' El objeto que devuelve tiene un método [print()] que muestra un resumen
+#' legible en la consola.
 #'
-#' @param results A [grade_results] object returned by [grade_submissions()]
+#' @section English:
+#' **Summarise grading results.** Computes pass rate per exercise and score
+#' per student, plus counts of errors, timeouts, and missing submissions. The
+#' returned object has a [print()] method that renders a readable console
+#' summary.
+#'
+#' @param results Un objeto [grade_results] que devuelve [grade_submissions()]
+#'   o [grade_exercise()].
+#'   *English:* A [grade_results] object returned by [grade_submissions()]
 #'   or [grade_exercise()].
-#' @param scoring `"all"` (default): an exercise counts as passed only if
+#' @param scoring `"all"` (por defecto): un ejercicio cuenta como aprobado
+#'   solo si pasan todos sus tests. `"partial"`: su puntaje es la fracción de
+#'   tests que pasan. Ver [student_scores()].
+#'   *English:* `"all"` (default): an exercise counts as passed only if
 #'   every test passes. `"partial"`: it scores the fraction of tests that
 #'   pass. See [student_scores()].
-#' @param weights Optional named numeric vector of test or exercise weights.
+#' @param weights Vector numérico con nombres, opcional, con los pesos de
+#'   tests o ejercicios. Ver [student_scores()].
+#'   *English:* Optional named numeric vector of test or exercise weights.
 #'   See [student_scores()].
-#' @return A `grade_report` object (a list) with components:
+#' @return Un objeto `grade_report` (una lista) con estos componentes:
+#'   \describe{
+#'     \item{`pass_rate_by_exercise`}{Vector numérico con nombres (0-1).
+#'       Puntaje medio del ejercicio entre todos los estudiantes.}
+#'     \item{`score_by_student`}{Vector numérico con nombres (0-1). El
+#'       `total` del estudiante en [student_scores()].}
+#'     \item{`overall_mean`}{Numérico, un solo valor (0-1).}
+#'     \item{`issue_counts`}{Vector de enteros con nombres, con la cantidad
+#'       de filas `error`, `timeout`, `missing` y `source_error`.}
+#'     \item{`flagged`}{Vector de texto con los estudiantes que tienen una
+#'       nota `suspicious code:` o `tampering:` en la columna `message` (ver
+#'       [scan_code()]).}
+#'   }
+#'   En `pass_rate_by_exercise` y `score_by_student`, un ejercicio `missing`
+#'   o con un `source_error` cuenta como 0.
+#'   *English:* A `grade_report` object (a list) with components:
 #'   \describe{
 #'     \item{`pass_rate_by_exercise`}{Named numeric vector (0-1). Mean
 #'       exercise score across students.}

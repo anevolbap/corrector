@@ -2,25 +2,37 @@
 % Please edit documentation in R/feedback.R
 \name{export_feedback}
 \alias{export_feedback}
-\title{Write one feedback file per student}
+\title{Escribir un archivo de devolución por estudiante}
 \usage{
 export_feedback(results, dir, scoring = c("partial", "all"), weights = NULL)
 }
 \arguments{
-\item{results}{A \link{grade_results} object.}
+\item{results}{Un objeto \link{grade_results}.
+\emph{English:} A \link{grade_results} object.}
 
-\item{dir}{Folder to write into. Created if needed.}
+\item{dir}{Carpeta donde escribir. Se crea si hace falta.
+\emph{English:} Folder to write into. Created if needed.}
 
-\item{scoring, weights}{Passed to \code{\link[=student_scores]{student_scores()}}.}
+\item{scoring, weights}{Se pasan a \code{\link[=student_scores]{student_scores()}}.
+\emph{English:} Passed to \code{\link[=student_scores]{student_scores()}}.}
 }
 \value{
-The paths of the written files, invisibly.
+Las rutas de los archivos escritos, de forma invisible.
+\emph{English:} The paths of the written files, invisibly.
 }
 \description{
-Writes \verb{<student>.md} into \code{dir} for every student: the total score, the
-score of each exercise, and the status of each test, with the error
-message when there is one. Use it to send each student their results.
+Escribe \verb{<student>.md} en \code{dir} para cada estudiante: el puntaje total, el
+puntaje de cada ejercicio y el estado de cada test, con el mensaje de error
+cuando lo hay. Usala para mandarle a cada estudiante sus resultados.
 }
+\section{English}{
+
+\strong{Write one feedback file per student.} Writes \verb{<student>.md} into \code{dir}
+for every student: the total score, the score of each exercise, and the
+status of each test, with the error message when there is one. Use it to
+send each student their results.
+}
+
 \examples{
 dir <- file.path(tempdir(), "feedback")
 paths <- export_feedback(example_results(), dir)

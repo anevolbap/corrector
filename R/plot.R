@@ -1,21 +1,41 @@
-#' Plot a visual summary of grading results
+#' Graficar un resumen visual de los resultados
 #'
-#' Produces three plots in sequence:
+#' Genera tres gráficos, uno después del otro:
+#' \enumerate{
+#'   \item Puntajes de los estudiantes ordenados (gráfico de barras horizontales).
+#'   \item Porcentaje de aprobación por ejercicio (gráfico de barras).
+#'   \item Mapa de calor de pass/fail (estudiantes x ejercicios).
+#' }
+#'
+#' @section English:
+#' **Plot a visual summary of grading results.** Produces three plots in
+#' sequence:
 #' \enumerate{
 #'   \item Student scores ranked (horizontal bar chart).
 #'   \item Pass rate per exercise (bar chart).
 #'   \item Pass/fail heatmap (students x exercises).
 #' }
 #'
-#' @param results A [grade_results] object.
-#' @param ask If `TRUE` (default in interactive sessions), pause between plots.
+#' @param results Un objeto [grade_results].
+#'   *English:* A [grade_results] object.
+#' @param ask Si es `TRUE` (por defecto en sesiones interactivas), hace una
+#'   pausa entre gráficos. Pasá `FALSE` cuando dibujás en un dispositivo de
+#'   archivo (PDF, PNG, etc.).
+#'   *English:* If `TRUE` (default in interactive sessions), pause between plots.
 #'   Pass `FALSE` when rendering to a file device (PDF, PNG, etc.).
-#' @param backend `"base"` (default) uses base graphics, no extra dependencies.
+#' @param backend `"base"` (por defecto) usa los gráficos base de R, sin
+#'   dependencias extra. `"ggplot2"` usa ggplot2 si está instalado. Si no, vuelve
+#'   a R base con una advertencia.
+#'   *English:* `"base"` (default) uses base graphics, no extra dependencies.
 #'   `"ggplot2"` uses ggplot2 when installed and falls back to base R with a
 #'   warning otherwise.
-#' @param scoring,weights How the two bar charts score students and
+#' @param scoring,weights Cómo los dos gráficos de barras calculan el puntaje
+#'   de estudiantes y ejercicios. Mirá [grade_report()]. El mapa de calor
+#'   siempre muestra pass/fail.
+#'   *English:* How the two bar charts score students and
 #'   exercises. See [grade_report()]. The heatmap always shows pass/fail.
-#' @return `results`, invisibly.
+#' @return `results`, de forma invisible.
+#'   *English:* `results`, invisibly.
 #' @importFrom graphics abline axis barplot box image legend par
 #' @importFrom stats aggregate
 #' @export

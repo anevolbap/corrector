@@ -1,13 +1,23 @@
-#' Write one feedback file per student
+#' Escribir un archivo de devolución por estudiante
 #'
-#' Writes `<student>.md` into `dir` for every student: the total score, the
-#' score of each exercise, and the status of each test, with the error
-#' message when there is one. Use it to send each student their results.
+#' Escribe `<student>.md` en `dir` para cada estudiante: el puntaje total, el
+#' puntaje de cada ejercicio y el estado de cada test, con el mensaje de error
+#' cuando lo hay. Usala para mandarle a cada estudiante sus resultados.
 #'
-#' @param results A [grade_results] object.
-#' @param dir Folder to write into. Created if needed.
-#' @param scoring,weights Passed to [student_scores()].
-#' @return The paths of the written files, invisibly.
+#' @section English:
+#' **Write one feedback file per student.** Writes `<student>.md` into `dir`
+#' for every student: the total score, the score of each exercise, and the
+#' status of each test, with the error message when there is one. Use it to
+#' send each student their results.
+#'
+#' @param results Un objeto [grade_results].
+#'   *English:* A [grade_results] object.
+#' @param dir Carpeta donde escribir. Se crea si hace falta.
+#'   *English:* Folder to write into. Created if needed.
+#' @param scoring,weights Se pasan a [student_scores()].
+#'   *English:* Passed to [student_scores()].
+#' @return Las rutas de los archivos escritos, de forma invisible.
+#'   *English:* The paths of the written files, invisibly.
 #' @export
 #' @examples
 #' dir <- file.path(tempdir(), "feedback")

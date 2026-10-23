@@ -2,7 +2,7 @@
 % Please edit documentation in R/grade.R
 \name{grade_exercise}
 \alias{grade_exercise}
-\title{Grade a single exercise file against its tests}
+\title{Corregir un ejercicio contra sus tests}
 \usage{
 grade_exercise(
   file,
@@ -14,20 +14,47 @@ grade_exercise(
 )
 }
 \arguments{
-\item{file}{Path to the student's file: an R script (e.g. \code{"ejercicio1.R"})
+\item{file}{Ruta al archivo del estudiante: un script de R (por ejemplo
+\code{"ejercicio1.R"}) o un documento R Markdown o Quarto (\code{.Rmd}, \code{.qmd}),
+del que se extraen los bloques de código R con \code{knitr::purl()}. El
+archivo de tests que le corresponde se busca sin distinguir mayúsculas
+de minúsculas.
+\emph{English:} Path to the student's file: an R script (e.g. \code{"ejercicio1.R"})
 or an R Markdown or Quarto document (\code{.Rmd}, \code{.qmd}), whose R chunks are
 extracted with \code{knitr::purl()}. The matching test file is found ignoring
 case.}
 
-\item{test_dir}{Directory that contains the test files.}
+\item{test_dir}{Carpeta que contiene los archivos de tests.
+\emph{English:} Directory that contains the test files.}
 
-\item{timeout}{Maximum seconds allowed per test function, and for loading
+\item{timeout}{Máximo de segundos permitido para cada función de test y
+para cargar el archivo del estudiante. Los tests que lo superan quedan
+registrados con estado \code{timeout}. Por defecto 10. Usá \code{Inf} para no
+poner límite.
+\emph{English:} Maximum seconds allowed per test function, and for loading
 the student's file. Tests that exceed it are recorded with status
 \code{timeout}. Default 10. Use \code{Inf} for no limit.}
 
-\item{student}{Optional student display name. Defaults to \code{NA}.}
+\item{student}{Nombre opcional del estudiante para mostrar. Por defecto
+\code{NA}.
+\emph{English:} Optional student display name. Defaults to \code{NA}.}
 
-\item{engine}{\code{"callr"} (default) runs each exercise in a fresh R
+\item{engine}{\code{"callr"} (por defecto) corre cada ejercicio en un subproceso
+nuevo de R con el paquete \pkg{callr}, con una carpeta de trabajo
+temporal. El timeout es un límite estricto de tiempo real, y las
+asignaciones con \verb{<<-} o los archivos que escribe el estudiante no llegan
+a tu sesión ni a tu carpeta.
+\code{"inproc"} corre los tests en la sesión de R actual. Es más rápido, pero
+su timeout con \code{setTimeLimit()} no corta todo tipo de bucle, y el código
+del estudiante puede ver y cambiar tu entorno global.
+\code{"isolated"} corre los tests en un subproceso y el código del estudiante
+en otro. Cada función del estudiante que llaman los tests corre en el
+proceso del estudiante y solo vuelve su resultado (datos simples). Así,
+trucos como \code{attach()}, métodos S3 para comparaciones o funciones base
+reemplazadas no cambian la nota. Es más lento, y una función del
+estudiante no puede devolver una función ni un entorno. Usalo cuando
+te importa evitar trampas.
+\emph{English:} \code{"callr"} (default) runs each exercise in a fresh R
 subprocess via the \pkg{callr} package, with a temporary working
 directory. The timeout is a hard wall-clock limit, and assignments with
 \verb{<<-} or files the student writes do not reach your session or folder.
@@ -41,7 +68,14 @@ process and only its result (plain data) comes back, so tricks such as
 not change the grade. It is slower, and a student function may not
 return a function or an environment. Use it when cheating matters.}
 
-\item{allow_masking}{Character vector of function names from base R and
+\item{allow_masking}{Vector de texto con nombres de funciones de R base y
+de los paquetes por defecto (stats, utils, methods, graphics, grDevices)
+que el estudiante puede redefinir, por ejemplo \code{"factorial"} cuando el
+ejercicio lo pide. Cualquier otro objeto del estudiante con uno de esos
+nombres no es visible para los tests, así que un estudiante no puede
+pasar los tests redefiniendo \code{all()} o \code{==}. Los nombres ignorados
+aparecen en la columna \code{message}.
+\emph{English:} Character vector of function names from base R and
 the default packages (stats, utils, methods, graphics, grDevices) that
 the student may redefine, e.g. \code{"factorial"} when the exercise asks for
 it. Any other student object with such a name is not visible to the
@@ -49,22 +83,40 @@ tests, so a student cannot pass by redefining \code{all()} or \code{==}. Ignored
 names are listed in the \code{message} column.}
 }
 \value{
-A \link{grade_results} object with one row per test. If the student file
-fails to parse, one row with \code{status = source_error}. If no matching test
-file is found, one row with \code{status = missing} and a warning.
+Un objeto \link{grade_results} con una fila por test. Si el archivo del
+estudiante tiene errores de sintaxis, una fila con
+\code{status = source_error}. Si no hay un archivo de tests que le
+corresponda, una fila con \code{status = missing} y una advertencia.
+\emph{English:} A \link{grade_results} object with one row per test. If the student
+file fails to parse, one row with \code{status = source_error}. If no matching
+test file is found, one row with \code{status = missing} and a warning.
 }
 \description{
-Sources the student's file and the matching test file into an isolated
-environment, runs every function whose name starts with
-\verb{test_<exercise>_}, and returns the per-test outcome as a \link{grade_results}
-object.
+Carga el archivo del estudiante y el archivo de tests que le corresponde
+en un entorno aislado, corre cada función cuyo nombre empieza con
+\verb{test_<exercise>_} y devuelve el resultado de cada test como un objeto
+\link{grade_results}.
 }
 \details{
+Un test pasa si devuelve \code{TRUE}. Los tests también pueden usar
+expectativas de \pkg{testthat} (llamá a \code{library(testthat)} al principio
+del archivo de tests): el test pasa cuando al menos una expectativa se
+cumple y ninguna falla. Una expectativa que falla queda registrada como
+\code{fail} con su mensaje.
+}
+\section{English}{
+
+\strong{Grade a single exercise file against its tests.} Sources the student's
+file and the matching test file into an isolated environment, runs every
+function whose name starts with \verb{test_<exercise>_}, and returns the
+per-test outcome as a \link{grade_results} object.
+
 A test passes if it returns \code{TRUE}. Tests can also use \pkg{testthat}
 expectations (call \code{library(testthat)} at the top of the test file): the
 test passes when at least one expectation succeeds and none fails, and a
 failed expectation is recorded as \code{fail} with its message.
 }
+
 \examples{
 # The package ships test files for five sample exercises.
 tests <- system.file("examples", package = "corrector")

@@ -1,11 +1,11 @@
-# Sample grading results
+# Resultados de ejemplo
 
-A small fake
+Un objeto
 [grade_results](https://anevolbap.github.io/corrector/reference/grade_results.md)
-object with 8 students and 5 exercises, useful for trying out
+chico y falso, con 8 estudiantes y 5 ejercicios. Sirve para probar
 [`grade_report()`](https://anevolbap.github.io/corrector/reference/grade_report.md),
-[`plot_report()`](https://anevolbap.github.io/corrector/reference/plot_report.md),
-and the export functions without needing real student submissions.
+[`plot_report()`](https://anevolbap.github.io/corrector/reference/plot_report.md)
+y las funciones de exportación sin necesitar entregas reales.
 
 ## Usage
 
@@ -15,9 +15,20 @@ example_results()
 
 ## Value
 
-A
+Un objeto
+[grade_results](https://anevolbap.github.io/corrector/reference/grade_results.md).
+*English:* A
 [grade_results](https://anevolbap.github.io/corrector/reference/grade_results.md)
 object.
+
+## English
+
+**Sample grading results.** A small fake
+[grade_results](https://anevolbap.github.io/corrector/reference/grade_results.md)
+object with 8 students and 5 exercises, useful for trying out
+[`grade_report()`](https://anevolbap.github.io/corrector/reference/grade_report.md),
+[`plot_report()`](https://anevolbap.github.io/corrector/reference/plot_report.md),
+and the export functions without needing real student submissions.
 
 ## Examples
 

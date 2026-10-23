@@ -1,46 +1,46 @@
 # Package index
 
-## Grading
+## Corregir
 
 - [`grade_exercise()`](https://anevolbap.github.io/corrector/reference/grade_exercise.md)
-  : Grade a single exercise file against its tests
+  : Corregir un ejercicio contra sus tests
 - [`grade_submissions()`](https://anevolbap.github.io/corrector/reference/grade_submissions.md)
-  : Grade all student submissions in a directory or zip archive
+  : Corregir todas las entregas de una carpeta o archivo .zip
 - [`scan_code()`](https://anevolbap.github.io/corrector/reference/scan_code.md)
-  : Find suspicious code in a student file
+  : Buscar código sospechoso en el archivo de un estudiante
 
-## Summarising
+## Resumir
 
 - [`grade_report()`](https://anevolbap.github.io/corrector/reference/grade_report.md)
-  : Summarise grading results
+  : Resumen de los resultados de la corrección
 - [`student_scores()`](https://anevolbap.github.io/corrector/reference/student_scores.md)
-  : Score each student, with optional partial credit and weights
+  : Puntaje de cada estudiante, con puntaje parcial y pesos opcionales
 - [`plot_report()`](https://anevolbap.github.io/corrector/reference/plot_report.md)
-  : Plot a visual summary of grading results
+  : Graficar un resumen visual de los resultados
 
-## Exporting
+## Exportar
 
 - [`export_to_csv()`](https://anevolbap.github.io/corrector/reference/export_to_csv.md)
-  : Export grading results to a CSV file
+  : Exportar los resultados a un archivo CSV
 - [`export_to_html()`](https://anevolbap.github.io/corrector/reference/export_to_html.md)
-  : Export grading results to an HTML report
+  : Exportar los resultados a un informe HTML
 - [`export_to_sheets()`](https://anevolbap.github.io/corrector/reference/export_to_sheets.md)
-  : Export grading results to a Google Sheet
+  : Exportar los resultados a una planilla de Google Sheets
 - [`export_feedback()`](https://anevolbap.github.io/corrector/reference/export_feedback.md)
-  : Write one feedback file per student
+  : Escribir un archivo de devolución por estudiante
 
-## Result object
+## Objeto de resultados
 
 - [`grade_results`](https://anevolbap.github.io/corrector/reference/grade_results.md)
-  : Grading results object
+  : Objeto con los resultados de la corrección
 - [`as.data.frame(`*`<grade_results>`*`)`](https://anevolbap.github.io/corrector/reference/as.data.frame.grade_results.md)
-  : Convert grading results to a data frame
+  : Convertir los resultados de la corrección en un data frame
 
-## Helpers
+## Auxiliares
 
 - [`default_student_name()`](https://anevolbap.github.io/corrector/reference/default_student_name.md)
-  : Default student-name extractor
+  : Extractor por defecto del nombre del estudiante
 - [`moodle_student_name()`](https://anevolbap.github.io/corrector/reference/moodle_student_name.md)
-  : Student name from a Moodle submission folder
+  : Nombre del estudiante a partir de una carpeta de Moodle
 - [`example_results()`](https://anevolbap.github.io/corrector/reference/example_results.md)
-  : Sample grading results
+  : Resultados de ejemplo

@@ -1,6 +1,6 @@
-# Convert grading results to a data frame
+# Convertir los resultados de la corrección en un data frame
 
-Convert grading results to a data frame
+Convertir los resultados de la corrección en un data frame
 
 ## Usage
 
@@ -19,30 +19,37 @@ as.data.frame(
 
 - x:
 
-  A `grade_results` object.
+  Un objeto `grade_results`. *English:* A `grade_results` object.
 
 - row.names:
 
-  Ignored.
+  Se ignora. *English:* Ignored.
 
 - optional:
 
-  Ignored.
+  Se ignora. *English:* Ignored.
 
 - format:
 
-  `"long"` returns the underlying long-format data frame. `"wide"`
-  returns the legacy view: one row per student, one logical column per
-  exercise (`TRUE` iff all tests passed; `NA` for `missing` or
-  `source_error`).
+  `"long"` devuelve el data frame en formato largo que guarda el objeto.
+  `"wide"` devuelve la vista anterior: una fila por estudiante, una
+  columna lógica por ejercicio (`TRUE` si y solo si pasaron todos los
+  tests; `NA` para `missing` o `source_error`). *English:* `"long"`
+  returns the underlying long-format data frame. `"wide"` returns the
+  legacy view: one row per student, one logical column per exercise
+  (`TRUE` iff all tests passed; `NA` for `missing` or `source_error`).
 
 - ...:
 
-  Ignored.
+  Se ignora. *English:* Ignored.
 
 ## Value
 
-A plain data frame.
+Un data frame común. *English:* A plain data frame.
+
+## English
+
+**Convert grading results to a data frame.**
 
 ## Examples
 

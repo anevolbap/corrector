@@ -1,6 +1,6 @@
-# Score each student, with optional partial credit and weights
+# Puntaje de cada estudiante, con puntaje parcial y pesos opcionales
 
-Score each student, with optional partial credit and weights
+Puntaje de cada estudiante, con puntaje parcial y pesos opcionales
 
 ## Usage
 
@@ -12,28 +12,44 @@ student_scores(results, scoring = c("partial", "all"), weights = NULL)
 
 - results:
 
-  A
+  Un objeto
+  [grade_results](https://anevolbap.github.io/corrector/reference/grade_results.md).
+  *English:* A
   [grade_results](https://anevolbap.github.io/corrector/reference/grade_results.md)
   object.
 
 - scoring:
 
-  `"partial"` (default): an exercise scores the weighted fraction of its
-  tests that pass. `"all"`: an exercise scores 1 only if every test
-  passes, else 0.
+  `"partial"` (por defecto): el puntaje de un ejercicio es la fracción
+  ponderada de sus tests que pasan. `"all"`: un ejercicio vale 1 solo si
+  pasan todos sus tests, si no vale 0. *English:* `"partial"` (default):
+  an exercise scores the weighted fraction of its tests that pass.
+  `"all"`: an exercise scores 1 only if every test passes, else 0.
 
 - weights:
 
-  Optional named numeric vector. A name that matches a test function
-  (e.g. `test_ejercicio1_raices`) weights that test inside its exercise.
-  A name that matches an exercise (e.g. `ejercicio1`) weights that
+  Vector numérico con nombres, opcional. Un nombre que coincide con una
+  función de test (por ejemplo `test_ejercicio1_raices`) define el peso
+  de ese test dentro de su ejercicio. Un nombre que coincide con un
+  ejercicio (por ejemplo `ejercicio1`) define el peso de ese ejercicio
+  en `total`. Lo que no aparece en el vector pesa 1. *English:* Optional
+  named numeric vector. A name that matches a test function (e.g.
+  `test_ejercicio1_raices`) weights that test inside its exercise. A
+  name that matches an exercise (e.g. `ejercicio1`) weights that
   exercise in `total`. Anything not named weighs 1.
 
 ## Value
 
-A data frame with one row per student: a `student` column, one numeric
-column (0-1) per exercise, and `total`. An exercise is `NA` when it is
-`missing` or has a `source_error`; it counts as 0 in `total`.
+Un data frame con una fila por estudiante: una columna `student`, una
+columna numérica (0-1) por ejercicio y `total`. Un ejercicio vale `NA`
+cuando está `missing` o tiene un `source_error`; en `total` cuenta como
+0. *English:* A data frame with one row per student: a `student` column,
+one numeric column (0-1) per exercise, and `total`. An exercise is `NA`
+when it is `missing` or has a `source_error`; it counts as 0 in `total`.
+
+## English
+
+**Score each student, with optional partial credit and weights.**
 
 ## Examples
 

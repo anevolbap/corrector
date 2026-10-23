@@ -1,8 +1,9 @@
-# Write one feedback file per student
+# Escribir un archivo de devolución por estudiante
 
-Writes `<student>.md` into `dir` for every student: the total score, the
-score of each exercise, and the status of each test, with the error
-message when there is one. Use it to send each student their results.
+Escribe `<student>.md` en `dir` para cada estudiante: el puntaje total,
+el puntaje de cada ejercicio y el estado de cada test, con el mensaje de
+error cuando lo hay. Usala para mandarle a cada estudiante sus
+resultados.
 
 ## Usage
 
@@ -14,22 +15,35 @@ export_feedback(results, dir, scoring = c("partial", "all"), weights = NULL)
 
 - results:
 
-  A
+  Un objeto
+  [grade_results](https://anevolbap.github.io/corrector/reference/grade_results.md).
+  *English:* A
   [grade_results](https://anevolbap.github.io/corrector/reference/grade_results.md)
   object.
 
 - dir:
 
-  Folder to write into. Created if needed.
+  Carpeta donde escribir. Se crea si hace falta. *English:* Folder to
+  write into. Created if needed.
 
 - scoring, weights:
 
-  Passed to
+  Se pasan a
+  [`student_scores()`](https://anevolbap.github.io/corrector/reference/student_scores.md).
+  *English:* Passed to
   [`student_scores()`](https://anevolbap.github.io/corrector/reference/student_scores.md).
 
 ## Value
 
-The paths of the written files, invisibly.
+Las rutas de los archivos escritos, de forma invisible. *English:* The
+paths of the written files, invisibly.
+
+## English
+
+**Write one feedback file per student.** Writes `<student>.md` into
+`dir` for every student: the total score, the score of each exercise,
+and the status of each test, with the error message when there is one.
+Use it to send each student their results.
 
 ## Examples
 

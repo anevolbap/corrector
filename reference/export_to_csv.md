@@ -1,8 +1,8 @@
-# Export grading results to a CSV file
+# Exportar los resultados a un archivo CSV
 
-Text cells that start with `=`, `+`, `-` or `@` get a leading `'`, so a
-spreadsheet app does not run them as formulas (error messages come from
-student code).
+Las celdas de texto que empiezan con `=`, `+`, `-` o `@` reciben un `'`
+adelante, así la planilla no las corre como fórmulas (los mensajes de
+error vienen del código del estudiante).
 
 ## Usage
 
@@ -14,22 +14,33 @@ export_to_csv(results, path, format = c("wide", "long"))
 
 - results:
 
-  A
+  Un objeto
+  [grade_results](https://anevolbap.github.io/corrector/reference/grade_results.md).
+  *English:* A
   [grade_results](https://anevolbap.github.io/corrector/reference/grade_results.md)
   object.
 
 - path:
 
+  Ruta del archivo de salida (por ejemplo `"grades.csv"`). *English:*
   Output file path (e.g. `"grades.csv"`).
 
 - format:
 
-  `"wide"` (default) writes one row per student with one logical column
-  per exercise. `"long"` writes the per-test detail.
+  `"wide"` (por defecto) escribe una fila por estudiante, con una
+  columna lógica por ejercicio. `"long"` escribe el detalle por test.
+  *English:* `"wide"` (default) writes one row per student with one
+  logical column per exercise. `"long"` writes the per-test detail.
 
 ## Value
 
-`results`, invisibly.
+`results`, de forma invisible. *English:* `results`, invisibly.
+
+## English
+
+**Export grading results to a CSV file.** Text cells that start with
+`=`, `+`, `-` or `@` get a leading `'`, so a spreadsheet app does not
+run them as formulas (error messages come from student code).
 
 ## Examples
 

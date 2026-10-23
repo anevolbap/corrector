@@ -1,10 +1,11 @@
-# Grade all student submissions in a directory or zip archive
+# Corregir todas las entregas de una carpeta o archivo .zip
 
-Expects one sub-folder per student inside `submissions_path`. Every
-student is graded on every exercise that has a test file in `test_dir`;
-a student who omits an exercise gets a `missing` row. The student's file
-is matched ignoring case (`Ejercicio1.R` counts as `ejercicio1`), and
-`.Rmd` or `.qmd` files are accepted when there is no `.R` file.
+Espera una subcarpeta por estudiante dentro de `submissions_path`. Cada
+estudiante se corrige en cada ejercicio que tiene un archivo de tests en
+`test_dir`. Un estudiante que no entrega un ejercicio recibe una fila
+`missing`. El archivo del estudiante se busca sin distinguir mayúsculas
+de minúsculas (`Ejercicio1.R` cuenta como `ejercicio1`), y se aceptan
+archivos `.Rmd` o `.qmd` cuando no hay un archivo `.R`.
 
 ## Usage
 
@@ -25,35 +26,52 @@ grade_submissions(
 
 - submissions_path:
 
-  Path to a directory or `.zip` archive of submissions.
+  Ruta a una carpeta o archivo `.zip` con las entregas. *English:* Path
+  to a directory or `.zip` archive of submissions.
 
 - test_dir:
 
-  Directory that contains the test files.
+  Carpeta que contiene los archivos de tests. *English:* Directory that
+  contains the test files.
 
 - timeout:
 
-  Maximum seconds allowed per test function. Default 10.
+  Máximo de segundos permitido para cada función de test. Por
+  defecto 10. *English:* Maximum seconds allowed per test function.
+  Default 10.
 
 - engine:
 
-  `"callr"` (default), `"inproc"` or `"isolated"`. See
+  `"callr"` (por defecto), `"inproc"` o `"isolated"`. Mirá
+  [`grade_exercise()`](https://anevolbap.github.io/corrector/reference/grade_exercise.md).
+  *English:* `"callr"` (default), `"inproc"` or `"isolated"`. See
   [`grade_exercise()`](https://anevolbap.github.io/corrector/reference/grade_exercise.md).
 
 - student_name_fn:
 
-  Function applied to each student folder name to produce the display
-  name. Defaults to taking the first underscore- separated token and
-  applying title case. Folders that map to the same name keep their
-  folder name, with a warning.
+  Función que se aplica al nombre de cada carpeta de estudiante para
+  obtener el nombre para mostrar. Por defecto toma la primera parte
+  separada por guiones bajos y la pasa a formato título. Las carpetas
+  que dan el mismo nombre conservan el nombre de la carpeta, con una
+  advertencia. *English:* Function applied to each student folder name
+  to produce the display name. Defaults to taking the first
+  underscore-separated token and applying title case. Folders that map
+  to the same name keep their folder name, with a warning.
 
 - allow_masking:
 
-  Base function names students may redefine. See
+  Nombres de funciones base que los estudiantes pueden redefinir. Mirá
+  [`grade_exercise()`](https://anevolbap.github.io/corrector/reference/grade_exercise.md).
+  *English:* Base function names students may redefine. See
   [`grade_exercise()`](https://anevolbap.github.io/corrector/reference/grade_exercise.md).
 
 - workers:
 
+  Cantidad de subprocesos de callr que corren al mismo tiempo. Por
+  defecto 1. Valores mayores que 1 aceleran la corrección de cursos
+  grandes; un valor cercano a
+  [`parallel::detectCores()`](https://rdrr.io/r/parallel/detectCores.html)
+  es un buen límite superior. El motor `"inproc"` lo ignora. *English:*
   Number of callr subprocesses to run at the same time. Default 1.
   Values above 1 speed up large classes; a value near
   [`parallel::detectCores()`](https://rdrr.io/r/parallel/detectCores.html)
@@ -61,19 +79,41 @@ grade_submissions(
 
 - layout:
 
-  `"folders"` (default): one folder per student. `"moodle"`: the zip or
-  folder from Moodle's "Download all submissions", with or without
-  "Download submissions in folders". Only file submissions are graded,
-  and `student_name_fn` defaults to
+  `"folders"` (por defecto): una carpeta por estudiante. `"moodle"`: el
+  archivo .zip o la carpeta de "Descargar todas las entregas" de Moodle,
+  con o sin "Descargar entregas en carpetas". Solo se corrigen las
+  entregas de archivos, y `student_name_fn` pasa a ser por defecto
+  [`moodle_student_name()`](https://anevolbap.github.io/corrector/reference/moodle_student_name.md).
+  *English:* `"folders"` (default): one folder per student. `"moodle"`:
+  the zip or folder from Moodle's "Download all submissions", with or
+  without "Download submissions in folders". Only file submissions are
+  graded, and `student_name_fn` defaults to
   [`moodle_student_name()`](https://anevolbap.github.io/corrector/reference/moodle_student_name.md).
 
 ## Value
 
-A
+Un objeto
+[grade_results](https://anevolbap.github.io/corrector/reference/grade_results.md).
+*English:* A
 [grade_results](https://anevolbap.github.io/corrector/reference/grade_results.md)
 object.
 
 ## Details
+
+Si `submissions_path` termina en `.zip`, primero se extrae en una
+subcarpeta de [`tempdir()`](https://rdrr.io/r/base/tempfile.html). Se
+ignoran los archivos sueltos, las carpetas ocultas y `__MACOSX`. Si la
+ruta tiene una sola carpeta sin archivos `.R`, `.Rmd` ni `.qmd` pero con
+subcarpetas, esas subcarpetas se toman como los estudiantes.
+
+## English
+
+**Grade all student submissions in a directory or zip archive.** Expects
+one sub-folder per student inside `submissions_path`. Every student is
+graded on every exercise that has a test file in `test_dir`; a student
+who omits an exercise gets a `missing` row. The student's file is
+matched ignoring case (`Ejercicio1.R` counts as `ejercicio1`), and
+`.Rmd` or `.qmd` files are accepted when there is no `.R` file.
 
 If `submissions_path` ends in `.zip` it is extracted into a
 [`tempdir()`](https://rdrr.io/r/base/tempfile.html) subfolder first.

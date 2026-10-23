@@ -1,5 +1,8 @@
 # Setting up a grading pipeline
 
+*[Versión en
+español](https://anevolbap.github.io/corrector/articles/corregir-entregas.md)*
+
 This vignette walks through a complete grading run end to end: writing
 tests, gathering submissions, grading, summarising, and exporting.
 

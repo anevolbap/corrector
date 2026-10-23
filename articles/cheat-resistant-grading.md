@@ -1,5 +1,8 @@
 # Cheat-resistant grading
 
+*[Versión en
+español](https://anevolbap.github.io/corrector/articles/evaluacion-anti-trampas.md)*
+
 A student file is R code, and R code can change how other R code
 behaves. This article shows what corrector does about that, which engine
 to pick, and how to write tests that are hard to fool.

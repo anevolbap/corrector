@@ -1,12 +1,20 @@
 # corrector
 
-[English version](https://anevolbap.github.io/corrector/README.en.md)
+[English
+version](https://github.com/anevolbap/corrector/blob/main/README.en.md)
 
 Paquete de R para corregir automáticamente ejercicios de programación.
 Cada estudiante entrega un archivo `.R` por ejercicio y el docente
 provee los archivos de tests. El paquete los carga en un entorno
 aislado, ejecuta los tests y devuelve un objeto con los resultados por
 test.
+
+Guías: [Corregir entregas de principio a
+fin](https://anevolbap.github.io/corrector/articles/corregir-entregas.html)
+· [Corregir sin que te hagan
+trampa](https://anevolbap.github.io/corrector/articles/evaluacion-anti-trampas.html)
+· [Referencia de
+funciones](https://anevolbap.github.io/corrector/reference/) (en inglés)
 
 ## Instalación
 
@@ -314,8 +322,8 @@ resultados <- grade_submissions("entregas/", test_dir = "tests/",
                                 engine = "isolated", workers = 4)
 ```
 
-El artículo [Cheat-resistant
-grading](https://anevolbap.github.io/corrector/articles/cheat-resistant-grading.html)
+El artículo [Corregir sin que te hagan
+trampa](https://anevolbap.github.io/corrector/articles/evaluacion-anti-trampas.html)
 explica qué cubre cada motor y cómo escribir tests difíciles de engañar
 (por ejemplo, comparar con
 [`identical()`](https://rdrr.io/r/base/identical.html) y usar datos al

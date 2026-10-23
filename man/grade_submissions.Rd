@@ -8,7 +8,7 @@ grade_submissions(
   submissions_path,
   test_dir,
   timeout = 10,
-  engine = c("callr", "inproc", "isolated"),
+  engine = c("callr", "inproc", "isolated", "container"),
   student_name_fn = default_student_name,
   allow_masking = character(),
   workers = 1L,
@@ -27,10 +27,10 @@ entregas.
 defecto 10.
 \emph{English:} Maximum seconds allowed per test function. Default 10.}
 
-\item{engine}{\code{"callr"} (por defecto), \code{"inproc"} o \code{"isolated"}. Mirá
-\code{\link[=grade_exercise]{grade_exercise()}}.
-\emph{English:} \code{"callr"} (default), \code{"inproc"} or \code{"isolated"}. See
-\code{\link[=grade_exercise]{grade_exercise()}}.}
+\item{engine}{\code{"callr"} (por defecto), \code{"inproc"}, \code{"isolated"} o \code{"container"}.
+Mirá \code{\link[=grade_exercise]{grade_exercise()}}.
+\emph{English:} \code{"callr"} (default), \code{"inproc"}, \code{"isolated"} or \code{"container"}.
+See \code{\link[=grade_exercise]{grade_exercise()}}.}
 
 \item{student_name_fn}{Función que se aplica al nombre de cada carpeta de
 estudiante para obtener el nombre para mostrar. Por defecto toma la

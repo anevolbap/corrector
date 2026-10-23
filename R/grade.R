@@ -58,6 +58,14 @@
 #'   reemplazadas no cambian la nota. Es más lento, y una función del
 #'   estudiante no puede devolver una función ni un entorno. Usalo cuando
 #'   te importa evitar trampas.
+#'   `"container"` hace lo mismo que `"isolated"`, pero dentro de un
+#'   contenedor de Docker sin red, con memoria limitada y solo con los
+#'   archivos del ejercicio, así el código del estudiante no llega a tus
+#'   archivos ni a tu red. Necesita Docker (o
+#'   `options(corrector.container_cmd = "podman")`) y la imagen
+#'   `corrector-runner` (otra con `options(corrector.container_image = )`);
+#'   el archivo para construirla está en
+#'   `system.file("container", package = "corrector")`.
 #'   *English:* `"callr"` (default) runs each exercise in a fresh R
 #'   subprocess via the \pkg{callr} package, with a temporary working
 #'   directory. The timeout is a hard wall-clock limit, and assignments with
@@ -71,6 +79,13 @@
 #'   `attach()`, S3 methods for comparisons or replaced base functions do
 #'   not change the grade. It is slower, and a student function may not
 #'   return a function or an environment. Use it when cheating matters.
+#'   `"container"` does the same as `"isolated"`, but inside a Docker
+#'   container with no network, limited memory and only the exercise's
+#'   files, so student code cannot reach your files or network. It needs
+#'   Docker (or `options(corrector.container_cmd = "podman")`) and the image
+#'   `corrector-runner` (another one with
+#'   `options(corrector.container_image = )`); the file to build it is in
+#'   `system.file("container", package = "corrector")`.
 #' @param allow_masking Vector de texto con nombres de funciones de R base y
 #'   de los paquetes por defecto (stats, utils, methods, graphics, grDevices)
 #'   que el estudiante puede redefinir, por ejemplo `"factorial"` cuando el
@@ -105,9 +120,10 @@
 #' grade_exercise(file, tests, student = "Garcia")
 grade_exercise <- function(file, test_dir, timeout = 10,
                            student = NA_character_,
-                           engine = c("callr", "inproc", "isolated"),
+                           engine = c("callr", "inproc", "isolated", "container"),
                            allow_masking = character()) {
   engine <- match.arg(engine)
+  if (engine == "container") check_container()
   if (!file.exists(file)) stop("Student file does not exist: ", file, call. = FALSE)
   check_test_dir(test_dir)
   check_timeout(timeout)
@@ -133,9 +149,9 @@ grade_exercise <- function(file, test_dir, timeout = 10,
   # Use the test file's spelling ("Ejercicio1.R" is graded as ejercicio1).
   exercise <- test_exercise(test_file)
 
-  if (engine %in% c("callr", "isolated")) {
+  if (engine != "inproc") {
     job <- start_grading_callr(file, test_file, timeout, student, protected,
-                               allow_masking, isolated = engine == "isolated")
+                               allow_masking, mode = engine)
     if (inherits(job, "grade_results")) return(job)
     job$proc$wait(timeout = wait_ms(job))
     return(finish_grading_callr(job))
@@ -246,10 +262,10 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 #' @param timeout Máximo de segundos permitido para cada función de test. Por
 #'   defecto 10.
 #'   *English:* Maximum seconds allowed per test function. Default 10.
-#' @param engine `"callr"` (por defecto), `"inproc"` o `"isolated"`. Mirá
-#'   [grade_exercise()].
-#'   *English:* `"callr"` (default), `"inproc"` or `"isolated"`. See
-#'   [grade_exercise()].
+#' @param engine `"callr"` (por defecto), `"inproc"`, `"isolated"` o `"container"`.
+#'   Mirá [grade_exercise()].
+#'   *English:* `"callr"` (default), `"inproc"`, `"isolated"` or `"container"`.
+#'   See [grade_exercise()].
 #' @param student_name_fn Función que se aplica al nombre de cada carpeta de
 #'   estudiante para obtener el nombre para mostrar. Por defecto toma la
 #'   primera parte separada por guiones bajos y la pasa a formato título.
@@ -301,12 +317,13 @@ grade_exercise <- function(file, test_dir, timeout = 10,
 #' results
 #' as.data.frame(results, format = "wide")
 grade_submissions <- function(submissions_path, test_dir, timeout = 10,
-                              engine = c("callr", "inproc", "isolated"),
+                              engine = c("callr", "inproc", "isolated", "container"),
                               student_name_fn = default_student_name,
                               allow_masking = character(),
                               workers = 1L,
                               layout = c("folders", "moodle")) {
   engine <- match.arg(engine)
+  if (engine == "container") check_container()
   layout <- match.arg(layout)
   if (!file.exists(submissions_path)) {
     stop("submissions_path does not exist: ", submissions_path, call. = FALSE)
@@ -393,7 +410,7 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
         job <- quiet_no_tests(start_grading_callr(
           file, find_test_file(tasks$exercise[[i]], test_dir),
           timeout, name, protected, allow_masking,
-          isolated = engine == "isolated"
+          mode = engine
         ))
         if (inherits(job, "grade_results")) {
           results[[i]] <- job

@@ -8,7 +8,9 @@
 #'
 #' @noRd
 start_grading_callr <- function(file, test_file, timeout, student, protected,
-                                allow_masking = character(), isolated = FALSE) {
+                                allow_masking = character(),
+                                mode = c("callr", "isolated", "container")) {
+  mode <- match.arg(mode)
   exercise <- test_exercise(test_file)
   test_fns <- discover_test_fns(test_file, exercise)
   if (length(test_fns) == 0) return(empty_grade_results())
@@ -18,14 +20,24 @@ start_grading_callr <- function(file, test_file, timeout, student, protected,
     return(source_error_result(student, exercise, conditionMessage(code)))
   }
   n <- max(length(test_fns), 1L)
-  budget <- if (is.finite(timeout)) timeout * n + 5 else Inf
-  progress <- tempfile("corrector_progress", fileext = ".rds")
+  # A container also needs a few seconds to start.
+  budget <- if (is.finite(timeout)) timeout * n + if (mode == "container") 20 else 5 else Inf
+  if (mode == "container") {
+    launched <- start_exercise_container(code, test_file, test_fns, timeout,
+                                         protected, allow_masking)
+    proc <- launched$proc
+    progress <- launched$progress
+  } else {
+    progress <- tempfile("corrector_progress", fileext = ".rds")
+    proc <- start_exercise_callr(code, test_file, test_fns, timeout, protected,
+                                 progress, allow_masking, isolated = mode == "isolated")
+  }
   list(
-    proc     = start_exercise_callr(code, test_file, test_fns, timeout, protected,
-                                    progress, allow_masking, isolated),
+    proc     = proc,
     deadline = as.numeric(Sys.time()) + budget,
     progress = progress,
-    isolated = isolated,
+    # Student code in a separate process could reach the progress file.
+    isolated = mode != "callr",
     suspicious = scan_code(code),
     file = file, test_fns = test_fns, timeout = timeout,
     student = student, exercise = exercise

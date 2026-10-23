@@ -25,6 +25,7 @@ reference:
       - export_to_html
       - export_to_sheets
       - export_feedback
+      - export_moodle_feedback
   - title: Objeto de resultados
     contents:
       - grade_results

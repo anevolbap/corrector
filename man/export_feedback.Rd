@@ -30,8 +30,9 @@ the computer's language (\code{LANGUAGE} or the locale): English if that is
 English, Spanish otherwise.}
 }
 \value{
-Las rutas de los archivos escritos, de forma invisible.
-\emph{English:} The paths of the written files, invisibly.
+Las rutas de los archivos escritos, con el nombre de cada
+estudiante, de forma invisible.
+\emph{English:} The paths of the written files, named by student, invisibly.
 }
 \description{
 Escribe \verb{<student>.md} en \code{dir} para cada estudiante: el puntaje total, el

@@ -22,8 +22,9 @@
 #'   *English:* Language of the files: `"es"` or `"en"`. By default it follows
 #'   the computer's language (`LANGUAGE` or the locale): English if that is
 #'   English, Spanish otherwise.
-#' @return Las rutas de los archivos escritos, de forma invisible.
-#'   *English:* The paths of the written files, invisibly.
+#' @return Las rutas de los archivos escritos, con el nombre de cada
+#'   estudiante, de forma invisible.
+#'   *English:* The paths of the written files, named by student, invisibly.
 #' @export
 #' @examples
 #' dir <- file.path(tempdir(), "feedback")
@@ -63,6 +64,7 @@ export_feedback <- function(results, dir, scoring = c("partial", "all"),
     writeLines(lines, path, useBytes = TRUE)
     path
   }, character(1))
+  names(paths) <- scores$student
   invisible(paths)
 }
 

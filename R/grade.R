@@ -431,7 +431,10 @@ grade_submissions <- function(submissions_path, test_dir, timeout = 10,
   if (use_cli) cli::cli_progress_done(id = progress_id)
 
   combined <- do.call(rbind, lapply(results, unclass_df))
-  new_grade_results(combined)
+  out <- new_grade_results(combined)
+  # Each student's submission folder, for export_moodle_feedback().
+  attr(out, "folders") <- stats::setNames(students, display)
+  out
 }
 
 # ---------- internal helpers ----------

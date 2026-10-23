@@ -10,8 +10,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Automatic Grading of R Coding Exercises">
-<meta name="description" content="Grades student R coding exercises against professor-written test functions. Accepts a directory or zip archive of submissions, matches each exercise file to its test file, runs the tests in a separate R process with a time limit, and returns one row per test with its status. Reads Moodle submission exports and accepts R Markdown and Quarto files. Provides partial-credit scores, summaries, plots, per-student feedback files, and export to CSV, HTML or Google Sheets.">
-<meta property="og:description" content="Grades student R coding exercises against professor-written test functions. Accepts a directory or zip archive of submissions, matches each exercise file to its test file, runs the tests in a separate R process with a time limit, and returns one row per test with its status. Reads Moodle submission exports and accepts R Markdown and Quarto files. Provides partial-credit scores, summaries, plots, per-student feedback files, and export to CSV, HTML or Google Sheets.">
+<meta name="description" content="Grades student R coding exercises against professor-written test functions. Accepts a directory or zip archive of submissions, matches each exercise file to its test file, runs the tests in a separate R process with a time limit, and returns one row per test with its status. Reads Moodle submission exports and accepts R Markdown and Quarto files. Provides partial-credit scores, grade scales, summaries, plots, per-student feedback files (also as a zip that Moodle imports), similarity checks between submissions, and export to CSV, HTML or Google Sheets. Student code can run in a separate process or in a container.">
+<meta property="og:description" content="Grades student R coding exercises against professor-written test functions. Accepts a directory or zip archive of submissions, matches each exercise file to its test file, runs the tests in a separate R process with a time limit, and returns one row per test with its status. Reads Moodle submission exports and accepts R Markdown and Quarto files. Provides partial-credit scores, grade scales, summaries, plots, per-student feedback files (also as a zip that Moodle imports), similarity checks between submissions, and export to CSV, HTML or Google Sheets. Student code can run in a separate process or in a container.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="index.html">corrector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -250,19 +250,35 @@ tests/
 <code class="sourceCode R"><span><span class="va">notas</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/student_scores.html">student_scores</a></span><span class="op">(</span><span class="va">resultados</span>,</span>
 <span>                        weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>test_ejercicio1_raices <span class="op">=</span> <span class="fl">2</span>, ejercicio2 <span class="op">=</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/grade_report.html">grade_report</a></span><span class="op">(</span><span class="va">resultados</span>, scoring <span class="op">=</span> <span class="st">"partial"</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="reference/grade_scale.html">grade_scale()</a></code> pasa el puntaje (de 0 a 1) a una escala de notas. Por defecto es de 1 a 10 y el 60% es un 4; el redondeo nunca aprueba a quien no llegó:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">notas</span><span class="op">$</span><span class="va">nota</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_scale.html">grade_scale</a></span><span class="op">(</span><span class="va">notas</span><span class="op">$</span><span class="va">total</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/grade_scale.html">grade_scale</a></span><span class="op">(</span><span class="va">notas</span><span class="op">$</span><span class="va">total</span>, min <span class="op">=</span> <span class="fl">0</span>, max <span class="op">=</span> <span class="fl">100</span>, pass <span class="op">=</span> <span class="fl">60</span>, pass_at <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="devolución-a-cada-estudiante">Devolución a cada estudiante<a class="anchor" aria-label="anchor" href="#devoluci%C3%B3n-a-cada-estudiante"></a>
 </h2>
-<p><code><a href="reference/export_feedback.html">export_feedback()</a></code> escribe un archivo Markdown por estudiante con su nota, el puntaje de cada ejercicio y el resultado de cada test, con el mensaje de error cuando lo hay:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/export_feedback.html">export_feedback</a></span><span class="op">(</span><span class="va">resultados</span>, <span class="st">"devoluciones/"</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="reference/export_feedback.html">export_feedback()</a></code> escribe un archivo Markdown por estudiante con su nota, el puntaje de cada ejercicio y el resultado de cada test, con el mensaje de error cuando lo hay. Los archivos salen en castellano o en inglés según el idioma de la computadora; elegilo con <code>lang</code>:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/export_feedback.html">export_feedback</a></span><span class="op">(</span><span class="va">resultados</span>, <span class="st">"devoluciones/"</span>, lang <span class="op">=</span> <span class="st">"es"</span><span class="op">)</span></span></code></pre></div>
+<p>Si corregiste con <code>layout = "moodle"</code>, <code><a href="reference/export_moodle_feedback.html">export_moodle_feedback()</a></code> arma un <code>.zip</code> que Moodle carga de una vez: en la página de entregas de la tarea, usá la opción para subir varios archivos de retroalimentación en un zip (en inglés, <em>Upload multiple feedback files in a zip</em>). La tarea tiene que tener activada la retroalimentación con archivos.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/export_moodle_feedback.html">export_moodle_feedback</a></span><span class="op">(</span><span class="va">resultados</span>, <span class="st">"devoluciones-tarea1.zip"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="entregas-parecidas">Entregas parecidas<a class="anchor" aria-label="anchor" href="#entregas-parecidas"></a>
+</h2>
+<p><code><a href="reference/compare_submissions.html">compare_submissions()</a></code> compara, ejercicio por ejercicio, los archivos de todos los pares de estudiantes y lista los más parecidos. Cambiar nombres de variables, espacios o comentarios no esconde una copia. Una similitud alta no prueba que haya copia (las soluciones cortas se parecen); sirve para elegir qué entregas mirar a mano.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/compare_submissions.html">compare_submissions</a></span><span class="op">(</span><span class="st">"entregas/"</span>, min_similarity <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
+<span><span class="co">#&gt;     exercise student_a student_b similarity</span></span>
+<span><span class="co">#&gt; 1 ejercicio1    Garcia     Lopez       1.00</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="gráficos">Gráficos<a class="anchor" aria-label="anchor" href="#gr%C3%A1ficos"></a>
 </h2>
 <p><code><a href="reference/plot_report.html">plot_report()</a></code> genera tres gráficos en secuencia: puntajes de los estudiantes ordenados, tasa de aprobación por ejercicio y un mapa de calor de resultados.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Interactivo, pausa entre gráficos</span></span>
 <span><span class="fu"><a href="reference/plot_report.html">plot_report</a></span><span class="op">(</span><span class="va">resultados</span><span class="op">)</span></span>
 <span></span>
@@ -281,11 +297,11 @@ tests/
 <h2 id="tiempo-límite-por-test">Tiempo límite por test<a class="anchor" aria-label="anchor" href="#tiempo-l%C3%ADmite-por-test"></a>
 </h2>
 <p>Cada test tiene un límite de <code>timeout</code> segundos (10 por defecto), y la carga del archivo del estudiante también. El motor <code>callr</code> corre cada ejercicio en un subproceso nuevo, con una carpeta de trabajo temporal. Si un test no responde al límite (por ejemplo dentro de <code><a href="https://rdrr.io/r/base/Sys.sleep.html" class="external-link">Sys.sleep()</a></code>), el subproceso se corta cuando el ejercicio completo pasa <code>timeout</code> × cantidad de tests + 5 segundos: los tests que ya terminaron conservan su resultado y el resto queda como <code>timeout</code>. Para cambiar el límite:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">resultados</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"entregas/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>, timeout <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span></code></pre></div>
 <p>Usá <code>timeout = Inf</code> para no poner límite. <code>engine = "inproc"</code> corre los tests en la sesión actual: es más rápido, pero <code><a href="https://rdrr.io/r/base/setTimeLimit.html" class="external-link">setTimeLimit()</a></code> no interrumpe todos los bucles y el código del estudiante puede modificar tu entorno global.</p>
 <p>Para cursos grandes, <code>workers</code> corre varios subprocesos a la vez:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">resultados</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"entregas/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>, workers <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -297,9 +313,14 @@ tests/
 </h3>
 <p>Con los motores <code>callr</code> e <code>inproc</code> el corrector bloquea las trampas comunes: redefinir funciones de base R o métodos S3 de comparación en el archivo, escribirlas en el entorno global, o llamar a <code><a href="https://rdrr.io/r/base/quit.html" class="external-link">quit()</a></code>. Un estudiante que conozca R a fondo todavía puede engañarlos (por ejemplo con <code><a href="https://rdrr.io/r/base/attach.html" class="external-link">attach()</a></code> o modificando el paquete base). El corrector detecta ese código y lo anota en la columna <code>message</code> como <code>suspicious code</code> o <code>tampering</code>, y <code><a href="reference/grade_report.html">grade_report()</a></code> lista a esos estudiantes en “Check by hand”.</p>
 <p><code>engine = "isolated"</code> corre el código del estudiante en otro proceso y solo recibe de vuelta los resultados, así esas trampas no cambian la nota. Tarda más o menos el doble que <code>callr</code>; <code>workers</code> lo compensa:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">resultados</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"entregas/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>,</span>
 <span>                                engine <span class="op">=</span> <span class="st">"isolated"</span>, workers <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
+<p><code>engine = "container"</code> hace lo mismo dentro de un contenedor de Docker sin red y con solo los archivos del ejercicio, así el código del estudiante tampoco llega a tus archivos ni a tu red. Construí la imagen una vez con el archivo que trae el paquete:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-t</span> corrector-runner <span class="st">"</span><span class="va">$(</span><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(system.file("container", package = "corrector"))'</span><span class="va">)</span><span class="st">"</span></span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">resultados</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"entregas/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>,</span>
+<span>                                engine <span class="op">=</span> <span class="st">"container"</span>, workers <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
 <p>El artículo <a href="https://anevolbap.github.io/corrector/articles/evaluacion-anti-trampas.html">Corregir sin que te hagan trampa</a> explica qué cubre cada motor y cómo escribir tests difíciles de engañar (por ejemplo, comparar con <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> y usar datos al azar).</p>
 </div>
 </div>
@@ -307,7 +328,7 @@ tests/
 <h2 id="archivos-de-tests-de-ejemplo">Archivos de tests de ejemplo<a class="anchor" aria-label="anchor" href="#archivos-de-tests-de-ejemplo"></a>
 </h2>
 <p>El paquete incluye ejemplos para cinco tipos de ejercicio: raíces de ecuación cuadrática, búsqueda de palabras, ordenamiento, simulación y transformación de data frames.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples"</span>, package <span class="op">=</span> <span class="st">"corrector"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -334,7 +355,7 @@ tests/
 </h2>
 <p>Se espera que las carpetas de cada estudiante empiecen con el apellido, opcionalmente seguido de otros campos separados por guiones bajos (por ejemplo <code>garcia_juan_12345</code>). El corrector extrae el primer segmento como nombre para mostrar.</p>
 <p>Para usar otra convención, pasá una función a <code>student_name_fn</code>:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">resultados</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span></span>
 <span>  <span class="st">"entregas/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>,</span>
 <span>  student_name_fn <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">folder</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"_.*$"</span>, <span class="st">""</span>, <span class="va">folder</span><span class="op">)</span></span>
@@ -344,7 +365,7 @@ tests/
 <h3 id="moodle">Moodle<a class="anchor" aria-label="anchor" href="#moodle"></a>
 </h3>
 <p>Para corregir directamente el <code>.zip</code> de “Descargar todas las entregas” de Moodle, usá <code>layout = "moodle"</code>. Funciona con y sin la opción “Descargar entregas en carpetas”, corrige solo las entregas de archivos (ignora el texto en línea) y usa el nombre completo del estudiante:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">resultados</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"tarea1-entregas.zip"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>,</span>
 <span>                                layout <span class="op">=</span> <span class="st">"moodle"</span><span class="op">)</span></span></code></pre></div>
 </div>

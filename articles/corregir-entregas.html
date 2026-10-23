@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">corrector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -150,11 +150,24 @@ detalle de cada test por estudiante.</p>
 tests que pasan, con pesos opcionales por test o por ejercicio, y una
 nota <code>total</code> donde un ejercicio no entregado cuenta como 0.
 <code>grade_report(scoring = "partial")</code> usa las mismas reglas.
-<code><a href="../reference/export_feedback.html">export_feedback()</a></code> escribe un archivo Markdown por
-estudiante.</p>
+<code><a href="../reference/grade_scale.html">grade_scale()</a></code> pasa ese puntaje a una nota (de 1 a 10 y con
+el 60% como 4, por defecto). <code><a href="../reference/export_feedback.html">export_feedback()</a></code> escribe un
+archivo Markdown por estudiante, en castellano o en inglés según
+<code>lang</code>.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">notas</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/student_scores.html">student_scores</a></span><span class="op">(</span><span class="va">resultados</span>, weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>ejercicio2 <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/export_feedback.html">export_feedback</a></span><span class="op">(</span><span class="va">resultados</span>, <span class="st">"devoluciones/"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">notas</span><span class="op">$</span><span class="va">nota</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/grade_scale.html">grade_scale</a></span><span class="op">(</span><span class="va">notas</span><span class="op">$</span><span class="va">total</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/export_feedback.html">export_feedback</a></span><span class="op">(</span><span class="va">resultados</span>, <span class="st">"devoluciones/"</span>, lang <span class="op">=</span> <span class="st">"es"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="entregas-parecidas">Entregas parecidas<a class="anchor" aria-label="anchor" href="#entregas-parecidas"></a>
+</h2>
+<p><code><a href="../reference/compare_submissions.html">compare_submissions()</a></code> lista, para cada ejercicio, los
+pares de estudiantes con archivos muy parecidos, aunque hayan cambiado
+nombres de variables, espacios o comentarios. Una similitud alta no
+prueba una copia; sirve para elegir qué mirar a mano.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/compare_submissions.html">compare_submissions</a></span><span class="op">(</span><span class="st">"entregas/"</span>, min_similarity <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="testthat-r-markdown-y-quarto">testthat, R Markdown y Quarto<a class="anchor" aria-label="anchor" href="#testthat-r-markdown-y-quarto"></a>
@@ -176,7 +189,7 @@ ejemplo dentro de <code><a href="https://rdrr.io/r/base/Sys.sleep.html" class="e
 cuando el ejercicio completo pasa <code>timeout</code> × cantidad de
 tests + 5 segundos; los tests que ya terminaron conservan su resultado.
 Usá <code>timeout = Inf</code> para no poner límite.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">resultados</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"entregas/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>, timeout <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span></code></pre></div>
 <p><code>engine = "inproc"</code> corre los tests en la sesión actual de
 R. Es más rápido, pero <code><a href="https://rdrr.io/r/base/setTimeLimit.html" class="external-link">setTimeLimit()</a></code> no interrumpe todos
@@ -184,7 +197,7 @@ los bucles y el código del estudiante puede modificar tu entorno
 global.</p>
 <p>Para cursos grandes, <code>workers</code> corre varios subprocesos a
 la vez:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">resultados</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"entregas/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>, workers <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
 <p>corrector no es un sandbox. El motor <code>callr</code> protege tu
 sesión de R, no tu computadora: el código del estudiante puede leer y
@@ -204,7 +217,7 @@ proceso que corre los tests. Mirá
 separado por guiones bajos, con mayúscula inicial
 (<code>garcia_juan_12345</code> queda como <code>Garcia</code>). Pasá
 <code>student_name_fn</code> para cambiarlo:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">resultados</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span></span>
 <span>  <span class="st">"entregas/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>,</span>
 <span>  student_name_fn <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">carpeta</span><span class="op">)</span> <span class="op">{</span></span>
@@ -218,9 +231,17 @@ separado por guiones bajos, con mayúscula inicial
 <p><code>layout = "moodle"</code> lee el <code>.zip</code> de “Descargar
 todas las entregas” de Moodle, con o sin “Descargar entregas en
 carpetas”:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">resultados</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"tarea1.zip"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>,</span>
 <span>                                layout <span class="op">=</span> <span class="st">"moodle"</span><span class="op">)</span></span></code></pre></div>
+<p>Para devolver las notas, <code><a href="../reference/export_moodle_feedback.html">export_moodle_feedback()</a></code> arma
+un <code>.zip</code> con un archivo de devolución dentro de la carpeta
+de Moodle de cada estudiante. En la página de entregas de la tarea, usá
+la opción para subir varios archivos de retroalimentación en un zip (en
+inglés, <em>Upload multiple feedback files in a zip</em>); la tarea
+tiene que tener activada la retroalimentación con archivos.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/export_moodle_feedback.html">export_moodle_feedback</a></span><span class="op">(</span><span class="va">resultados</span>, <span class="st">"devoluciones-tarea1.zip"</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

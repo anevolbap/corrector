@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">corrector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -116,6 +116,16 @@ because those could carry code back.</p>
 machine, 10 students with 5 tests each took 9 s with <code>callr</code>
 and 20 s with <code>isolated</code>, both with one worker.
 <code>workers</code> runs students in parallel on either engine.</p>
+<p><code>engine = "container"</code> runs those two processes inside a
+Docker container with no network, limited memory and processes, a
+read-only system, and only the exercise’s files. Student code then
+cannot reach your files, your network or the other students’ submissions
+either. Build the image once from the file the package ships (add any
+package the students or the tests use, because the container has no
+network):</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-t</span> corrector-runner <span class="st">"</span><span class="va">$(</span><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(system.file("container", package = "corrector"))'</span><span class="va">)</span><span class="st">"</span></span></code></pre></div>
+<p>Each exercise takes a few seconds longer, because the container has
+to start.</p>
 </div>
 <div class="section level2">
 <h2 id="reading-the-notes">Reading the notes<a class="anchor" aria-label="anchor" href="#reading-the-notes"></a>
@@ -132,7 +142,7 @@ runs the first check on its own.</p>
 <p>The notes do not change a test’s status. <code><a href="../reference/grade_report.html">grade_report()</a></code>
 lists the students who got one under “Check by hand”, so you can read
 those files yourself:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/grade_report.html">grade_report</a></span><span class="op">(</span><span class="va">results</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ...</span></span>
 <span><span class="co">#&gt; Check by hand (suspicious code or tampering, see the message column):</span></span>
@@ -150,13 +160,13 @@ stops those.</p>
 class of its arguments, and it compares the class too, so a student
 object with its own <code>==</code> or <code><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal()</a></code> method
 does not pass:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">test_ejercicio1_raices</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">ceros_cuadratica</span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>For numbers that need a tolerance, check that the result is a plain
 number before you compare it:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">test_ejercicio1_media</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">media</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/double.html" class="external-link">is.double</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/is.object.html" class="external-link">is.object</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">7</span> <span class="op">/</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
@@ -166,7 +176,7 @@ number before you compare it:</p>
 <p>Use inputs the student cannot know in advance. A student who has seen
 the tests can hard-code the answers; random inputs checked against a
 reference solution in the test file stop that:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">test_ejercicio2_ordenar</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">20</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">ordenar</span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
@@ -181,10 +191,15 @@ including the test files and the reference solutions in them. It can
 also write any file you can, including corrector’s own temporary files
 and other students’ submissions, and start programs that outlive the
 grading. The isolated engine keeps student code out of the process that
-compares values, but it cannot stop attacks through the file system. Run
-corrector inside a container or a virtual machine that holds only the
-submissions and the tests, and treat test files as visible to
-students.</li>
+compares values, but it cannot stop attacks through the file system. The
+<code>"container"</code> engine does: inside the container the student
+only sees the files of their exercise. Still treat test files as visible
+to students, because the test is among those files.</li>
+<li>Inside the container, student code shares the folder where the test
+process leaves its result. A student who studies how corrector works
+could, in principle, forge their own result. The container protects your
+computer; it does not make cheating impossible for someone who studies
+the package.</li>
 <li>A student function returns whatever its author wants. If the tests
 use fixed inputs, an answer table works; random inputs stop that.</li>
 <li>The checks above look for known tricks. Obfuscated code that hides

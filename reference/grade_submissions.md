@@ -14,7 +14,7 @@ grade_submissions(
   submissions_path,
   test_dir,
   timeout = 10,
-  engine = c("callr", "inproc", "isolated"),
+  engine = c("callr", "inproc", "isolated", "container"),
   student_name_fn = default_student_name,
   allow_masking = character(),
   workers = 1L,
@@ -42,9 +42,11 @@ grade_submissions(
 
 - engine:
 
-  `"callr"` (por defecto), `"inproc"` o `"isolated"`. Mirá
+  `"callr"` (por defecto), `"inproc"`, `"isolated"` o `"container"`.
+  Mirá
   [`grade_exercise()`](https://anevolbap.github.io/corrector/reference/grade_exercise.md).
-  *English:* `"callr"` (default), `"inproc"` or `"isolated"`. See
+  *English:* `"callr"` (default), `"inproc"`, `"isolated"` or
+  `"container"`. See
   [`grade_exercise()`](https://anevolbap.github.io/corrector/reference/grade_exercise.md).
 
 - student_name_fn:

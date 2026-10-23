@@ -13,7 +13,7 @@ grade_results."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">corrector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,7 @@ en un entorno aislado, corre cada función cuyo nombre empieza con
 <span>  <span class="va">test_dir</span>,</span>
 <span>  timeout <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  student <span class="op">=</span> <span class="cn">NA_character_</span>,</span>
-<span>  engine <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"callr"</span>, <span class="st">"inproc"</span>, <span class="st">"isolated"</span><span class="op">)</span>,</span>
+<span>  engine <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"callr"</span>, <span class="st">"inproc"</span>, <span class="st">"isolated"</span>, <span class="st">"container"</span><span class="op">)</span>,</span>
 <span>  allow_masking <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -120,6 +120,14 @@ trucos como <code><a href="https://rdrr.io/r/base/attach.html" class="external-l
 reemplazadas no cambian la nota. Es más lento, y una función del
 estudiante no puede devolver una función ni un entorno. Usalo cuando
 te importa evitar trampas.
+<code>"container"</code> hace lo mismo que <code>"isolated"</code>, pero dentro de un
+contenedor de Docker sin red, con memoria limitada y solo con los
+archivos del ejercicio, así el código del estudiante no llega a tus
+archivos ni a tu red. Necesita Docker (o
+<code>options(corrector.container_cmd = "podman")</code>) y la imagen
+<code>corrector-runner</code> (otra con <code>options(corrector.container_image = )</code>);
+el archivo para construirla está en
+<code>system.file("container", package = "corrector")</code>.
 <em>English:</em> <code>"callr"</code> (default) runs each exercise in a fresh R
 subprocess via the <span class="pkg">callr</span> package, with a temporary working
 directory. The timeout is a hard wall-clock limit, and assignments with
@@ -132,7 +140,14 @@ another. Each student function the tests call runs in the student
 process and only its result (plain data) comes back, so tricks such as
 <code><a href="https://rdrr.io/r/base/attach.html" class="external-link">attach()</a></code>, S3 methods for comparisons or replaced base functions do
 not change the grade. It is slower, and a student function may not
-return a function or an environment. Use it when cheating matters.</p></dd>
+return a function or an environment. Use it when cheating matters.
+<code>"container"</code> does the same as <code>"isolated"</code>, but inside a Docker
+container with no network, limited memory and only the exercise's
+files, so student code cannot reach your files or network. It needs
+Docker (or <code>options(corrector.container_cmd = "podman")</code>) and the image
+<code>corrector-runner</code> (another one with
+<code>options(corrector.container_image = )</code>); the file to build it is in
+<code>system.file("container", package = "corrector")</code>.</p></dd>
 
 
 <dt id="arg-allow-masking">allow_masking<a class="anchor" aria-label="anchor" href="#arg-allow-masking"></a></dt>

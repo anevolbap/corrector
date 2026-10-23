@@ -95,13 +95,31 @@ le da a cada ejercicio la fracción de tests que pasan, con pesos
 opcionales por test o por ejercicio, y una nota `total` donde un
 ejercicio no entregado cuenta como 0.
 `grade_report(scoring = "partial")` usa las mismas reglas.
+[`grade_scale()`](https://anevolbap.github.io/corrector/reference/grade_scale.md)
+pasa ese puntaje a una nota (de 1 a 10 y con el 60% como 4, por
+defecto).
 [`export_feedback()`](https://anevolbap.github.io/corrector/reference/export_feedback.md)
-escribe un archivo Markdown por estudiante.
+escribe un archivo Markdown por estudiante, en castellano o en inglés
+según `lang`.
 
 ``` r
 
 notas <- student_scores(resultados, weights = c(ejercicio2 = 2))
-export_feedback(resultados, "devoluciones/")
+notas$nota <- grade_scale(notas$total)
+export_feedback(resultados, "devoluciones/", lang = "es")
+```
+
+## Entregas parecidas
+
+[`compare_submissions()`](https://anevolbap.github.io/corrector/reference/compare_submissions.md)
+lista, para cada ejercicio, los pares de estudiantes con archivos muy
+parecidos, aunque hayan cambiado nombres de variables, espacios o
+comentarios. Una similitud alta no prueba una copia; sirve para elegir
+qué mirar a mano.
+
+``` r
+
+compare_submissions("entregas/", min_similarity = 0.8)
 ```
 
 ## testthat, R Markdown y Quarto
@@ -175,4 +193,17 @@ Moodle, con o sin “Descargar entregas en carpetas”:
 
 resultados <- grade_submissions("tarea1.zip", test_dir = "tests/",
                                 layout = "moodle")
+```
+
+Para devolver las notas,
+[`export_moodle_feedback()`](https://anevolbap.github.io/corrector/reference/export_moodle_feedback.md)
+arma un `.zip` con un archivo de devolución dentro de la carpeta de
+Moodle de cada estudiante. En la página de entregas de la tarea, usá la
+opción para subir varios archivos de retroalimentación en un zip (en
+inglés, *Upload multiple feedback files in a zip*); la tarea tiene que
+tener activada la retroalimentación con archivos.
+
+``` r
+
+export_moodle_feedback(resultados, "devoluciones-tarea1.zip")
 ```

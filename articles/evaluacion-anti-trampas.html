@@ -19,7 +19,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">corrector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -120,6 +120,16 @@ máquina, 10 estudiantes con 5 tests cada uno tardaron 9 s con
 <code>callr</code> y 20 s con <code>isolated</code>, los dos con un solo
 worker. <code>workers</code> corrige varios estudiantes a la vez con
 cualquiera de los dos motores.</p>
+<p><code>engine = "container"</code> corre esos dos procesos dentro de
+un contenedor de Docker sin red, con memoria y procesos limitados, el
+sistema en solo lectura y solo los archivos del ejercicio. Así el código
+del estudiante tampoco llega a tus archivos, a tu red ni a las entregas
+de los demás. Construí la imagen una vez con el archivo que trae el
+paquete (agregale los paquetes que usen los estudiantes o los tests,
+porque el contenedor no tiene red):</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-t</span> corrector-runner <span class="st">"</span><span class="va">$(</span><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(system.file("container", package = "corrector"))'</span><span class="va">)</span><span class="st">"</span></span></code></pre></div>
+<p>Cada ejercicio tarda unos segundos más, por el arranque del
+contenedor.</p>
 </div>
 <div class="section level2">
 <h2 id="cómo-leer-las-notas">Cómo leer las notas<a class="anchor" aria-label="anchor" href="#c%C3%B3mo-leer-las-notas"></a>
@@ -137,7 +147,7 @@ revisión por separado.</p>
 <p>Las notas no cambian el resultado de ningún test.
 <code><a href="../reference/grade_report.html">grade_report()</a></code> lista a los estudiantes que tienen alguna en
 “Check by hand”, para que revises esos archivos a mano:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/grade_report.html">grade_report</a></span><span class="op">(</span><span class="va">resultados</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ...</span></span>
 <span><span class="co">#&gt; Check by hand (suspicious code or tampering, see the message column):</span></span>
@@ -156,13 +166,13 @@ aislado.</p>
 sus argumentos y además compara la clase, así que un objeto del
 estudiante con su propio método <code>==</code> o
 <code><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal()</a></code> no pasa:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">test_ejercicio1_raices</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">ceros_cuadratica</span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p>Para números que necesitan tolerancia, revisá que el resultado sea un
 número común antes de comparar:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">test_ejercicio1_media</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">media</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/double.html" class="external-link">is.double</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/is.object.html" class="external-link">is.object</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">7</span> <span class="op">/</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
@@ -173,7 +183,7 @@ número común antes de comparar:</p>
 estudiante que vio los tests puede escribir las respuestas a mano; datos
 al azar comparados con una solución de referencia dentro del archivo de
 tests lo impiden:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">test_ejercicio2_ordenar</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">20</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">ordenar</span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
@@ -190,10 +200,16 @@ cualquier archivo que puedas escribir vos, incluidos los archivos
 temporales del corrector y las entregas de otros estudiantes, y lanzar
 programas que siguen corriendo después de la corrección. El motor
 aislado deja el código del estudiante fuera del proceso que compara los
-valores, pero no puede frenar ataques a través de los archivos. Corré el
-corrector dentro de un contenedor o una máquina virtual que tenga solo
-las entregas y los tests, y tratá los archivos de tests como visibles
-para los estudiantes.</li>
+valores, pero no puede frenar ataques a través de los archivos. El motor
+<code>"container"</code> sí: dentro del contenedor el estudiante solo ve
+los archivos de su ejercicio. Igual tratá los archivos de tests como
+visibles para los estudiantes, porque el test está entre esos
+archivos.</li>
+<li>Dentro del contenedor, el código del estudiante comparte la carpeta
+donde el proceso de los tests deja su resultado. Un estudiante que
+estudie cómo funciona el corrector podría, en principio, falsificar su
+propio resultado. El contenedor protege tu computadora; no vuelve
+imposible hacer trampa para quien estudia el paquete.</li>
 <li>Una función del estudiante devuelve lo que quiera su autor. Si los
 tests usan datos fijos, alcanza con una tabla de respuestas; los datos
 al azar lo impiden.</li>

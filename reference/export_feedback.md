@@ -8,7 +8,13 @@ resultados.
 ## Usage
 
 ``` r
-export_feedback(results, dir, scoring = c("partial", "all"), weights = NULL)
+export_feedback(
+  results,
+  dir,
+  scoring = c("partial", "all"),
+  weights = NULL,
+  lang = default_lang()
+)
 ```
 
 ## Arguments
@@ -33,10 +39,20 @@ export_feedback(results, dir, scoring = c("partial", "all"), weights = NULL)
   *English:* Passed to
   [`student_scores()`](https://anevolbap.github.io/corrector/reference/student_scores.md).
 
+- lang:
+
+  Idioma de los archivos: `"es"` o `"en"`. Por defecto sigue el idioma
+  de la computadora (`LANGUAGE` o la configuración regional): inglés si
+  es inglés, castellano en cualquier otro caso. *English:* Language of
+  the files: `"es"` or `"en"`. By default it follows the computer's
+  language (`LANGUAGE` or the locale): English if that is English,
+  Spanish otherwise.
+
 ## Value
 
-Las rutas de los archivos escritos, de forma invisible. *English:* The
-paths of the written files, invisibly.
+Las rutas de los archivos escritos, con el nombre de cada estudiante, de
+forma invisible. *English:* The paths of the written files, named by
+student, invisibly.
 
 ## English
 
@@ -53,26 +69,26 @@ paths <- export_feedback(example_results(), dir)
 writeLines(readLines(paths[[1]]))
 #> # Garcia
 #> 
-#> Total score: 80%
+#> Nota total: 80%
 #> 
 #> ## ejercicio1: 100%
 #> 
-#> - `test_ejercicio1_case1`: pass
+#> - `test_ejercicio1_case1`: aprobado
 #> 
 #> ## ejercicio2: 100%
 #> 
-#> - `test_ejercicio2_case1`: pass
+#> - `test_ejercicio2_case1`: aprobado
 #> 
 #> ## ejercicio3: 100%
 #> 
-#> - `test_ejercicio3_case1`: pass
+#> - `test_ejercicio3_case1`: aprobado
 #> 
 #> ## ejercicio4: 0%
 #> 
-#> - `test_ejercicio4_case1`: fail
+#> - `test_ejercicio4_case1`: no aprobado
 #> 
 #> ## ejercicio5: 100%
 #> 
-#> - `test_ejercicio5_case1`: pass
+#> - `test_ejercicio5_case1`: aprobado
 #> 
 ```

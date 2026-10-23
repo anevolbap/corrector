@@ -224,16 +224,55 @@ notas <- student_scores(resultados,
 grade_report(resultados, scoring = "partial")
 ```
 
+[`grade_scale()`](https://anevolbap.github.io/corrector/reference/grade_scale.md)
+pasa el puntaje (de 0 a 1) a una escala de notas. Por defecto es de 1 a
+10 y el 60% es un 4; el redondeo nunca aprueba a quien no llegó:
+
+``` r
+
+notas$nota <- grade_scale(notas$total)
+grade_scale(notas$total, min = 0, max = 100, pass = 60, pass_at = 0.6)
+```
+
 ## Devolución a cada estudiante
 
 [`export_feedback()`](https://anevolbap.github.io/corrector/reference/export_feedback.md)
 escribe un archivo Markdown por estudiante con su nota, el puntaje de
 cada ejercicio y el resultado de cada test, con el mensaje de error
-cuando lo hay:
+cuando lo hay. Los archivos salen en castellano o en inglés según el
+idioma de la computadora; elegilo con `lang`:
 
 ``` r
 
-export_feedback(resultados, "devoluciones/")
+export_feedback(resultados, "devoluciones/", lang = "es")
+```
+
+Si corregiste con `layout = "moodle"`,
+[`export_moodle_feedback()`](https://anevolbap.github.io/corrector/reference/export_moodle_feedback.md)
+arma un `.zip` que Moodle carga de una vez: en la página de entregas de
+la tarea, usá la opción para subir varios archivos de retroalimentación
+en un zip (en inglés, *Upload multiple feedback files in a zip*). La
+tarea tiene que tener activada la retroalimentación con archivos.
+
+``` r
+
+export_moodle_feedback(resultados, "devoluciones-tarea1.zip")
+```
+
+## Entregas parecidas
+
+[`compare_submissions()`](https://anevolbap.github.io/corrector/reference/compare_submissions.md)
+compara, ejercicio por ejercicio, los archivos de todos los pares de
+estudiantes y lista los más parecidos. Cambiar nombres de variables,
+espacios o comentarios no esconde una copia. Una similitud alta no
+prueba que haya copia (las soluciones cortas se parecen); sirve para
+elegir qué entregas mirar a mano.
+
+``` r
+
+compare_submissions("entregas/", min_similarity = 0.8)
+#>     exercise student_a student_b similarity
+#> 1 ejercicio1    Garcia     Lopez       1.00
 ```
 
 ## Gráficos
@@ -322,6 +361,21 @@ resultados <- grade_submissions("entregas/", test_dir = "tests/",
                                 engine = "isolated", workers = 4)
 ```
 
+`engine = "container"` hace lo mismo dentro de un contenedor de Docker
+sin red y con solo los archivos del ejercicio, así el código del
+estudiante tampoco llega a tus archivos ni a tu red. Construí la imagen
+una vez con el archivo que trae el paquete:
+
+``` bash
+docker build -t corrector-runner "$(Rscript -e 'cat(system.file("container", package = "corrector"))')"
+```
+
+``` r
+
+resultados <- grade_submissions("entregas/", test_dir = "tests/",
+                                engine = "container", workers = 4)
+```
+
 El artículo [Corregir sin que te hagan
 trampa](https://anevolbap.github.io/corrector/articles/evaluacion-anti-trampas.html)
 explica qué cubre cada motor y cómo escribir tests difíciles de engañar
@@ -406,6 +460,8 @@ resultados <- grade_submissions("tarea1-entregas.zip", test_dir = "tests/",
   : Corregir todas las entregas de una carpeta o archivo .zip
 - [`scan_code()`](https://anevolbap.github.io/corrector/reference/scan_code.md)
   : Buscar código sospechoso en el archivo de un estudiante
+- [`compare_submissions()`](https://anevolbap.github.io/corrector/reference/compare_submissions.md)
+  : Buscar entregas parecidas entre estudiantes
 
 ## Resumir
 
@@ -413,6 +469,8 @@ resultados <- grade_submissions("tarea1-entregas.zip", test_dir = "tests/",
   : Resumen de los resultados de la corrección
 - [`student_scores()`](https://anevolbap.github.io/corrector/reference/student_scores.md)
   : Puntaje de cada estudiante, con puntaje parcial y pesos opcionales
+- [`grade_scale()`](https://anevolbap.github.io/corrector/reference/grade_scale.md)
+  : Pasar puntajes a una escala de notas
 - [`plot_report()`](https://anevolbap.github.io/corrector/reference/plot_report.md)
   : Graficar un resumen visual de los resultados
 
@@ -426,6 +484,8 @@ resultados <- grade_submissions("tarea1-entregas.zip", test_dir = "tests/",
   : Exportar los resultados a una planilla de Google Sheets
 - [`export_feedback()`](https://anevolbap.github.io/corrector/reference/export_feedback.md)
   : Escribir un archivo de devolución por estudiante
+- [`export_moodle_feedback()`](https://anevolbap.github.io/corrector/reference/export_moodle_feedback.md)
+  : Devoluciones en un .zip listo para subir a Moodle
 
 ## Objeto de resultados
 

@@ -11,7 +11,7 @@ cuando lo hay. Usala para mandarle a cada estudiante sus resultados."></head><bo
 
     <a class="navbar-brand me-2" href="../index.html">corrector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,13 @@ cuando lo hay. Usala para mandarle a cada estudiante sus resultados.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">export_feedback</span><span class="op">(</span><span class="va">results</span>, <span class="va">dir</span>, scoring <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"partial"</span>, <span class="st">"all"</span><span class="op">)</span>, weights <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">export_feedback</span><span class="op">(</span></span>
+<span>  <span class="va">results</span>,</span>
+<span>  <span class="va">dir</span>,</span>
+<span>  scoring <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"partial"</span>, <span class="st">"all"</span><span class="op">)</span>,</span>
+<span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  lang <span class="op">=</span> <span class="fu">default_lang</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -75,11 +81,21 @@ cuando lo hay. Usala para mandarle a cada estudiante sus resultados.</p>
 <dd><p>Se pasan a <code><a href="student_scores.html">student_scores()</a></code>.
 <em>English:</em> Passed to <code><a href="student_scores.html">student_scores()</a></code>.</p></dd>
 
+
+<dt id="arg-lang">lang<a class="anchor" aria-label="anchor" href="#arg-lang"></a></dt>
+<dd><p>Idioma de los archivos: <code>"es"</code> o <code>"en"</code>. Por defecto sigue el
+idioma de la computadora (<code>LANGUAGE</code> o la configuración regional): inglés
+si es inglés, castellano en cualquier otro caso.
+<em>English:</em> Language of the files: <code>"es"</code> or <code>"en"</code>. By default it follows
+the computer's language (<code>LANGUAGE</code> or the locale): English if that is
+English, Spanish otherwise.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Las rutas de los archivos escritos, de forma invisible.
-<em>English:</em> The paths of the written files, invisibly.</p>
+    <p>Las rutas de los archivos escritos, con el nombre de cada
+estudiante, de forma invisible.
+<em>English:</em> The paths of the written files, named by student, invisibly.</p>
     </div>
     <div class="section level2">
     <h2 id="english">English<a class="anchor" aria-label="anchor" href="#english"></a></h2>
@@ -98,27 +114,27 @@ send each student their results.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">paths</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> # Garcia</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Total score: 80%</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Nota total: 80%</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## ejercicio1: 100%</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> - `test_ejercicio1_case1`: pass</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - `test_ejercicio1_case1`: aprobado</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## ejercicio2: 100%</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> - `test_ejercicio2_case1`: pass</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - `test_ejercicio2_case1`: aprobado</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## ejercicio3: 100%</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> - `test_ejercicio3_case1`: pass</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - `test_ejercicio3_case1`: aprobado</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## ejercicio4: 0%</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> - `test_ejercicio4_case1`: fail</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - `test_ejercicio4_case1`: no aprobado</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## ejercicio5: 100%</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> - `test_ejercicio5_case1`: pass</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - `test_ejercicio5_case1`: aprobado</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">corrector</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,6 +41,42 @@
       <small>Source: <a href="https://github.com/anevolbap/corrector/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.6.0" id="corrector-060">corrector 0.6.0<a class="anchor" aria-label="anchor" href="#corrector-060"></a></h2>
+<div class="section level3">
+<h3 id="novedades-0-6-0">Novedades<a class="anchor" aria-label="anchor" href="#novedades-0-6-0"></a></h3>
+<ul><li>
+<code>engine = "container"</code> corre el motor aislado dentro de un contenedor de Docker sin red, con memoria y procesos limitados, el sistema en solo lectura y solo los archivos del ejercicio, así el código del estudiante no llega a tus archivos ni a tu red. El archivo para construir la imagen <code>corrector-runner</code> está en <code>system.file("container", package = "corrector")</code>. Con <code>options(corrector.container_cmd = "podman")</code> se usa podman.</li>
+<li>Nueva función <code><a href="../reference/export_moodle_feedback.html">export_moodle_feedback()</a></code>: arma un <code>.zip</code> con un archivo de devolución dentro de la carpeta de Moodle de cada estudiante, listo para subir a Moodle. <code><a href="../reference/grade_submissions.html">grade_submissions()</a></code> ahora guarda la carpeta de cada estudiante en el atributo <code>folders</code> de los resultados.</li>
+<li>Nueva función <code><a href="../reference/compare_submissions.html">compare_submissions()</a></code>: busca entregas parecidas entre estudiantes, aunque cambien nombres de variables, espacios o comentarios.</li>
+<li>Nueva función <code><a href="../reference/grade_scale.html">grade_scale()</a></code>: pasa puntajes de 0 a 1 a una escala de notas (de 1 a 10, con el 60% como 4, por defecto). El redondeo nunca aprueba a quien no llegó.</li>
+<li>
+<code><a href="../reference/export_feedback.html">export_feedback()</a></code> tiene el argumento <code>lang</code> (<code>"es"</code> o <code>"en"</code>). Por defecto sigue el idioma de la computadora: inglés si es inglés, castellano en cualquier otro caso. <code><a href="../reference/export_feedback.html">export_feedback()</a></code> ahora devuelve las rutas con el nombre de cada estudiante.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="otros-0-6-0">Otros<a class="anchor" aria-label="anchor" href="#otros-0-6-0"></a></h3>
+<ul><li>
+<code>processx</code> pasa a Imports (ya lo instalaba <code>callr</code>).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="english-0-6-0">English<a class="anchor" aria-label="anchor" href="#english-0-6-0"></a></h3>
+<div class="section level4">
+<h4 id="new-features-0-6-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-6-0"></a></h4>
+<ul><li>
+<code>engine = "container"</code> runs the isolated engine inside a Docker container with no network, limited memory and processes, a read-only system, and only the exercise’s files, so student code cannot reach your files or network. The file to build the <code>corrector-runner</code> image is in <code>system.file("container", package = "corrector")</code>. <code>options(corrector.container_cmd = "podman")</code> uses podman instead.</li>
+<li>New <code><a href="../reference/export_moodle_feedback.html">export_moodle_feedback()</a></code>: builds a <code>.zip</code> with one feedback file in each student’s Moodle folder, ready to upload to Moodle. <code><a href="../reference/grade_submissions.html">grade_submissions()</a></code> now keeps each student’s folder in the <code>folders</code> attribute of the results.</li>
+<li>New <code><a href="../reference/compare_submissions.html">compare_submissions()</a></code>: finds similar submissions between students, even after renaming variables or changing spacing or comments.</li>
+<li>New <code><a href="../reference/grade_scale.html">grade_scale()</a></code>: maps 0-1 scores to a grade scale (1 to 10 with 60% as a 4, by default). Rounding never passes a student who did not reach it.</li>
+<li>
+<code><a href="../reference/export_feedback.html">export_feedback()</a></code> gains <code>lang</code> (<code>"es"</code> or <code>"en"</code>). By default it follows the computer’s language: English if that is English, Spanish otherwise. <code><a href="../reference/export_feedback.html">export_feedback()</a></code> now returns the paths named by student.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="other-0-6-0">Other<a class="anchor" aria-label="anchor" href="#other-0-6-0"></a></h4>
+<ul><li>
+<code>processx</code> moves to Imports (<code>callr</code> already installed it).</li>
+</ul></div>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.0" id="corrector-050">corrector 0.5.0<a class="anchor" aria-label="anchor" href="#corrector-050"></a></h2>
 <div class="section level3">

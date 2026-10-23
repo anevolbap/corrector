@@ -93,13 +93,29 @@ gives each exercise the fraction of its tests that pass, with optional
 weights per test or per exercise, and a `total` grade where a missing
 exercise counts as 0. `grade_report(scoring = "partial")` uses the same
 rules.
+[`grade_scale()`](https://anevolbap.github.io/corrector/reference/grade_scale.md)
+turns that score into a grade (1 to 10 with 60% as a 4, by default).
 [`export_feedback()`](https://anevolbap.github.io/corrector/reference/export_feedback.md)
-writes one Markdown file per student.
+writes one Markdown file per student, in Spanish or English depending on
+`lang`.
 
 ``` r
 
 grades <- student_scores(results, weights = c(ejercicio2 = 2))
-export_feedback(results, "feedback/")
+grades$grade <- grade_scale(grades$total)
+export_feedback(results, "feedback/", lang = "en")
+```
+
+## Similar submissions
+
+[`compare_submissions()`](https://anevolbap.github.io/corrector/reference/compare_submissions.md)
+lists, for each exercise, the pairs of students with very similar files,
+even after renaming variables or changing spacing or comments. A high
+similarity does not prove copying; use it to pick what to read by hand.
+
+``` r
+
+compare_submissions("submissions/", min_similarity = 0.8)
 ```
 
 ## testthat, R Markdown and Quarto
@@ -171,4 +187,16 @@ submissions”, with or without “Download submissions in folders”:
 
 results <- grade_submissions("assignment1.zip", test_dir = "tests/",
                              layout = "moodle")
+```
+
+To send the grades back,
+[`export_moodle_feedback()`](https://anevolbap.github.io/corrector/reference/export_moodle_feedback.md)
+builds a `.zip` with one feedback file inside each student’s Moodle
+folder. On the assignment’s submissions page, use “Upload multiple
+feedback files in a zip”; the assignment must have file feedback turned
+on.
+
+``` r
+
+export_moodle_feedback(results, "feedback-assignment1.zip")
 ```

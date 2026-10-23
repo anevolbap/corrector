@@ -59,6 +59,20 @@ máquina, 10 estudiantes con 5 tests cada uno tardaron 9 s con `callr` y
 20 s con `isolated`, los dos con un solo worker. `workers` corrige
 varios estudiantes a la vez con cualquiera de los dos motores.
 
+`engine = "container"` corre esos dos procesos dentro de un contenedor
+de Docker sin red, con memoria y procesos limitados, el sistema en solo
+lectura y solo los archivos del ejercicio. Así el código del estudiante
+tampoco llega a tus archivos, a tu red ni a las entregas de los demás.
+Construí la imagen una vez con el archivo que trae el paquete (agregale
+los paquetes que usen los estudiantes o los tests, porque el contenedor
+no tiene red):
+
+``` bash
+docker build -t corrector-runner "$(Rscript -e 'cat(system.file("container", package = "corrector"))')"
+```
+
+Cada ejercicio tarda unos segundos más, por el arranque del contenedor.
+
 ## Cómo leer las notas
 
 Con cualquier motor, el corrector lee cada archivo del estudiante antes
@@ -148,10 +162,16 @@ test_ejercicio2_ordenar <- function() {
   temporales del corrector y las entregas de otros estudiantes, y lanzar
   programas que siguen corriendo después de la corrección. El motor
   aislado deja el código del estudiante fuera del proceso que compara
-  los valores, pero no puede frenar ataques a través de los archivos.
-  Corré el corrector dentro de un contenedor o una máquina virtual que
-  tenga solo las entregas y los tests, y tratá los archivos de tests
-  como visibles para los estudiantes.
+  los valores, pero no puede frenar ataques a través de los archivos. El
+  motor `"container"` sí: dentro del contenedor el estudiante solo ve
+  los archivos de su ejercicio. Igual tratá los archivos de tests como
+  visibles para los estudiantes, porque el test está entre esos
+  archivos.
+- Dentro del contenedor, el código del estudiante comparte la carpeta
+  donde el proceso de los tests deja su resultado. Un estudiante que
+  estudie cómo funciona el corrector podría, en principio, falsificar su
+  propio resultado. El contenedor protege tu computadora; no vuelve
+  imposible hacer trampa para quien estudia el paquete.
 - Una función del estudiante devuelve lo que quiera su autor. Si los
   tests usan datos fijos, alcanza con una tabla de respuestas; los datos
   al azar lo impiden.

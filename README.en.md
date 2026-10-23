@@ -335,16 +335,37 @@ system.file("examples", package = "corrector")
 
 ## Alternatives
 
-- **[gradethis](https://rstudio.github.io/gradethis/)**: grades code inside
-  interactive [learnr](https://rstudio.github.io/learnr/) tutorials. Requires a
-  Shiny server.
-- **[exams](https://www.r-exams.org/)**: generates randomised exam questions,
-  exports to Moodle, Canvas, PDF and more.
-- **[RTutor](https://github.com/skranz/RTutor)**: Shiny-based interactive
-  problem sets with automatic solution checking.
+corrector is for exercises that students write as files (`.R`, `.Rmd` or
+`.qmd`) on their own computer and that the teacher grades afterwards, all at
+once, with their own tests. Other R packages cover other cases:
 
-corrector is the lightest option: no server, plain `.R` file submissions,
-zero hard dependencies.
+- **[gradethis](https://rstudio.github.io/gradethis/)**: checks code exercise
+  by exercise inside an interactive [learnr](https://rstudio.github.io/learnr/)
+  tutorial, with instant feedback. Great for guided practice, but the
+  exercise lives inside the tutorial and needs a Shiny server.
+- **[exams](https://www.r-exams.org/)**: generates random questions and
+  exports them to Moodle, Canvas, PDF and more. It grades answers (a number,
+  a choice, a text), not the code the student wrote.
+- **[RTutor](https://github.com/skranz/RTutor)**: interactive problem sets
+  with automatic checking and progress tracking, in its own format.
+
+What corrector adds:
+
+- It runs on your computer: no server, no network and no student accounts.
+  One call grades a whole class.
+- Tests are plain R functions or testthat expectations, so they work for any
+  exercise.
+- It works alongside Moodle: Moodle collects the submissions in an
+  assignment, corrector grades them from the `.zip`, and
+  `export_moodle_feedback()` sends the feedback back to Moodle.
+- Per-test results, partial credit, weights, a grade scale and one feedback
+  file per student, in Spanish or English.
+- Defenses against cheating: the `isolated` and `container` engines,
+  suspicious-code detection, and `compare_submissions()` for copied work.
+
+It is not interactive: students do not see results while they write, unless
+you give them the tests to run. It depends on `callr` and `processx`, which
+install with the package.
 
 ## Folder names
 

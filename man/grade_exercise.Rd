@@ -9,7 +9,7 @@ grade_exercise(
   test_dir,
   timeout = 10,
   student = NA_character_,
-  engine = c("callr", "inproc", "isolated"),
+  engine = c("callr", "inproc", "isolated", "container"),
   allow_masking = character()
 )
 }
@@ -54,6 +54,14 @@ trucos como \code{attach()}, métodos S3 para comparaciones o funciones base
 reemplazadas no cambian la nota. Es más lento, y una función del
 estudiante no puede devolver una función ni un entorno. Usalo cuando
 te importa evitar trampas.
+\code{"container"} hace lo mismo que \code{"isolated"}, pero dentro de un
+contenedor de Docker sin red, con memoria limitada y solo con los
+archivos del ejercicio, así el código del estudiante no llega a tus
+archivos ni a tu red. Necesita Docker (o
+\code{options(corrector.container_cmd = "podman")}) y la imagen
+\code{corrector-runner} (otra con \code{options(corrector.container_image = )});
+el archivo para construirla está en
+\code{system.file("container", package = "corrector")}.
 \emph{English:} \code{"callr"} (default) runs each exercise in a fresh R
 subprocess via the \pkg{callr} package, with a temporary working
 directory. The timeout is a hard wall-clock limit, and assignments with
@@ -66,7 +74,14 @@ another. Each student function the tests call runs in the student
 process and only its result (plain data) comes back, so tricks such as
 \code{attach()}, S3 methods for comparisons or replaced base functions do
 not change the grade. It is slower, and a student function may not
-return a function or an environment. Use it when cheating matters.}
+return a function or an environment. Use it when cheating matters.
+\code{"container"} does the same as \code{"isolated"}, but inside a Docker
+container with no network, limited memory and only the exercise's
+files, so student code cannot reach your files or network. It needs
+Docker (or \code{options(corrector.container_cmd = "podman")}) and the image
+\code{corrector-runner} (another one with
+\code{options(corrector.container_image = )}); the file to build it is in
+\code{system.file("container", package = "corrector")}.}
 
 \item{allow_masking}{Vector de texto con nombres de funciones de R base y
 de los paquetes por defecto (stats, utils, methods, graphics, grDevices)

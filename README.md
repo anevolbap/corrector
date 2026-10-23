@@ -354,20 +354,40 @@ system.file("examples", package = "corrector")
 
 ## Alternativas
 
-Otros paquetes de R que resuelven problemas similares, cada uno con un alcance
-distinto:
+corrector sirve para ejercicios que el estudiante escribe como archivo
+(`.R`, `.Rmd` o `.qmd`) en su propia computadora y que el docente corrige
+después, todos juntos, con sus propios tests. Otros paquetes de R cubren otros
+casos:
 
-- **[gradethis](https://rstudio.github.io/gradethis/)**: verifica código dentro
-  de tutoriales interactivos de [learnr](https://rstudio.github.io/learnr/).
-  Ideal para práctica guiada, pero requiere un servidor Shiny.
-- **[exams](https://www.r-exams.org/)**: genera preguntas de examen
-  aleatorizadas y exporta a Moodle, Canvas, PDF y otros formatos. Muy poderoso
-  para cursos grandes que se repiten año a año.
-- **[RTutor](https://github.com/skranz/RTutor)**: crea guías de problemas
-  interactivas con corrección automática y seguimiento del progreso.
+- **[gradethis](https://rstudio.github.io/gradethis/)**: revisa el código
+  ejercicio por ejercicio dentro de un tutorial interactivo de
+  [learnr](https://rstudio.github.io/learnr/), con respuesta al instante. Muy
+  bueno para práctica guiada, pero el ejercicio vive dentro del tutorial y
+  necesita un servidor Shiny.
+- **[exams](https://www.r-exams.org/)**: genera preguntas al azar y las exporta
+  a Moodle, Canvas, PDF y otros formatos. Corrige respuestas (un número, una
+  opción, un texto), no el código que escribió el estudiante.
+- **[RTutor](https://github.com/skranz/RTutor)**: guías de problemas
+  interactivas con corrección automática y seguimiento del progreso, en su
+  propio formato.
 
-corrector es la opción más liviana: sin servidor, sin infraestructura,
-entregas en archivos `.R` comunes y sin dependencias obligatorias.
+Lo que suma corrector:
+
+- Corre en tu computadora: sin servidor, sin red y sin cuentas para los
+  estudiantes. Un curso entero se corrige con una sola llamada.
+- Los tests son funciones de R comunes o expectativas de testthat, así que
+  sirven para cualquier ejercicio.
+- Con Moodle se complementa: Moodle junta las entregas en una tarea, corrector
+  las corrige desde el `.zip` y `export_moodle_feedback()` devuelve las
+  devoluciones a Moodle.
+- Resultados por test, puntaje parcial, pesos, escala de notas y una
+  devolución por estudiante, en castellano o en inglés.
+- Defensas contra trampas: los motores `isolated` y `container`, la detección
+  de código sospechoso y `compare_submissions()` para entregas copiadas.
+
+No es interactivo: el estudiante no ve el resultado mientras escribe, salvo
+que le des los tests para que los corra. Depende de `callr` y `processx`, que
+se instalan solos con el paquete.
 
 ## Contribuciones
 

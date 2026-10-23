@@ -208,14 +208,48 @@ notas <- student_scores(resultados,
 grade_report(resultados, scoring = "partial")
 ```
 
+`grade_scale()` pasa el puntaje (de 0 a 1) a una escala de notas. Por
+defecto es de 1 a 10 y el 60% es un 4; el redondeo nunca aprueba a quien no
+llegó:
+
+```r
+notas$nota <- grade_scale(notas$total)
+grade_scale(notas$total, min = 0, max = 100, pass = 60, pass_at = 0.6)
+```
+
 ## Devolución a cada estudiante
 
 `export_feedback()` escribe un archivo Markdown por estudiante con su nota,
 el puntaje de cada ejercicio y el resultado de cada test, con el mensaje de
-error cuando lo hay:
+error cuando lo hay. Los archivos salen en castellano o en inglés según el
+idioma de la computadora; elegilo con `lang`:
 
 ```r
-export_feedback(resultados, "devoluciones/")
+export_feedback(resultados, "devoluciones/", lang = "es")
+```
+
+Si corregiste con `layout = "moodle"`, `export_moodle_feedback()` arma un
+`.zip` que Moodle carga de una vez: en la página de entregas de la tarea,
+usá la opción para subir varios archivos de retroalimentación en un zip (en
+inglés, *Upload multiple feedback files in a zip*). La tarea tiene que tener
+activada la retroalimentación con archivos.
+
+```r
+export_moodle_feedback(resultados, "devoluciones-tarea1.zip")
+```
+
+## Entregas parecidas
+
+`compare_submissions()` compara, ejercicio por ejercicio, los archivos de
+todos los pares de estudiantes y lista los más parecidos. Cambiar nombres de
+variables, espacios o comentarios no esconde una copia. Una similitud alta no
+prueba que haya copia (las soluciones cortas se parecen); sirve para elegir
+qué entregas mirar a mano.
+
+```r
+compare_submissions("entregas/", min_similarity = 0.8)
+#>     exercise student_a student_b similarity
+#> 1 ejercicio1    Garcia     Lopez       1.00
 ```
 
 ## Gráficos
@@ -287,6 +321,20 @@ más o menos el doble que `callr`; `workers` lo compensa:
 ```r
 resultados <- grade_submissions("entregas/", test_dir = "tests/",
                                 engine = "isolated", workers = 4)
+```
+
+`engine = "container"` hace lo mismo dentro de un contenedor de Docker sin
+red y con solo los archivos del ejercicio, así el código del estudiante
+tampoco llega a tus archivos ni a tu red. Construí la imagen una vez con el
+archivo que trae el paquete:
+
+```bash
+docker build -t corrector-runner "$(Rscript -e 'cat(system.file("container", package = "corrector"))')"
+```
+
+```r
+resultados <- grade_submissions("entregas/", test_dir = "tests/",
+                                engine = "container", workers = 4)
 ```
 
 El artículo

@@ -1,3 +1,58 @@
+# corrector 0.6.0
+
+## Novedades
+
+* `engine = "container"` corre el motor aislado dentro de un contenedor de
+  Docker sin red, con memoria y procesos limitados, el sistema en solo
+  lectura y solo los archivos del ejercicio, así el código del estudiante no
+  llega a tus archivos ni a tu red. El archivo para construir la imagen
+  `corrector-runner` está en `system.file("container", package =
+  "corrector")`. Con `options(corrector.container_cmd = "podman")` se usa
+  podman.
+* Nueva función `export_moodle_feedback()`: arma un `.zip` con un archivo de
+  devolución dentro de la carpeta de Moodle de cada estudiante, listo para
+  subir a Moodle. `grade_submissions()` ahora guarda la carpeta de cada
+  estudiante en el atributo `folders` de los resultados.
+* Nueva función `compare_submissions()`: busca entregas parecidas entre
+  estudiantes, aunque cambien nombres de variables, espacios o comentarios.
+* Nueva función `grade_scale()`: pasa puntajes de 0 a 1 a una escala de
+  notas (de 1 a 10, con el 60% como 4, por defecto). El redondeo nunca
+  aprueba a quien no llegó.
+* `export_feedback()` tiene el argumento `lang` (`"es"` o `"en"`). Por
+  defecto sigue el idioma de la computadora: inglés si es inglés, castellano
+  en cualquier otro caso. `export_feedback()` ahora devuelve las rutas con el
+  nombre de cada estudiante.
+
+## Otros
+
+* `processx` pasa a Imports (ya lo instalaba `callr`).
+
+## English
+
+### New features
+
+* `engine = "container"` runs the isolated engine inside a Docker container
+  with no network, limited memory and processes, a read-only system, and only
+  the exercise's files, so student code cannot reach your files or network.
+  The file to build the `corrector-runner` image is in
+  `system.file("container", package = "corrector")`.
+  `options(corrector.container_cmd = "podman")` uses podman instead.
+* New `export_moodle_feedback()`: builds a `.zip` with one feedback file in
+  each student's Moodle folder, ready to upload to Moodle.
+  `grade_submissions()` now keeps each student's folder in the `folders`
+  attribute of the results.
+* New `compare_submissions()`: finds similar submissions between students,
+  even after renaming variables or changing spacing or comments.
+* New `grade_scale()`: maps 0-1 scores to a grade scale (1 to 10 with 60% as
+  a 4, by default). Rounding never passes a student who did not reach it.
+* `export_feedback()` gains `lang` (`"es"` or `"en"`). By default it follows
+  the computer's language: English if that is English, Spanish otherwise.
+  `export_feedback()` now returns the paths named by student.
+
+### Other
+
+* `processx` moves to Imports (`callr` already installed it).
+
 # corrector 0.5.0
 
 ## Novedades

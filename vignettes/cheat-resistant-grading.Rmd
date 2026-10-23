@@ -56,6 +56,19 @@ The cost is time: each exercise starts two R processes. On one machine, 10
 students with 5 tests each took 9 s with `callr` and 20 s with `isolated`,
 both with one worker. `workers` runs students in parallel on either engine.
 
+`engine = "container"` runs those two processes inside a Docker container
+with no network, limited memory and processes, a read-only system, and only
+the exercise's files. Student code then cannot reach your files, your
+network or the other students' submissions either. Build the image once
+from the file the package ships (add any package the students or the tests
+use, because the container has no network):
+
+```bash
+docker build -t corrector-runner "$(Rscript -e 'cat(system.file("container", package = "corrector"))')"
+```
+
+Each exercise takes a few seconds longer, because the container has to start.
+
 ## Reading the notes
 
 On every engine, corrector reads each student file before running it and
@@ -123,9 +136,15 @@ test_ejercicio2_ordenar <- function() {
   write any file you can, including corrector's own temporary files and
   other students' submissions, and start programs that outlive the grading.
   The isolated engine keeps student code out of the process that compares
-  values, but it cannot stop attacks through the file system. Run corrector
-  inside a container or a virtual machine that holds only the submissions
-  and the tests, and treat test files as visible to students.
+  values, but it cannot stop attacks through the file system. The
+  `"container"` engine does: inside the container the student only sees the
+  files of their exercise. Still treat test files as visible to students,
+  because the test is among those files.
+- Inside the container, student code shares the folder where the test
+  process leaves its result. A student who studies how corrector works could,
+  in principle, forge their own result. The container protects your
+  computer; it does not make cheating impossible for someone who studies the
+  package.
 - A student function returns whatever its author wants. If the tests use
   fixed inputs, an answer table works; random inputs stop that.
 - The checks above look for known tricks. Obfuscated code that hides them

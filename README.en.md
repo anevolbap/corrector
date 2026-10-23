@@ -195,14 +195,47 @@ grades <- student_scores(results,
 grade_report(results, scoring = "partial")
 ```
 
+`grade_scale()` turns the score (0 to 1) into a grade. By default it is a
+1-10 scale where 60% is a 4; rounding never passes a student who did not
+reach it:
+
+```r
+grades$grade <- grade_scale(grades$total)
+grade_scale(grades$total, min = 0, max = 100, pass = 60, pass_at = 0.6)
+```
+
 ## Feedback for each student
 
 `export_feedback()` writes one Markdown file per student with their grade,
 the score of each exercise, and the result of each test, with the error
-message when there is one:
+message when there is one. The files come in Spanish or English depending on
+the computer's language; choose with `lang`:
 
 ```r
-export_feedback(results, "feedback/")
+export_feedback(results, "feedback/", lang = "en")
+```
+
+If you graded with `layout = "moodle"`, `export_moodle_feedback()` builds a
+`.zip` that Moodle loads in one go: on the assignment's submissions page, use
+"Upload multiple feedback files in a zip". The assignment must have file
+feedback turned on.
+
+```r
+export_moodle_feedback(results, "feedback-assignment1.zip")
+```
+
+## Similar submissions
+
+`compare_submissions()` compares, exercise by exercise, the files of every
+pair of students and lists the most similar ones. Renaming variables,
+changing spacing or adding comments does not hide a copy. A high similarity
+does not prove copying (short solutions look alike); use it to pick which
+submissions to read by hand.
+
+```r
+compare_submissions("submissions/", min_similarity = 0.8)
+#>     exercise student_a student_b similarity
+#> 1 ejercicio1    Garcia     Lopez       1.00
 ```
 
 ## Plots
@@ -273,6 +306,20 @@ twice as long as `callr`; `workers` makes up for it:
 ```r
 results <- grade_submissions("submissions/", test_dir = "tests/",
                              engine = "isolated", workers = 4)
+```
+
+`engine = "container"` does the same inside a Docker container with no
+network and only the exercise's files, so student code cannot reach your
+files or network either. Build the image once from the file the package
+ships:
+
+```bash
+docker build -t corrector-runner "$(Rscript -e 'cat(system.file("container", package = "corrector"))')"
+```
+
+```r
+results <- grade_submissions("submissions/", test_dir = "tests/",
+                             engine = "container", workers = 4)
 ```
 
 The article

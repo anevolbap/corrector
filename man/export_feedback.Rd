@@ -4,7 +4,13 @@
 \alias{export_feedback}
 \title{Escribir un archivo de devolución por estudiante}
 \usage{
-export_feedback(results, dir, scoring = c("partial", "all"), weights = NULL)
+export_feedback(
+  results,
+  dir,
+  scoring = c("partial", "all"),
+  weights = NULL,
+  lang = default_lang()
+)
 }
 \arguments{
 \item{results}{Un objeto \link{grade_results}.
@@ -15,6 +21,13 @@ export_feedback(results, dir, scoring = c("partial", "all"), weights = NULL)
 
 \item{scoring, weights}{Se pasan a \code{\link[=student_scores]{student_scores()}}.
 \emph{English:} Passed to \code{\link[=student_scores]{student_scores()}}.}
+
+\item{lang}{Idioma de los archivos: \code{"es"} o \code{"en"}. Por defecto sigue el
+idioma de la computadora (\code{LANGUAGE} o la configuración regional): inglés
+si es inglés, castellano en cualquier otro caso.
+\emph{English:} Language of the files: \code{"es"} or \code{"en"}. By default it follows
+the computer's language (\code{LANGUAGE} or the locale): English if that is
+English, Spanish otherwise.}
 }
 \value{
 Las rutas de los archivos escritos, de forma invisible.

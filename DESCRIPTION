@@ -23,6 +23,7 @@ Depends:
 Imports:
     callr,
     graphics,
+    processx,
     stats,
     utils
 Suggests:

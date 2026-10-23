@@ -1,7 +1,32 @@
-#' Grading results object
+#' Objeto con los resultados de la corrección
 #'
-#' A `grade_results` object is a data frame in long format with one row per
-#' (student, exercise, test) and the following columns:
+#' Un objeto `grade_results` es un data frame en formato largo con una fila
+#' por (estudiante, ejercicio, test) y estas columnas:
+#' \describe{
+#'   \item{`student`}{Texto. Nombre del estudiante para mostrar.}
+#'   \item{`exercise`}{Texto. Identificador del ejercicio (nombre del archivo
+#'     sin extensión).}
+#'   \item{`test`}{Texto. Nombre de la función de test, o `NA` cuando la fila
+#'     registra una entrega `missing` o un `source_error`.}
+#'   \item{`status`}{Factor con niveles `pass`, `fail`, `error`, `timeout`,
+#'     `missing`, `source_error`.}
+#'   \item{`message`}{Texto. El mensaje de error para `error`,
+#'     `source_error` y `timeout`; el mensaje de testthat o "test returned
+#'     non-logical" para algunas filas `fail`; una nota con las definiciones
+#'     del estudiante que se ignoraron (ver `allow_masking` en
+#'     [grade_exercise()]); `NA` en los demás casos.}
+#'   \item{`duration`}{Numérico. Segundos que tardó el test, o `NA` cuando el
+#'     test no se ejecutó.}
+#' }
+#'
+#' Usá [as.data.frame()] con `format = "wide"` para obtener la vista anterior
+#' en formato ancho (una columna lógica por ejercicio, `TRUE` si y solo si
+#' pasaron todos los tests).
+#'
+#' @section English:
+#' **Grading results object.** A `grade_results` object is a data frame in
+#' long format with one row per (student, exercise, test) and the following
+#' columns:
 #' \describe{
 #'   \item{`student`}{Character. Student display name.}
 #'   \item{`exercise`}{Character. Exercise identifier (file stem).}
@@ -70,17 +95,26 @@ print.grade_results <- function(x, ...) {
   invisible(x)
 }
 
-#' Convert grading results to a data frame
+#' Convertir los resultados de la corrección en un data frame
 #'
-#' @param x A `grade_results` object.
-#' @param row.names Ignored.
-#' @param optional Ignored.
-#' @param format `"long"` returns the underlying long-format data frame.
+#' @section English:
+#' **Convert grading results to a data frame.**
+#'
+#' @param x Un objeto `grade_results`.
+#'   *English:* A `grade_results` object.
+#' @param row.names Se ignora. *English:* Ignored.
+#' @param optional Se ignora. *English:* Ignored.
+#' @param format `"long"` devuelve el data frame en formato largo que guarda
+#'   el objeto. `"wide"` devuelve la vista anterior: una fila por estudiante,
+#'   una columna lógica por ejercicio (`TRUE` si y solo si pasaron todos los
+#'   tests; `NA` para `missing` o `source_error`).
+#'   *English:* `"long"` returns the underlying long-format data frame.
 #'   `"wide"` returns the legacy view: one row per student, one logical column
 #'   per exercise (`TRUE` iff all tests passed; `NA` for `missing` or
 #'   `source_error`).
-#' @param ... Ignored.
-#' @return A plain data frame.
+#' @param ... Se ignora. *English:* Ignored.
+#' @return Un data frame común.
+#'   *English:* A plain data frame.
 #' @export
 #' @examples
 #' results <- example_results()

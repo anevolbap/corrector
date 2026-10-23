@@ -2,7 +2,7 @@
 % Please edit documentation in R/grade.R
 \name{grade_submissions}
 \alias{grade_submissions}
-\title{Grade all student submissions in a directory or zip archive}
+\title{Corregir todas las entregas de una carpeta o archivo .zip}
 \usage{
 grade_submissions(
   submissions_path,
@@ -16,49 +16,90 @@ grade_submissions(
 )
 }
 \arguments{
-\item{submissions_path}{Path to a directory or \code{.zip} archive of submissions.}
+\item{submissions_path}{Ruta a una carpeta o archivo \code{.zip} con las
+entregas.
+\emph{English:} Path to a directory or \code{.zip} archive of submissions.}
 
-\item{test_dir}{Directory that contains the test files.}
+\item{test_dir}{Carpeta que contiene los archivos de tests.
+\emph{English:} Directory that contains the test files.}
 
-\item{timeout}{Maximum seconds allowed per test function. Default 10.}
+\item{timeout}{Máximo de segundos permitido para cada función de test. Por
+defecto 10.
+\emph{English:} Maximum seconds allowed per test function. Default 10.}
 
-\item{engine}{\code{"callr"} (default), \code{"inproc"} or \code{"isolated"}. See
+\item{engine}{\code{"callr"} (por defecto), \code{"inproc"} o \code{"isolated"}. Mirá
+\code{\link[=grade_exercise]{grade_exercise()}}.
+\emph{English:} \code{"callr"} (default), \code{"inproc"} or \code{"isolated"}. See
 \code{\link[=grade_exercise]{grade_exercise()}}.}
 
-\item{student_name_fn}{Function applied to each student folder name to
-produce the display name. Defaults to taking the first underscore-
-separated token and applying title case. Folders that map to the same
+\item{student_name_fn}{Función que se aplica al nombre de cada carpeta de
+estudiante para obtener el nombre para mostrar. Por defecto toma la
+primera parte separada por guiones bajos y la pasa a formato título.
+Las carpetas que dan el mismo nombre conservan el nombre de la carpeta,
+con una advertencia.
+\emph{English:} Function applied to each student folder name to
+produce the display name. Defaults to taking the first
+underscore-separated token and applying title case. Folders that map to the same
 name keep their folder name, with a warning.}
 
-\item{allow_masking}{Base function names students may redefine. See
+\item{allow_masking}{Nombres de funciones base que los estudiantes pueden
+redefinir. Mirá \code{\link[=grade_exercise]{grade_exercise()}}.
+\emph{English:} Base function names students may redefine. See
 \code{\link[=grade_exercise]{grade_exercise()}}.}
 
-\item{workers}{Number of callr subprocesses to run at the same time.
+\item{workers}{Cantidad de subprocesos de callr que corren al mismo
+tiempo. Por defecto 1. Valores mayores que 1 aceleran la corrección de
+cursos grandes; un valor cercano a \code{parallel::detectCores()} es un buen
+límite superior. El motor \code{"inproc"} lo ignora.
+\emph{English:} Number of callr subprocesses to run at the same time.
 Default 1. Values above 1 speed up large classes; a value near
 \code{parallel::detectCores()} is a good upper bound. Ignored by the
 \code{"inproc"} engine.}
 
-\item{layout}{\code{"folders"} (default): one folder per student. \code{"moodle"}:
+\item{layout}{\code{"folders"} (por defecto): una carpeta por estudiante.
+\code{"moodle"}: el archivo .zip o la carpeta de "Descargar todas las
+entregas" de Moodle, con o sin "Descargar entregas en carpetas". Solo se
+corrigen las entregas de archivos, y \code{student_name_fn} pasa a ser por
+defecto \code{\link[=moodle_student_name]{moodle_student_name()}}.
+\emph{English:} \code{"folders"} (default): one folder per student. \code{"moodle"}:
 the zip or folder from Moodle's "Download all submissions", with or
 without "Download submissions in folders". Only file submissions are
 graded, and \code{student_name_fn} defaults to \code{\link[=moodle_student_name]{moodle_student_name()}}.}
 }
 \value{
-A \link{grade_results} object.
+Un objeto \link{grade_results}.
+\emph{English:} A \link{grade_results} object.
 }
 \description{
-Expects one sub-folder per student inside \code{submissions_path}. Every student
-is graded on every exercise that has a test file in \code{test_dir}; a student
-who omits an exercise gets a \code{missing} row. The student's file is matched
-ignoring case (\code{Ejercicio1.R} counts as \code{ejercicio1}), and \code{.Rmd} or \code{.qmd}
-files are accepted when there is no \code{.R} file.
+Espera una subcarpeta por estudiante dentro de \code{submissions_path}. Cada
+estudiante se corrige en cada ejercicio que tiene un archivo de tests en
+\code{test_dir}. Un estudiante que no entrega un ejercicio recibe una fila
+\code{missing}. El archivo del estudiante se busca sin distinguir mayúsculas de
+minúsculas (\code{Ejercicio1.R} cuenta como \code{ejercicio1}), y se aceptan
+archivos \code{.Rmd} o \code{.qmd} cuando no hay un archivo \code{.R}.
 }
 \details{
+Si \code{submissions_path} termina en \code{.zip}, primero se extrae en una
+subcarpeta de \code{tempdir()}. Se ignoran los archivos sueltos, las carpetas
+ocultas y \verb{__MACOSX}. Si la ruta tiene una sola carpeta sin archivos \code{.R},
+\code{.Rmd} ni \code{.qmd} pero con subcarpetas, esas subcarpetas se toman como los
+estudiantes.
+}
+\section{English}{
+
+\strong{Grade all student submissions in a directory or zip archive.} Expects
+one sub-folder per student inside \code{submissions_path}. Every student is
+graded on every exercise that has a test file in \code{test_dir}; a student who
+omits an exercise gets a \code{missing} row. The student's file is matched
+ignoring case (\code{Ejercicio1.R} counts as \code{ejercicio1}), and \code{.Rmd} or \code{.qmd}
+files are accepted when there is no \code{.R} file.
+
 If \code{submissions_path} ends in \code{.zip} it is extracted into a \code{tempdir()}
 subfolder first. Loose files, hidden folders and \verb{__MACOSX} are ignored.
 If the path holds a single folder with no \code{.R}, \code{.Rmd} or \code{.qmd} files but
 with sub-folders, those sub-folders are taken as the students.
 }
+
 \examples{
 # One folder per student, one test file per exercise.
 root <- file.path(tempdir(), "entregas")

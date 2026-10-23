@@ -2,18 +2,27 @@
 % Please edit documentation in R/data.R
 \name{example_results}
 \alias{example_results}
-\title{Sample grading results}
+\title{Resultados de ejemplo}
 \usage{
 example_results()
 }
 \value{
-A \link{grade_results} object.
+Un objeto \link{grade_results}.
+\emph{English:} A \link{grade_results} object.
 }
 \description{
-A small fake \link{grade_results} object with 8 students and 5 exercises,
-useful for trying out \code{\link[=grade_report]{grade_report()}}, \code{\link[=plot_report]{plot_report()}}, and the export
-functions without needing real student submissions.
+Un objeto \link{grade_results} chico y falso, con 8 estudiantes y 5 ejercicios.
+Sirve para probar \code{\link[=grade_report]{grade_report()}}, \code{\link[=plot_report]{plot_report()}} y las funciones de
+exportación sin necesitar entregas reales.
 }
+\section{English}{
+
+\strong{Sample grading results.} A small fake \link{grade_results} object with 8
+students and 5 exercises, useful for trying out \code{\link[=grade_report]{grade_report()}},
+\code{\link[=plot_report]{plot_report()}}, and the export functions without needing real student
+submissions.
+}
+
 \examples{
 results <- example_results()
 grade_report(results)

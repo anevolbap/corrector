@@ -1,14 +1,24 @@
-#' Export grading results to a CSV file
+#' Exportar los resultados a un archivo CSV
 #'
-#' Text cells that start with `=`, `+`, `-` or `@` get a leading `'`, so a
-#' spreadsheet app does not run them as formulas (error messages come from
-#' student code).
+#' Las celdas de texto que empiezan con `=`, `+`, `-` o `@` reciben un `'`
+#' adelante, así la planilla no las corre como fórmulas (los mensajes de error
+#' vienen del código del estudiante).
 #'
-#' @param results A [grade_results] object.
-#' @param path Output file path (e.g. `"grades.csv"`).
-#' @param format `"wide"` (default) writes one row per student with one logical
+#' @section English:
+#' **Export grading results to a CSV file.** Text cells that start with `=`,
+#' `+`, `-` or `@` get a leading `'`, so a spreadsheet app does not run them as
+#' formulas (error messages come from student code).
+#'
+#' @param results Un objeto [grade_results].
+#'   *English:* A [grade_results] object.
+#' @param path Ruta del archivo de salida (por ejemplo `"grades.csv"`).
+#'   *English:* Output file path (e.g. `"grades.csv"`).
+#' @param format `"wide"` (por defecto) escribe una fila por estudiante, con
+#'   una columna lógica por ejercicio. `"long"` escribe el detalle por test.
+#'   *English:* `"wide"` (default) writes one row per student with one logical
 #'   column per exercise. `"long"` writes the per-test detail.
-#' @return `results`, invisibly.
+#' @return `results`, de forma invisible.
+#'   *English:* `results`, invisibly.
 #' @importFrom utils write.csv
 #' @export
 #' @examples
@@ -23,19 +33,31 @@ export_to_csv <- function(results, path, format = c("wide", "long")) {
   invisible(results)
 }
 
-#' Export grading results to a Google Sheet
+#' Exportar los resultados a una planilla de Google Sheets
 #'
-#' Writes results to an existing Google Sheet, replacing its contents. Text
-#' cells that could run as formulas get a leading `'`, as in
-#' [export_to_csv()]. Requires
-#' the \pkg{googlesheets4} package and prior authentication; call
-#' `googlesheets4::gs4_auth()` once per session before using this function.
+#' Escribe los resultados en una planilla de Google Sheets que ya existe y
+#' reemplaza su contenido. Las celdas de texto que podrían correr como
+#' fórmulas reciben un `'` adelante, como en [export_to_csv()]. Necesita el
+#' paquete \pkg{googlesheets4} y una autenticación previa: corré
+#' `googlesheets4::gs4_auth()` una vez por sesión antes de usar esta función.
 #'
-#' @param results A [grade_results] object.
-#' @param sheet_url URL of the target Google Sheet.
-#' @param sheet Name or index of the worksheet tab (default: first sheet).
-#' @param format `"wide"` (default) or `"long"`.
-#' @return `results`, invisibly.
+#' @section English:
+#' **Export grading results to a Google Sheet.** Writes results to an existing
+#' Google Sheet, replacing its contents. Text cells that could run as formulas
+#' get a leading `'`, as in [export_to_csv()]. Requires the \pkg{googlesheets4}
+#' package and prior authentication; call `googlesheets4::gs4_auth()` once per
+#' session before using this function.
+#'
+#' @param results Un objeto [grade_results].
+#'   *English:* A [grade_results] object.
+#' @param sheet_url URL de la planilla de Google Sheets de destino.
+#'   *English:* URL of the target Google Sheet.
+#' @param sheet Nombre o número de la pestaña (por defecto: la primera).
+#'   *English:* Name or index of the worksheet tab (default: first sheet).
+#' @param format `"wide"` (por defecto) o `"long"`.
+#'   *English:* `"wide"` (default) or `"long"`.
+#' @return `results`, de forma invisible.
+#'   *English:* `results`, invisibly.
 #' @export
 #' @examples
 #' \dontrun{
@@ -60,19 +82,34 @@ export_to_sheets <- function(results, sheet_url, sheet = 1, format = c("wide", "
   invisible(results)
 }
 
-#' Export grading results to an HTML report
+#' Exportar los resultados a un informe HTML
 #'
-#' Produces a self-contained HTML file with a colour-coded table (green = pass,
-#' red = fail, amber = error/timeout, grey = missing), per-student score
-#' column, and a pass-rate summary row.
+#' Genera un archivo HTML autocontenido con una tabla por colores (verde =
+#' pass, rojo = fail, ámbar = error/timeout, gris = missing), una columna con
+#' el puntaje de cada estudiante y una fila final con el porcentaje de
+#' aprobación.
 #'
-#' @param results A [grade_results] object.
-#' @param path Output file path (e.g. `"report.html"`).
-#' @param include_details If `TRUE`, append a per-test breakdown under each
+#' @section English:
+#' **Export grading results to an HTML report.** Produces a self-contained HTML
+#' file with a colour-coded table (green = pass, red = fail, amber =
+#' error/timeout, grey = missing), per-student score column, and a pass-rate
+#' summary row.
+#'
+#' @param results Un objeto [grade_results].
+#'   *English:* A [grade_results] object.
+#' @param path Ruta del archivo de salida (por ejemplo `"report.html"`).
+#'   *English:* Output file path (e.g. `"report.html"`).
+#' @param include_details Si es `TRUE`, agrega el detalle por test debajo de
+#'   cada estudiante (los errores y timeouts incluyen el mensaje). Por defecto
+#'   `TRUE`.
+#'   *English:* If `TRUE`, append a per-test breakdown under each
 #'   student (errors and timeouts include the message). Default `TRUE`.
-#' @param scoring,weights How the score column and pass-rate row are
+#' @param scoring,weights Cómo se calculan la columna de puntaje y la fila de
+#'   porcentaje de aprobación. Mirá [grade_report()].
+#'   *English:* How the score column and pass-rate row are
 #'   computed. See [grade_report()].
-#' @return `results`, invisibly.
+#' @return `results`, de forma invisible.
+#'   *English:* `results`, invisibly.
 #' @export
 #' @examples
 #' path <- tempfile(fileext = ".html")

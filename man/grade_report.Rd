@@ -2,23 +2,45 @@
 % Please edit documentation in R/report.R
 \name{grade_report}
 \alias{grade_report}
-\title{Summarise grading results}
+\title{Resumen de los resultados de la corrección}
 \usage{
 grade_report(results, scoring = c("all", "partial"), weights = NULL)
 }
 \arguments{
-\item{results}{A \link{grade_results} object returned by \code{\link[=grade_submissions]{grade_submissions()}}
+\item{results}{Un objeto \link{grade_results} que devuelve \code{\link[=grade_submissions]{grade_submissions()}}
+o \code{\link[=grade_exercise]{grade_exercise()}}.
+\emph{English:} A \link{grade_results} object returned by \code{\link[=grade_submissions]{grade_submissions()}}
 or \code{\link[=grade_exercise]{grade_exercise()}}.}
 
-\item{scoring}{\code{"all"} (default): an exercise counts as passed only if
+\item{scoring}{\code{"all"} (por defecto): un ejercicio cuenta como aprobado
+solo si pasan todos sus tests. \code{"partial"}: su puntaje es la fracción de
+tests que pasan. Ver \code{\link[=student_scores]{student_scores()}}.
+\emph{English:} \code{"all"} (default): an exercise counts as passed only if
 every test passes. \code{"partial"}: it scores the fraction of tests that
 pass. See \code{\link[=student_scores]{student_scores()}}.}
 
-\item{weights}{Optional named numeric vector of test or exercise weights.
+\item{weights}{Vector numérico con nombres, opcional, con los pesos de
+tests o ejercicios. Ver \code{\link[=student_scores]{student_scores()}}.
+\emph{English:} Optional named numeric vector of test or exercise weights.
 See \code{\link[=student_scores]{student_scores()}}.}
 }
 \value{
-A \code{grade_report} object (a list) with components:
+Un objeto \code{grade_report} (una lista) con estos componentes:
+\describe{
+\item{\code{pass_rate_by_exercise}}{Vector numérico con nombres (0-1).
+Puntaje medio del ejercicio entre todos los estudiantes.}
+\item{\code{score_by_student}}{Vector numérico con nombres (0-1). El
+\code{total} del estudiante en \code{\link[=student_scores]{student_scores()}}.}
+\item{\code{overall_mean}}{Numérico, un solo valor (0-1).}
+\item{\code{issue_counts}}{Vector de enteros con nombres, con la cantidad
+de filas \code{error}, \code{timeout}, \code{missing} y \code{source_error}.}
+\item{\code{flagged}}{Vector de texto con los estudiantes que tienen una
+nota \verb{suspicious code:} o \verb{tampering:} en la columna \code{message} (ver
+\code{\link[=scan_code]{scan_code()}}).}
+}
+En \code{pass_rate_by_exercise} y \code{score_by_student}, un ejercicio \code{missing}
+o con un \code{source_error} cuenta como 0.
+\emph{English:} A \code{grade_report} object (a list) with components:
 \describe{
 \item{\code{pass_rate_by_exercise}}{Named numeric vector (0-1). Mean
 exercise score across students.}
@@ -34,10 +56,19 @@ In \code{pass_rate_by_exercise} and \code{score_by_student}, a \code{missing} ex
 or one with a \code{source_error} counts as 0.
 }
 \description{
-Computes pass rate per exercise and score per student, plus counts of
-errors, timeouts, and missing submissions. The returned object has a
-\code{\link[=print]{print()}} method that renders a readable console summary.
+Calcula el porcentaje de aprobación por ejercicio y el puntaje por
+estudiante, y cuenta los errores, los timeouts y las entregas que faltan.
+El objeto que devuelve tiene un método \code{\link[=print]{print()}} que muestra un resumen
+legible en la consola.
 }
+\section{English}{
+
+\strong{Summarise grading results.} Computes pass rate per exercise and score
+per student, plus counts of errors, timeouts, and missing submissions. The
+returned object has a \code{\link[=print]{print()}} method that renders a readable console
+summary.
+}
+
 \examples{
 report <- grade_report(example_results())
 report

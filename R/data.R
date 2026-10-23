@@ -1,10 +1,17 @@
-#' Sample grading results
+#' Resultados de ejemplo
 #'
-#' A small fake [grade_results] object with 8 students and 5 exercises,
-#' useful for trying out [grade_report()], [plot_report()], and the export
-#' functions without needing real student submissions.
+#' Un objeto [grade_results] chico y falso, con 8 estudiantes y 5 ejercicios.
+#' Sirve para probar [grade_report()], [plot_report()] y las funciones de
+#' exportación sin necesitar entregas reales.
 #'
-#' @return A [grade_results] object.
+#' @section English:
+#' **Sample grading results.** A small fake [grade_results] object with 8
+#' students and 5 exercises, useful for trying out [grade_report()],
+#' [plot_report()], and the export functions without needing real student
+#' submissions.
+#'
+#' @return Un objeto [grade_results].
+#'   *English:* A [grade_results] object.
 #' @export
 #' @examples
 #' results <- example_results()

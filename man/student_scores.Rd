@@ -2,30 +2,47 @@
 % Please edit documentation in R/scores.R
 \name{student_scores}
 \alias{student_scores}
-\title{Score each student, with optional partial credit and weights}
+\title{Puntaje de cada estudiante, con puntaje parcial y pesos opcionales}
 \usage{
 student_scores(results, scoring = c("partial", "all"), weights = NULL)
 }
 \arguments{
-\item{results}{A \link{grade_results} object.}
+\item{results}{Un objeto \link{grade_results}.
+\emph{English:} A \link{grade_results} object.}
 
-\item{scoring}{\code{"partial"} (default): an exercise scores the weighted
+\item{scoring}{\code{"partial"} (por defecto): el puntaje de un ejercicio es la
+fracción ponderada de sus tests que pasan. \code{"all"}: un ejercicio vale 1
+solo si pasan todos sus tests, si no vale 0.
+\emph{English:} \code{"partial"} (default): an exercise scores the weighted
 fraction of its tests that pass. \code{"all"}: an exercise scores 1 only if
 every test passes, else 0.}
 
-\item{weights}{Optional named numeric vector. A name that matches a test
+\item{weights}{Vector numérico con nombres, opcional. Un nombre que
+coincide con una función de test (por ejemplo \code{test_ejercicio1_raices})
+define el peso de ese test dentro de su ejercicio. Un nombre que coincide
+con un ejercicio (por ejemplo \code{ejercicio1}) define el peso de ese
+ejercicio en \code{total}. Lo que no aparece en el vector pesa 1.
+\emph{English:} Optional named numeric vector. A name that matches a test
 function (e.g. \code{test_ejercicio1_raices}) weights that test inside its
 exercise. A name that matches an exercise (e.g. \code{ejercicio1}) weights
 that exercise in \code{total}. Anything not named weighs 1.}
 }
 \value{
-A data frame with one row per student: a \code{student} column, one
+Un data frame con una fila por estudiante: una columna \code{student},
+una columna numérica (0-1) por ejercicio y \code{total}. Un ejercicio vale \code{NA}
+cuando está \code{missing} o tiene un \code{source_error}; en \code{total} cuenta como 0.
+\emph{English:} A data frame with one row per student: a \code{student} column, one
 numeric column (0-1) per exercise, and \code{total}. An exercise is \code{NA} when
 it is \code{missing} or has a \code{source_error}; it counts as 0 in \code{total}.
 }
 \description{
-Score each student, with optional partial credit and weights
+Puntaje de cada estudiante, con puntaje parcial y pesos opcionales
 }
+\section{English}{
+
+\strong{Score each student, with optional partial credit and weights.}
+}
+
 \examples{
 results <- example_results()
 student_scores(results)

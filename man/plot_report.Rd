@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.R
 \name{plot_report}
 \alias{plot_report}
-\title{Plot a visual summary of grading results}
+\title{Graficar un resumen visual de los resultados}
 \usage{
 plot_report(
   results,
@@ -13,29 +13,51 @@ plot_report(
 )
 }
 \arguments{
-\item{results}{A \link{grade_results} object.}
+\item{results}{Un objeto \link{grade_results}.
+\emph{English:} A \link{grade_results} object.}
 
-\item{ask}{If \code{TRUE} (default in interactive sessions), pause between plots.
+\item{ask}{Si es \code{TRUE} (por defecto en sesiones interactivas), hace una
+pausa entre gráficos. Pasá \code{FALSE} cuando dibujás en un dispositivo de
+archivo (PDF, PNG, etc.).
+\emph{English:} If \code{TRUE} (default in interactive sessions), pause between plots.
 Pass \code{FALSE} when rendering to a file device (PDF, PNG, etc.).}
 
-\item{backend}{\code{"base"} (default) uses base graphics, no extra dependencies.
+\item{backend}{\code{"base"} (por defecto) usa los gráficos base de R, sin
+dependencias extra. \code{"ggplot2"} usa ggplot2 si está instalado. Si no, vuelve
+a R base con una advertencia.
+\emph{English:} \code{"base"} (default) uses base graphics, no extra dependencies.
 \code{"ggplot2"} uses ggplot2 when installed and falls back to base R with a
 warning otherwise.}
 
-\item{scoring, weights}{How the two bar charts score students and
+\item{scoring, weights}{Cómo los dos gráficos de barras calculan el puntaje
+de estudiantes y ejercicios. Mirá \code{\link[=grade_report]{grade_report()}}. El mapa de calor
+siempre muestra pass/fail.
+\emph{English:} How the two bar charts score students and
 exercises. See \code{\link[=grade_report]{grade_report()}}. The heatmap always shows pass/fail.}
 }
 \value{
-\code{results}, invisibly.
+\code{results}, de forma invisible.
+\emph{English:} \code{results}, invisibly.
 }
 \description{
-Produces three plots in sequence:
+Genera tres gráficos, uno después del otro:
+\enumerate{
+\item Puntajes de los estudiantes ordenados (gráfico de barras horizontales).
+\item Porcentaje de aprobación por ejercicio (gráfico de barras).
+\item Mapa de calor de pass/fail (estudiantes x ejercicios).
+}
+}
+\section{English}{
+
+\strong{Plot a visual summary of grading results.} Produces three plots in
+sequence:
 \enumerate{
 \item Student scores ranked (horizontal bar chart).
 \item Pass rate per exercise (bar chart).
 \item Pass/fail heatmap (students x exercises).
 }
 }
+
 \examples{
 plot_report(example_results(), ask = FALSE)
 }

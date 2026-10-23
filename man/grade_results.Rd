@@ -2,10 +2,37 @@
 % Please edit documentation in R/results.R
 \name{grade_results}
 \alias{grade_results}
-\title{Grading results object}
+\title{Objeto con los resultados de la corrección}
 \description{
-A \code{grade_results} object is a data frame in long format with one row per
-(student, exercise, test) and the following columns:
+Un objeto \code{grade_results} es un data frame en formato largo con una fila
+por (estudiante, ejercicio, test) y estas columnas:
+\describe{
+\item{\code{student}}{Texto. Nombre del estudiante para mostrar.}
+\item{\code{exercise}}{Texto. Identificador del ejercicio (nombre del archivo
+sin extensión).}
+\item{\code{test}}{Texto. Nombre de la función de test, o \code{NA} cuando la fila
+registra una entrega \code{missing} o un \code{source_error}.}
+\item{\code{status}}{Factor con niveles \code{pass}, \code{fail}, \code{error}, \code{timeout},
+\code{missing}, \code{source_error}.}
+\item{\code{message}}{Texto. El mensaje de error para \code{error},
+\code{source_error} y \code{timeout}; el mensaje de testthat o "test returned
+non-logical" para algunas filas \code{fail}; una nota con las definiciones
+del estudiante que se ignoraron (ver \code{allow_masking} en
+\code{\link[=grade_exercise]{grade_exercise()}}); \code{NA} en los demás casos.}
+\item{\code{duration}}{Numérico. Segundos que tardó el test, o \code{NA} cuando el
+test no se ejecutó.}
+}
+}
+\details{
+Usá \code{\link[=as.data.frame]{as.data.frame()}} con \code{format = "wide"} para obtener la vista anterior
+en formato ancho (una columna lógica por ejercicio, \code{TRUE} si y solo si
+pasaron todos los tests).
+}
+\section{English}{
+
+\strong{Grading results object.} A \code{grade_results} object is a data frame in
+long format with one row per (student, exercise, test) and the following
+columns:
 \describe{
 \item{\code{student}}{Character. Student display name.}
 \item{\code{exercise}}{Character. Exercise identifier (file stem).}
@@ -21,8 +48,8 @@ otherwise.}
 \item{\code{duration}}{Numeric. Seconds elapsed running the test, or \code{NA}
 when the test was not run.}
 }
-}
-\details{
+
 Use \code{\link[=as.data.frame]{as.data.frame()}} with \code{format = "wide"} to get the old wide-boolean
 view (one logical column per exercise, \code{TRUE} iff all tests passed).
 }
+

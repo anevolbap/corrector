@@ -2,7 +2,7 @@
 % Please edit documentation in R/results.R
 \name{as.data.frame.grade_results}
 \alias{as.data.frame.grade_results}
-\title{Convert grading results to a data frame}
+\title{Convertir los resultados de la corrección en un data frame}
 \usage{
 \method{as.data.frame}{grade_results}(
   x,
@@ -13,25 +13,36 @@
 )
 }
 \arguments{
-\item{x}{A \code{grade_results} object.}
+\item{x}{Un objeto \code{grade_results}.
+\emph{English:} A \code{grade_results} object.}
 
-\item{row.names}{Ignored.}
+\item{row.names}{Se ignora. \emph{English:} Ignored.}
 
-\item{optional}{Ignored.}
+\item{optional}{Se ignora. \emph{English:} Ignored.}
 
-\item{format}{\code{"long"} returns the underlying long-format data frame.
+\item{format}{\code{"long"} devuelve el data frame en formato largo que guarda
+el objeto. \code{"wide"} devuelve la vista anterior: una fila por estudiante,
+una columna lógica por ejercicio (\code{TRUE} si y solo si pasaron todos los
+tests; \code{NA} para \code{missing} o \code{source_error}).
+\emph{English:} \code{"long"} returns the underlying long-format data frame.
 \code{"wide"} returns the legacy view: one row per student, one logical column
 per exercise (\code{TRUE} iff all tests passed; \code{NA} for \code{missing} or
 \code{source_error}).}
 
-\item{...}{Ignored.}
+\item{...}{Se ignora. \emph{English:} Ignored.}
 }
 \value{
-A plain data frame.
+Un data frame común.
+\emph{English:} A plain data frame.
 }
 \description{
-Convert grading results to a data frame
+Convertir los resultados de la corrección en un data frame
 }
+\section{English}{
+
+\strong{Convert grading results to a data frame.}
+}
+
 \examples{
 results <- example_results()
 head(as.data.frame(results))

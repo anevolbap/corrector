@@ -2,22 +2,34 @@
 % Please edit documentation in R/moodle.R
 \name{moodle_student_name}
 \alias{moodle_student_name}
-\title{Student name from a Moodle submission folder}
+\title{Nombre del estudiante a partir de una carpeta de Moodle}
 \usage{
 moodle_student_name(folder)
 }
 \arguments{
-\item{folder}{Character. Submission folder name.}
+\item{folder}{Texto. Nombre de la carpeta de la entrega.
+\emph{English:} Character. Submission folder name.}
 }
 \value{
-Character. Display name.
+Texto. Nombre para mostrar.
+\emph{English:} Character. Display name.
 }
 \description{
-Moodle's "Download all submissions" names each folder
-\verb{<Full name>_<id>_assignsubmission_file}. This keeps the full name. With
-blind marking every folder starts with "Participant", so names clash and
-\code{\link[=grade_submissions]{grade_submissions()}} falls back to the folder names.
+"Descargar todas las entregas" de Moodle nombra cada carpeta
+\verb{<Nombre completo>_<id>_assignsubmission_file}. Esta función se queda con
+el nombre completo. Con calificación anónima (\emph{blind marking}) todas las
+carpetas empiezan con "Participante", así que los nombres se repiten y
+\code{\link[=grade_submissions]{grade_submissions()}} usa los nombres de las carpetas.
 }
+\section{English}{
+
+\strong{Student name from a Moodle submission folder.} Moodle's "Download all
+submissions" names each folder \verb{<Full name>_<id>_assignsubmission_file}.
+This keeps the full name. With blind marking every folder starts with
+"Participant", so names clash and \code{\link[=grade_submissions]{grade_submissions()}} falls back to the
+folder names.
+}
+
 \examples{
 moodle_student_name("Juan Perez_123456_assignsubmission_file")
 }

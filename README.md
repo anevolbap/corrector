@@ -9,7 +9,7 @@ devuelve un objeto con los resultados por test.
 
 Guías: [Corregir entregas de principio a fin](https://anevolbap.github.io/corrector/articles/corregir-entregas.html) ·
 [Corregir sin que te hagan trampa](https://anevolbap.github.io/corrector/articles/evaluacion-anti-trampas.html) ·
-[Referencia de funciones](https://anevolbap.github.io/corrector/reference/) (en inglés)
+[Referencia de funciones](https://anevolbap.github.io/corrector/reference/)
 
 ## Instalación
 

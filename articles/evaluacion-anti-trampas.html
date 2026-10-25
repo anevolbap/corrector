@@ -63,7 +63,7 @@
       <h1>Corregir sin que te hagan trampa</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/anevolbap/corrector/blob/v0.6.0/vignettes/evaluacion-anti-trampas.Rmd" class="external-link"><code>vignettes/evaluacion-anti-trampas.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/anevolbap/corrector/blob/main/vignettes/evaluacion-anti-trampas.Rmd" class="external-link"><code>vignettes/evaluacion-anti-trampas.Rmd</code></a></small>
       <div class="d-none name"><code>evaluacion-anti-trampas.Rmd</code></div>
     </div>
 
@@ -84,7 +84,7 @@ corrector bloquea las trampas comunes:</p>
 <ul>
 <li>Si el estudiante redefine una función de base R que usan los tests
 (<code><a href="https://rdrr.io/r/base/all.html" class="external-link">all()</a></code>, <code>==</code>, <code><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE()</a></code>,
-<code><a href="https://testthat.r-lib.org/reference/equality-expectations.html" class="external-link">expect_equal()</a></code> de testthat, etc.), los tests no ven esa
+<code>expect_equal()</code> de testthat, etc.), los tests no ven esa
 versión.</li>
 <li>Los tests tampoco ven los métodos S3 del estudiante para las
 funciones de comparación (<code>Ops</code>, <code>==</code>,
@@ -177,8 +177,8 @@ número común antes de comparar:</p>
 <span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">media</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/double.html" class="external-link">is.double</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/is.object.html" class="external-link">is.object</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">7</span> <span class="op">/</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>Con testthat, preferí <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html" class="external-link">expect_identical()</a></code> y
-<code><a href="https://testthat.r-lib.org/reference/inheritance-expectations.html" class="external-link">expect_type()</a></code>.</p>
+<p>Con testthat, preferí <code>expect_identical()</code> y
+<code>expect_type()</code>.</p>
 <p>Usá datos que el estudiante no pueda conocer de antemano. Un
 estudiante que vio los tests puede escribir las respuestas a mano; datos
 al azar comparados con una solución de referencia dentro del archivo de

@@ -16,9 +16,8 @@ comunes:
 
 - Si el estudiante redefine una función de base R que usan los tests
   ([`all()`](https://rdrr.io/r/base/all.html), `==`,
-  [`isTRUE()`](https://rdrr.io/r/base/Logic.html),
-  [`expect_equal()`](https://testthat.r-lib.org/reference/equality-expectations.html)
-  de testthat, etc.), los tests no ven esa versión.
+  [`isTRUE()`](https://rdrr.io/r/base/Logic.html), `expect_equal()` de
+  testthat, etc.), los tests no ven esa versión.
 - Los tests tampoco ven los métodos S3 del estudiante para las funciones
   de comparación (`Ops`, `==`, `all.equal`, `as.logical`, …).
 - Las funciones que el estudiante escribe en el entorno global no les
@@ -135,10 +134,7 @@ test_ejercicio1_media <- function() {
 }
 ```
 
-Con testthat, preferí
-[`expect_identical()`](https://testthat.r-lib.org/reference/equality-expectations.html)
-y
-[`expect_type()`](https://testthat.r-lib.org/reference/inheritance-expectations.html).
+Con testthat, preferí `expect_identical()` y `expect_type()`.
 
 Usá datos que el estudiante no pueda conocer de antemano. Un estudiante
 que vio los tests puede escribir las respuestas a mano; datos al azar

@@ -38,7 +38,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/anevolbap/corrector/blob/v0.6.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/anevolbap/corrector/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
@@ -135,7 +135,7 @@
 <li>Cuando el motor callr interrumpe un ejercicio, los tests que ya terminaron conservan su resultado.</li>
 <li>Si un archivo de tests no se puede cargar, la corrección se detiene con un error claro antes de corregir a nadie; antes, el motor callr devolvía cero filas sin avisar. Un archivo de tests sin funciones <code>test_&lt;exercise&gt;_*</code> da una advertencia una sola vez.</li>
 <li>
-<code><a href="https://testthat.r-lib.org/reference/skip.html" class="external-link">skip()</a></code> de testthat dentro de un test se registra como <code>error</code> en lugar de abortar.</li>
+<code>skip()</code> de testthat dentro de un test se registra como <code>error</code> en lugar de abortar.</li>
 <li>El paquete rechaza las entradas de un zip que apuntan fuera de la carpeta de extracción.</li>
 <li>Las exportaciones a CSV y Google Sheets ponen un <code>'</code> antes del texto que una planilla ejecutaría como fórmula.</li>
 <li>Errores claros para rutas que no existen y para valores incorrectos de <code>timeout</code> o <code>workers</code>, y una advertencia cuando no hay carpetas de estudiantes.</li>
@@ -168,7 +168,7 @@
 <code><a href="https://rdrr.io/r/base/quit.html" class="external-link">quit()</a></code> and <code><a href="https://rdrr.io/r/base/quit.html" class="external-link">q()</a></code> in student code raise an error instead of ending the session. The inproc engine restores the working directory and options.</li>
 <li>When the callr engine kills an exercise, tests that already finished keep their result.</li>
 <li>A test file that fails to load stops grading with a clear error before anyone is graded; before, the callr engine returned zero rows in silence. A test file without <code>test_&lt;exercise&gt;_*</code> functions warns once.</li>
-<li>testthat <code><a href="https://testthat.r-lib.org/reference/skip.html" class="external-link">skip()</a></code> in a test is recorded as <code>error</code> instead of aborting.</li>
+<li>testthat <code>skip()</code> in a test is recorded as <code>error</code> instead of aborting.</li>
 <li>Zip entries that point outside the extraction folder are refused.</li>
 <li>CSV and Google Sheets exports put a <code>'</code> before text that a spreadsheet would run as a formula.</li>
 <li>Clear errors for missing paths and bad <code>timeout</code> or <code>workers</code> values, and a warning when there are no student folders.</li>

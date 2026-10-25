@@ -15,8 +15,7 @@ process as the student code. corrector blocks the common tricks there:
 - A student object that redefines a base function the tests use
   ([`all()`](https://rdrr.io/r/base/all.html), `==`,
   [`isTRUE()`](https://rdrr.io/r/base/Logic.html), testthat’s
-  [`expect_equal()`](https://testthat.r-lib.org/reference/equality-expectations.html),
-  and so on) is not visible to the tests.
+  `expect_equal()`, and so on) is not visible to the tests.
 - Student S3 methods for the comparison generics (`Ops`, `==`,
   `all.equal`, `as.logical`, …) are not visible to the tests either.
 - Functions written into the global environment are not visible to the
@@ -130,10 +129,7 @@ test_ejercicio1_media <- function() {
 }
 ```
 
-With testthat, prefer
-[`expect_identical()`](https://testthat.r-lib.org/reference/equality-expectations.html)
-and
-[`expect_type()`](https://testthat.r-lib.org/reference/inheritance-expectations.html).
+With testthat, prefer `expect_identical()` and `expect_type()`.
 
 Use inputs the student cannot know in advance. A student who has seen
 the tests can hard-code the answers; random inputs checked against a

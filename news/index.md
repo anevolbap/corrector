@@ -215,8 +215,8 @@
   con un error claro antes de corregir a nadie; antes, el motor callr
   devolvía cero filas sin avisar. Un archivo de tests sin funciones
   `test_<exercise>_*` da una advertencia una sola vez.
-- [`skip()`](https://testthat.r-lib.org/reference/skip.html) de testthat
-  dentro de un test se registra como `error` en lugar de abortar.
+- `skip()` de testthat dentro de un test se registra como `error` en
+  lugar de abortar.
 - El paquete rechaza las entradas de un zip que apuntan fuera de la
   carpeta de extracción.
 - Las exportaciones a CSV y Google Sheets ponen un `'` antes del texto
@@ -287,8 +287,8 @@
 - A test file that fails to load stops grading with a clear error before
   anyone is graded; before, the callr engine returned zero rows in
   silence. A test file without `test_<exercise>_*` functions warns once.
-- testthat [`skip()`](https://testthat.r-lib.org/reference/skip.html) in
-  a test is recorded as `error` instead of aborting.
+- testthat `skip()` in a test is recorded as `error` instead of
+  aborting.
 - Zip entries that point outside the extraction folder are refused.
 - CSV and Google Sheets exports put a `'` before text that a spreadsheet
   would run as a formula.

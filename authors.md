@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/anevolbap/corrector/blob/v0.6.0/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/anevolbap/corrector/blob/main/DESCRIPTION)
 
 Vena P (2026). *corrector: Automatic Grading of R Coding Exercises*. R
 package version 0.6.0, <https://anevolbap.github.io/corrector/>.

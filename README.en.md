@@ -2,10 +2,11 @@
 
 [Versión en español](https://anevolbap.github.io/corrector/README.md)
 
-An R package for automatically grading student coding exercises. Each
-student submits one R file per exercise; the professor provides matching
-test files. The package sources both into an isolated environment, runs
-the tests, and returns a per-test results object.
+An R package for grading R programming exercises. Each student hands in
+one file per exercise (`.R`, `.Rmd` or `.qmd`), the teacher writes the
+tests, and corrector grades the whole class at once, on your computer.
+It reads the submissions of a Moodle assignment and prepares the
+feedback to upload back.
 
 Guides: [Grading
 pipeline](https://anevolbap.github.io/corrector/articles/grading-pipeline.html)
@@ -69,288 +70,105 @@ export_to_html(results, "report.html")
 export_to_csv(results,  "grades.csv")
 ```
 
-A built-in sample dataset is available to try the package immediately:
+## Submissions and tests
 
-``` r
-
-results <- example_results()  # 8 fake students, 5 exercises
-grade_report(results)
-plot_report(results)
-```
-
-## Results shape
-
-[`grade_submissions()`](https://anevolbap.github.io/corrector/reference/grade_submissions.md)
-and
-[`grade_exercise()`](https://anevolbap.github.io/corrector/reference/grade_exercise.md)
-return a `grade_results` object, a long-format data frame with one row
-per (student, exercise, test):
-
-| student | exercise   | test                   | status | message | duration |
-|---------|------------|------------------------|--------|---------|----------|
-| Garcia  | ejercicio1 | test_ejercicio1_raices | pass   | NA      | 0.001    |
-| Lopez   | ejercicio1 | test_ejercicio1_raices | fail   | NA      | 0.001    |
-
-`status` is a factor with levels `pass`, `fail`, `error`, `timeout`,
-`missing`, `source_error`. This makes it easy to tell a test that
-returned `FALSE` apart from one that errored, hit a timeout, or a file
-the student never submitted.
-
-The legacy wide view (one row per student, one logical column per
-exercise) is one call away:
-
-``` r
-
-as.data.frame(results, format = "wide")
-#   student    ejercicio1
-# 1 Garcia          TRUE
-# 2 Lopez          FALSE
-```
-
-`NA` means the exercise was missing or failed to parse.
-
-## How it works
-
-The grader follows a naming convention:
+One folder per student and one test file per exercise. The test file
+name must match the exercise:
 
     submissions/
     ├── garcia_juan/
-    │   ├── ejercicio1.R   <- student file
-    │   └── ejercicio2.R
+    │   ├── ejercicio1.R
+    │   └── ejercicio2.Rmd
     └── lopez_maria/
-        ├── ejercicio1.R
-        └── ejercicio2.R
+        └── ejercicio1.R
 
     tests/
-    ├── test_ejercicio1.R  <- professor test file (name must match)
+    ├── test_ejercicio1.R
     └── test_ejercicio2.R
 
-Each test file contains functions named `test_<exercise>_<case>` that
-return `TRUE` or `FALSE`:
+A test file holds functions named `test_<exercise>_<case>` that return
+`TRUE` or `FALSE`. They can also use testthat expectations
+(`expect_equal()` and others).
 
 ``` r
 
 # tests/test_ejercicio1.R
-test_ejercicio1_positivos <- function() {
+test_ejercicio1_roots <- function() {
   all(ceros_cuadratica(1, 0, -1) == c(-1, 1))
 }
-
-test_ejercicio1_tipo <- function() {
-  is.numeric(ceros_cuadratica(1, 0, -1))
-}
 ```
 
-The expected exercise list comes from the test directory: every
-`test_*.R` file defines an exercise. If a student does not submit an
-exercise that has a test file, a row with `status = missing` is recorded
-rather than silently skipping it.
-
-Student code and test code are sourced into fresh environments for each
-exercise. Tests do not see base R functions the student redefines (such
-as [`all()`](https://rdrr.io/r/base/all.html) or `==`), except the ones
-you list in `allow_masking`. With the default `callr` engine each
-exercise runs in its own process, so submissions cannot affect each
-other.
-
-Tests can also use testthat expectations. A failed `expect_*` counts as
-`fail`, and its message goes in the `message` column:
+- The expected exercises come from the test folder. An exercise the
+  student did not hand in is recorded as `missing`, not skipped.
+- File names are matched ignoring case: `Ejercicio1.R` counts as
+  `ejercicio1`. For `.Rmd` and `.qmd`, the R chunks run.
+- Submissions can come as a folder or a `.zip`. Each student’s name
+  comes from their folder (`garcia_juan` becomes `Garcia`); change it
+  with `student_name_fn`.
+- For Moodle, pass the `.zip` from “Download all submissions” with
+  `layout = "moodle"`. It works with and without “Download submissions
+  in folders”.
 
 ``` r
 
-# tests/test_ejercicio1.R
-library(testthat)
-
-test_ejercicio1_roots <- function() {
-  expect_equal(ceros_cuadratica(1, 0, -1), c(-1, 1))
-}
+results <- grade_submissions("assignment1-submissions.zip", test_dir = "tests/",
+                             layout = "moodle")
 ```
 
-Students can hand in `ejercicio1.R`, `ejercicio1.Rmd` or
-`ejercicio1.qmd` (for the last two, the R code chunks run). Case does
-not matter: `Ejercicio1.R` counts as `ejercicio1`.
+## What else it does
 
-## Usage
+- **Grades:**
+  [`student_scores()`](https://anevolbap.github.io/corrector/reference/student_scores.md)
+  gives partial credit and takes weights per test or per exercise;
+  [`grade_scale()`](https://anevolbap.github.io/corrector/reference/grade_scale.md)
+  turns that score into a 1-10 grade.
+- **Feedback:**
+  [`export_feedback()`](https://anevolbap.github.io/corrector/reference/export_feedback.md)
+  writes one file per student, in Spanish or English;
+  [`export_moodle_feedback()`](https://anevolbap.github.io/corrector/reference/export_moodle_feedback.md)
+  packs them in a `.zip` to upload to Moodle.
+- **Summaries and export:**
+  [`grade_report()`](https://anevolbap.github.io/corrector/reference/grade_report.md),
+  [`plot_report()`](https://anevolbap.github.io/corrector/reference/plot_report.md),
+  [`export_to_csv()`](https://anevolbap.github.io/corrector/reference/export_to_csv.md),
+  [`export_to_html()`](https://anevolbap.github.io/corrector/reference/export_to_html.md)
+  and
+  [`export_to_sheets()`](https://anevolbap.github.io/corrector/reference/export_to_sheets.md).
+- **Similar submissions:**
+  [`compare_submissions()`](https://anevolbap.github.io/corrector/reference/compare_submissions.md)
+  looks for copies, even after renaming variables or changing spacing or
+  comments.
+- **Time limit and speed:** each test gets `timeout` seconds (default
+  10), and `workers` grades several students at once.
+- **To try it:**
+  [`example_results()`](https://anevolbap.github.io/corrector/reference/example_results.md)
+  returns sample results, and
+  `system.file("examples", package = "corrector")` holds tests for five
+  exercises.
 
-``` r
-
-library(corrector)
-
-# Grade a full batch (directory or .zip)
-results <- grade_submissions("submissions/", test_dir = "tests/")
-
-# Grade a single file during development
-grade_exercise("submissions/garcia_juan/ejercicio1.R", test_dir = "tests/")
-
-# Console summary
-grade_report(results)
-
-# Export
-export_to_csv(results, "grades.csv")               # wide view by default
-export_to_csv(results, "grades-long.csv", format = "long")
-export_to_html(results, "report.html")             # colour-coded, per-test breakdown
-
-# Export to Google Sheets (requires googlesheets4)
-googlesheets4::gs4_auth()
-export_to_sheets(results, "https://docs.google.com/spreadsheets/d/...")
-```
-
-## Partial credit and weights
-
-By default an exercise passes only when all its tests pass.
-[`student_scores()`](https://anevolbap.github.io/corrector/reference/student_scores.md)
-gives partial credit (the fraction of tests that pass) and takes weights
-per test or per exercise. The `total` column is the grade: a missing
-exercise counts as 0.
-
-``` r
-
-grades <- student_scores(results,
-                         weights = c(test_ejercicio1_roots = 2, ejercicio2 = 3))
-grade_report(results, scoring = "partial")
-```
-
-[`grade_scale()`](https://anevolbap.github.io/corrector/reference/grade_scale.md)
-turns the score (0 to 1) into a grade. By default it is a 1-10 scale
-where 60% is a 4; rounding never passes a student who did not reach it:
-
-``` r
-
-grades$grade <- grade_scale(grades$total)
-grade_scale(grades$total, min = 0, max = 100, pass = 60, pass_at = 0.6)
-```
-
-## Feedback for each student
-
-[`export_feedback()`](https://anevolbap.github.io/corrector/reference/export_feedback.md)
-writes one Markdown file per student with their grade, the score of each
-exercise, and the result of each test, with the error message when there
-is one. The files come in Spanish or English depending on the computer’s
-language; choose with `lang`:
-
-``` r
-
-export_feedback(results, "feedback/", lang = "en")
-```
-
-If you graded with `layout = "moodle"`,
-[`export_moodle_feedback()`](https://anevolbap.github.io/corrector/reference/export_moodle_feedback.md)
-builds a `.zip` that Moodle loads in one go: on the assignment’s
-submissions page, use “Upload multiple feedback files in a zip”. The
-assignment must have file feedback turned on.
-
-``` r
-
-export_moodle_feedback(results, "feedback-assignment1.zip")
-```
-
-## Similar submissions
-
-[`compare_submissions()`](https://anevolbap.github.io/corrector/reference/compare_submissions.md)
-compares, exercise by exercise, the files of every pair of students and
-lists the most similar ones. Renaming variables, changing spacing or
-adding comments does not hide a copy. A high similarity does not prove
-copying (short solutions look alike); use it to pick which submissions
-to read by hand.
-
-``` r
-
-compare_submissions("submissions/", min_similarity = 0.8)
-#>     exercise student_a student_b similarity
-#> 1 ejercicio1    Garcia     Lopez       1.00
-```
-
-## Plots
-
-[`plot_report()`](https://anevolbap.github.io/corrector/reference/plot_report.md)
-produces three sequential plots: student scores ranked, pass rate per
-exercise, and a pass/fail heatmap.
-
-``` r
-
-# Interactive, pauses between plots
-plot_report(results)
-
-# Save to PDF
-pdf("report.pdf", width = 8, height = 5)
-plot_report(results, ask = FALSE)
-dev.off()
-
-# Use ggplot2 when installed (falls back to base R otherwise)
-plot_report(results, backend = "ggplot2")
-```
+All of this, with examples, in the [Grading
+pipeline](https://anevolbap.github.io/corrector/articles/grading-pipeline.html)
+guide.
 
 ![Plots preview](reference/figures/plots-preview.png)
 
 Plots preview
 
-## Timeout
+## Security and cheating
 
-Each test gets `timeout` seconds (default 10), and so does loading the
-student’s file. The default engine, `callr`, runs each exercise in a
-fresh subprocess with a temporary working directory. If a test does not
-respond to the limit (for example inside
-[`Sys.sleep()`](https://rdrr.io/r/base/Sys.sleep.html)), the subprocess
-is killed once the whole exercise passes `timeout` × number of tests + 5
-seconds: tests that already finished keep their result, and the rest are
-marked `timeout`. To change the limit:
-
-``` r
-
-results <- grade_submissions("submissions/", test_dir = "tests/", timeout = 30)
-```
-
-Use `timeout = Inf` for no limit. `engine = "inproc"` runs tests in the
-current session: it is faster, but
-[`setTimeLimit()`](https://rdrr.io/r/base/setTimeLimit.html) does not
-interrupt every loop, and student code can change your global
-environment.
-
-For large classes, `workers` runs several subprocesses at the same time:
-
-``` r
-
-results <- grade_submissions("submissions/", test_dir = "tests/", workers = 4)
-```
-
-## Security
-
-corrector is not a sandbox. The `callr` engine protects your R session,
-not your computer: student code can read and write any file your user
-can, use the network, or run system commands. For code from people you
-do not trust, run corrector inside a container or virtual machine
-without your credentials.
-
-### Cheating
-
-With the `callr` and `inproc` engines corrector blocks the common
-tricks: redefining base R functions or S3 comparison methods in the
-file, writing them into the global environment, or calling
-[`quit()`](https://rdrr.io/r/base/quit.html). A student who knows R in
-depth can still fool these engines (for example with
-[`attach()`](https://rdrr.io/r/base/attach.html) or by changing the base
-package). corrector detects such code and notes it in the `message`
-column as `suspicious code` or `tampering`, and
+corrector is not a sandbox: with the default engine, `callr`, student
+code runs as your user and can read and write your files. It blocks the
+common tricks (redefining [`all()`](https://rdrr.io/r/base/all.html),
+`==` or comparison methods) and notes suspicious code, which
 [`grade_report()`](https://anevolbap.github.io/corrector/reference/grade_report.md)
-lists those students under “Check by hand”.
+lists for you to check by hand.
 
-`engine = "isolated"` runs the student code in another process and only
-gets the results back, so those tricks do not change the grade. It takes
-about twice as long as `callr`; `workers` makes up for it:
-
-``` r
-
-results <- grade_submissions("submissions/", test_dir = "tests/",
-                             engine = "isolated", workers = 4)
-```
-
-`engine = "container"` does the same inside a Docker container with no
-network and only the exercise’s files, so student code cannot reach your
-files or network either. Build the image once from the file the package
-ships:
-
-``` bash
-docker build -t corrector-runner "$(Rscript -e 'cat(system.file("container", package = "corrector"))')"
-```
+- `engine = "isolated"` runs the student code in another process, so
+  tricks such as [`attach()`](https://rdrr.io/r/base/attach.html) do not
+  change the grade.
+- `engine = "container"` does the same inside Docker, with no network
+  and only the exercise’s files, so the code cannot reach your computer
+  either.
 
 ``` r
 
@@ -358,62 +176,30 @@ results <- grade_submissions("submissions/", test_dir = "tests/",
                              engine = "container", workers = 4)
 ```
 
-The article [Cheat-resistant
-grading](https://anevolbap.github.io/corrector/articles/cheat-resistant-grading.html)
-explains what each engine covers and how to write tests that are hard to
-fool (for example, compare with
-[`identical()`](https://rdrr.io/r/base/identical.html) and use random
-inputs).
-
-## Example test files
-
-``` r
-
-system.file("examples", package = "corrector")
-```
+How to pick an engine, build the Docker image, and write tests that are
+hard to fool: [Cheat-resistant
+grading](https://anevolbap.github.io/corrector/articles/cheat-resistant-grading.html).
 
 ## Alternatives
 
-- **[gradethis](https://rstudio.github.io/gradethis/)**: grades code
-  inside interactive [learnr](https://rstudio.github.io/learnr/)
-  tutorials. Requires a Shiny server.
-- **[exams](https://www.r-exams.org/)**: generates randomised exam
-  questions, exports to Moodle, Canvas, PDF and more.
-- **[RTutor](https://github.com/skranz/RTutor)**: Shiny-based
-  interactive problem sets with automatic solution checking.
+corrector is for exercises that students write as files on their own
+computer and that the teacher grades afterwards, all at once, with their
+own tests, with no server and no student accounts. Other R packages
+cover other cases:
 
-corrector is the lightest option: no server, plain `.R` file
-submissions, zero hard dependencies.
+- **[gradethis](https://rstudio.github.io/gradethis/)**: checks code
+  exercise by exercise inside an interactive
+  [learnr](https://rstudio.github.io/learnr/) tutorial, with instant
+  feedback. The exercise lives inside the tutorial and needs a Shiny
+  server.
+- **[exams](https://www.r-exams.org/)**: generates random questions and
+  exports them to Moodle, Canvas, PDF and more. It grades answers (a
+  number, a choice, a text), not the code the student wrote.
+- **[RTutor](https://github.com/skranz/RTutor)**: interactive problem
+  sets with automatic checking and progress tracking, in its own format.
 
-## Folder names
-
-The default extractor takes the first underscore-separated token of the
-folder name and applies title case (so `garcia_juan_12345` becomes
-`Garcia`). Pass `student_name_fn` to override:
-
-``` r
-
-results <- grade_submissions(
-  "submissions/", test_dir = "tests/",
-  student_name_fn = function(folder) sub("_.*$", "", folder)
-)
-```
-
-Submissions can also be handed in as a single `.zip`; the package
-extracts it into a temporary directory before grading.
-
-### Moodle
-
-To grade the `.zip` from Moodle’s “Download all submissions” directly,
-use `layout = "moodle"`. It works with and without “Download submissions
-in folders”, grades only file submissions (online text is skipped), and
-uses the student’s full name:
-
-``` r
-
-results <- grade_submissions("assignment1-submissions.zip", test_dir = "tests/",
-                             layout = "moodle")
-```
+corrector is not interactive: students do not see results while they
+write, unless you give them the tests to run.
 
 ## Contributing
 

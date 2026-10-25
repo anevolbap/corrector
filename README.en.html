@@ -38,13 +38,13 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>corrector</h1>
-      <small class="dont-index">Source: <a href="https://github.com/anevolbap/corrector/blob/v0.6.0/README.en.md" class="external-link"><code>README.en.md</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/anevolbap/corrector/blob/main/README.en.md" class="external-link"><code>README.en.md</code></a></small>
     </div>
 
 <div id="corrector" class="section level1">
 
 <p><a href="README.html">Versión en español</a></p>
-<p>An R package for automatically grading student coding exercises. Each student submits one R file per exercise; the professor provides matching test files. The package sources both into an isolated environment, runs the tests, and returns a per-test results object.</p>
+<p>An R package for grading R programming exercises. Each student hands in one file per exercise (<code>.R</code>, <code>.Rmd</code> or <code>.qmd</code>), the teacher writes the tests, and corrector grades the whole class at once, on your computer. It reads the submissions of a Moodle assignment and prepares the feedback to upload back.</p>
 <p>Guides: <a href="https://anevolbap.github.io/corrector/articles/grading-pipeline.html">Grading pipeline</a> · <a href="https://anevolbap.github.io/corrector/articles/cheat-resistant-grading.html">Cheat-resistant grading</a> · <a href="https://anevolbap.github.io/corrector/reference/">Function reference</a></p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a></h2>
@@ -97,207 +97,75 @@
 <span><span class="fu"><a href="reference/grade_report.html">grade_report</a></span><span class="op">(</span><span class="va">results</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/export_to_html.html">export_to_html</a></span><span class="op">(</span><span class="va">results</span>, <span class="st">"report.html"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/export_to_csv.html">export_to_csv</a></span><span class="op">(</span><span class="va">results</span>,  <span class="st">"grades.csv"</span><span class="op">)</span></span></code></pre></div>
-<p>A built-in sample dataset is available to try the package immediately:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/example_results.html">example_results</a></span><span class="op">(</span><span class="op">)</span>  <span class="co"># 8 fake students, 5 exercises</span></span>
-<span><span class="fu"><a href="reference/grade_report.html">grade_report</a></span><span class="op">(</span><span class="va">results</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/plot_report.html">plot_report</a></span><span class="op">(</span><span class="va">results</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="results-shape">Results shape<a class="anchor" aria-label="anchor" href="#results-shape"></a></h2>
-<p><code><a href="reference/grade_submissions.html">grade_submissions()</a></code> and <code><a href="reference/grade_exercise.html">grade_exercise()</a></code> return a <code>grade_results</code> object, a long-format data frame with one row per (student, exercise, test):</p>
-<table style="width:100%;" class="table"><colgroup><col width="12%"><col width="16%"><col width="34%"><col width="10%"><col width="12%"><col width="13%"></colgroup><thead><tr><th>student</th>
-<th>exercise</th>
-<th>test</th>
-<th>status</th>
-<th>message</th>
-<th>duration</th>
-</tr></thead><tbody><tr><td>Garcia</td>
-<td>ejercicio1</td>
-<td>test_ejercicio1_raices</td>
-<td>pass</td>
-<td>NA</td>
-<td>0.001</td>
-</tr><tr><td>Lopez</td>
-<td>ejercicio1</td>
-<td>test_ejercicio1_raices</td>
-<td>fail</td>
-<td>NA</td>
-<td>0.001</td>
-</tr></tbody></table><p><code>status</code> is a factor with levels <code>pass</code>, <code>fail</code>, <code>error</code>, <code>timeout</code>, <code>missing</code>, <code>source_error</code>. This makes it easy to tell a test that returned <code>FALSE</code> apart from one that errored, hit a timeout, or a file the student never submitted.</p>
-<p>The legacy wide view (one row per student, one logical column per exercise) is one call away:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">results</span>, format <span class="op">=</span> <span class="st">"wide"</span><span class="op">)</span></span>
-<span><span class="co">#   student    ejercicio1</span></span>
-<span><span class="co"># 1 Garcia          TRUE</span></span>
-<span><span class="co"># 2 Lopez          FALSE</span></span></code></pre></div>
-<p><code>NA</code> means the exercise was missing or failed to parse.</p>
-</div>
-<div class="section level2">
-<h2 id="how-it-works">How it works<a class="anchor" aria-label="anchor" href="#how-it-works"></a></h2>
-<p>The grader follows a naming convention:</p>
+<h2 id="submissions-and-tests">Submissions and tests<a class="anchor" aria-label="anchor" href="#submissions-and-tests"></a></h2>
+<p>One folder per student and one test file per exercise. The test file name must match the exercise:</p>
 <pre><code>submissions/
 ├── garcia_juan/
-│   ├── ejercicio1.R   &lt;- student file
-│   └── ejercicio2.R
+│   ├── ejercicio1.R
+│   └── ejercicio2.Rmd
 └── lopez_maria/
-    ├── ejercicio1.R
-    └── ejercicio2.R
+    └── ejercicio1.R
 
 tests/
-├── test_ejercicio1.R  &lt;- professor test file (name must match)
+├── test_ejercicio1.R
 └── test_ejercicio2.R</code></pre>
-<p>Each test file contains functions named <code>test_&lt;exercise&gt;_&lt;case&gt;</code> that return <code>TRUE</code> or <code>FALSE</code>:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<p>A test file holds functions named <code>test_&lt;exercise&gt;_&lt;case&gt;</code> that return <code>TRUE</code> or <code>FALSE</code>. They can also use testthat expectations (<code>expect_equal()</code> and others).</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># tests/test_ejercicio1.R</span></span>
-<span><span class="va">test_ejercicio1_positivos</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="fu">ceros_cuadratica</span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">test_ejercicio1_tipo</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">is.numeric</a></span><span class="op">(</span><span class="fu">ceros_cuadratica</span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<p>The expected exercise list comes from the test directory: every <code>test_*.R</code> file defines an exercise. If a student does not submit an exercise that has a test file, a row with <code>status = missing</code> is recorded rather than silently skipping it.</p>
-<p>Student code and test code are sourced into fresh environments for each exercise. Tests do not see base R functions the student redefines (such as <code><a href="https://rdrr.io/r/base/all.html" class="external-link">all()</a></code> or <code>==</code>), except the ones you list in <code>allow_masking</code>. With the default <code>callr</code> engine each exercise runs in its own process, so submissions cannot affect each other.</p>
-<p>Tests can also use testthat expectations. A failed <code>expect_*</code> counts as <code>fail</code>, and its message goes in the <code>message</code> column:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># tests/test_ejercicio1.R</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://testthat.r-lib.org" class="external-link">testthat</a></span><span class="op">)</span></span>
-<span></span>
 <span><span class="va">test_ejercicio1_roots</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://testthat.r-lib.org/reference/equality-expectations.html" class="external-link">expect_equal</a></span><span class="op">(</span><span class="fu">ceros_cuadratica</span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="fu">ceros_cuadratica</span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>Students can hand in <code>ejercicio1.R</code>, <code>ejercicio1.Rmd</code> or <code>ejercicio1.qmd</code> (for the last two, the R code chunks run). Case does not matter: <code>Ejercicio1.R</code> counts as <code>ejercicio1</code>.</p>
+<ul><li>The expected exercises come from the test folder. An exercise the student did not hand in is recorded as <code>missing</code>, not skipped.</li>
+<li>File names are matched ignoring case: <code>Ejercicio1.R</code> counts as <code>ejercicio1</code>. For <code>.Rmd</code> and <code>.qmd</code>, the R chunks run.</li>
+<li>Submissions can come as a folder or a <code>.zip</code>. Each student’s name comes from their folder (<code>garcia_juan</code> becomes <code>Garcia</code>); change it with <code>student_name_fn</code>.</li>
+<li>For Moodle, pass the <code>.zip</code> from “Download all submissions” with <code>layout = "moodle"</code>. It works with and without “Download submissions in folders”.</li>
+</ul><div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"assignment1-submissions.zip"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>,</span>
+<span>                             layout <span class="op">=</span> <span class="st">"moodle"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a></h2>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://anevolbap.github.io/corrector/">corrector</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Grade a full batch (directory or .zip)</span></span>
-<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"submissions/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Grade a single file during development</span></span>
-<span><span class="fu"><a href="reference/grade_exercise.html">grade_exercise</a></span><span class="op">(</span><span class="st">"submissions/garcia_juan/ejercicio1.R"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Console summary</span></span>
-<span><span class="fu"><a href="reference/grade_report.html">grade_report</a></span><span class="op">(</span><span class="va">results</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Export</span></span>
-<span><span class="fu"><a href="reference/export_to_csv.html">export_to_csv</a></span><span class="op">(</span><span class="va">results</span>, <span class="st">"grades.csv"</span><span class="op">)</span>               <span class="co"># wide view by default</span></span>
-<span><span class="fu"><a href="reference/export_to_csv.html">export_to_csv</a></span><span class="op">(</span><span class="va">results</span>, <span class="st">"grades-long.csv"</span>, format <span class="op">=</span> <span class="st">"long"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/export_to_html.html">export_to_html</a></span><span class="op">(</span><span class="va">results</span>, <span class="st">"report.html"</span><span class="op">)</span>             <span class="co"># colour-coded, per-test breakdown</span></span>
-<span></span>
-<span><span class="co"># Export to Google Sheets (requires googlesheets4)</span></span>
-<span><span class="fu">googlesheets4</span><span class="fu">::</span><span class="fu"><a href="https://googlesheets4.tidyverse.org/reference/gs4_auth.html" class="external-link">gs4_auth</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/export_to_sheets.html">export_to_sheets</a></span><span class="op">(</span><span class="va">results</span>, <span class="st">"https://docs.google.com/spreadsheets/d/..."</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="partial-credit-and-weights">Partial credit and weights<a class="anchor" aria-label="anchor" href="#partial-credit-and-weights"></a></h2>
-<p>By default an exercise passes only when all its tests pass. <code><a href="reference/student_scores.html">student_scores()</a></code> gives partial credit (the fraction of tests that pass) and takes weights per test or per exercise. The <code>total</code> column is the grade: a missing exercise counts as 0.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">grades</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/student_scores.html">student_scores</a></span><span class="op">(</span><span class="va">results</span>,</span>
-<span>                         weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>test_ejercicio1_roots <span class="op">=</span> <span class="fl">2</span>, ejercicio2 <span class="op">=</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/grade_report.html">grade_report</a></span><span class="op">(</span><span class="va">results</span>, scoring <span class="op">=</span> <span class="st">"partial"</span><span class="op">)</span></span></code></pre></div>
-<p><code><a href="reference/grade_scale.html">grade_scale()</a></code> turns the score (0 to 1) into a grade. By default it is a 1-10 scale where 60% is a 4; rounding never passes a student who did not reach it:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">grades</span><span class="op">$</span><span class="va">grade</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_scale.html">grade_scale</a></span><span class="op">(</span><span class="va">grades</span><span class="op">$</span><span class="va">total</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/grade_scale.html">grade_scale</a></span><span class="op">(</span><span class="va">grades</span><span class="op">$</span><span class="va">total</span>, min <span class="op">=</span> <span class="fl">0</span>, max <span class="op">=</span> <span class="fl">100</span>, pass <span class="op">=</span> <span class="fl">60</span>, pass_at <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="feedback-for-each-student">Feedback for each student<a class="anchor" aria-label="anchor" href="#feedback-for-each-student"></a></h2>
-<p><code><a href="reference/export_feedback.html">export_feedback()</a></code> writes one Markdown file per student with their grade, the score of each exercise, and the result of each test, with the error message when there is one. The files come in Spanish or English depending on the computer’s language; choose with <code>lang</code>:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/export_feedback.html">export_feedback</a></span><span class="op">(</span><span class="va">results</span>, <span class="st">"feedback/"</span>, lang <span class="op">=</span> <span class="st">"en"</span><span class="op">)</span></span></code></pre></div>
-<p>If you graded with <code>layout = "moodle"</code>, <code><a href="reference/export_moodle_feedback.html">export_moodle_feedback()</a></code> builds a <code>.zip</code> that Moodle loads in one go: on the assignment’s submissions page, use “Upload multiple feedback files in a zip”. The assignment must have file feedback turned on.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/export_moodle_feedback.html">export_moodle_feedback</a></span><span class="op">(</span><span class="va">results</span>, <span class="st">"feedback-assignment1.zip"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="similar-submissions">Similar submissions<a class="anchor" aria-label="anchor" href="#similar-submissions"></a></h2>
-<p><code><a href="reference/compare_submissions.html">compare_submissions()</a></code> compares, exercise by exercise, the files of every pair of students and lists the most similar ones. Renaming variables, changing spacing or adding comments does not hide a copy. A high similarity does not prove copying (short solutions look alike); use it to pick which submissions to read by hand.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/compare_submissions.html">compare_submissions</a></span><span class="op">(</span><span class="st">"submissions/"</span>, min_similarity <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span>
-<span><span class="co">#&gt;     exercise student_a student_b similarity</span></span>
-<span><span class="co">#&gt; 1 ejercicio1    Garcia     Lopez       1.00</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="plots">Plots<a class="anchor" aria-label="anchor" href="#plots"></a></h2>
-<p><code><a href="reference/plot_report.html">plot_report()</a></code> produces three sequential plots: student scores ranked, pass rate per exercise, and a pass/fail heatmap.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Interactive, pauses between plots</span></span>
-<span><span class="fu"><a href="reference/plot_report.html">plot_report</a></span><span class="op">(</span><span class="va">results</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Save to PDF</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/grDevices/pdf.html" class="external-link">pdf</a></span><span class="op">(</span><span class="st">"report.pdf"</span>, width <span class="op">=</span> <span class="fl">8</span>, height <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/plot_report.html">plot_report</a></span><span class="op">(</span><span class="va">results</span>, ask <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/grDevices/dev.html" class="external-link">dev.off</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Use ggplot2 when installed (falls back to base R otherwise)</span></span>
-<span><span class="fu"><a href="reference/plot_report.html">plot_report</a></span><span class="op">(</span><span class="va">results</span>, backend <span class="op">=</span> <span class="st">"ggplot2"</span><span class="op">)</span></span></code></pre></div>
+<h2 id="what-else-it-does">What else it does<a class="anchor" aria-label="anchor" href="#what-else-it-does"></a></h2>
+<ul><li>
+<strong>Grades:</strong> <code><a href="reference/student_scores.html">student_scores()</a></code> gives partial credit and takes weights per test or per exercise; <code><a href="reference/grade_scale.html">grade_scale()</a></code> turns that score into a 1-10 grade.</li>
+<li>
+<strong>Feedback:</strong> <code><a href="reference/export_feedback.html">export_feedback()</a></code> writes one file per student, in Spanish or English; <code><a href="reference/export_moodle_feedback.html">export_moodle_feedback()</a></code> packs them in a <code>.zip</code> to upload to Moodle.</li>
+<li>
+<strong>Summaries and export:</strong> <code><a href="reference/grade_report.html">grade_report()</a></code>, <code><a href="reference/plot_report.html">plot_report()</a></code>, <code><a href="reference/export_to_csv.html">export_to_csv()</a></code>, <code><a href="reference/export_to_html.html">export_to_html()</a></code> and <code><a href="reference/export_to_sheets.html">export_to_sheets()</a></code>.</li>
+<li>
+<strong>Similar submissions:</strong> <code><a href="reference/compare_submissions.html">compare_submissions()</a></code> looks for copies, even after renaming variables or changing spacing or comments.</li>
+<li>
+<strong>Time limit and speed:</strong> each test gets <code>timeout</code> seconds (default 10), and <code>workers</code> grades several students at once.</li>
+<li>
+<strong>To try it:</strong> <code><a href="reference/example_results.html">example_results()</a></code> returns sample results, and <code>system.file("examples", package = "corrector")</code> holds tests for five exercises.</li>
+</ul><p>All of this, with examples, in the <a href="https://anevolbap.github.io/corrector/articles/grading-pipeline.html">Grading pipeline</a> guide.</p>
 <div class="float">
 <img src="reference/figures/plots-preview.png" alt="Plots preview"><div class="figcaption">Plots preview</div>
 </div>
 </div>
 <div class="section level2">
-<h2 id="timeout">Timeout<a class="anchor" aria-label="anchor" href="#timeout"></a></h2>
-<p>Each test gets <code>timeout</code> seconds (default 10), and so does loading the student’s file. The default engine, <code>callr</code>, runs each exercise in a fresh subprocess with a temporary working directory. If a test does not respond to the limit (for example inside <code><a href="https://rdrr.io/r/base/Sys.sleep.html" class="external-link">Sys.sleep()</a></code>), the subprocess is killed once the whole exercise passes <code>timeout</code> × number of tests + 5 seconds: tests that already finished keep their result, and the rest are marked <code>timeout</code>. To change the limit:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"submissions/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>, timeout <span class="op">=</span> <span class="fl">30</span><span class="op">)</span></span></code></pre></div>
-<p>Use <code>timeout = Inf</code> for no limit. <code>engine = "inproc"</code> runs tests in the current session: it is faster, but <code><a href="https://rdrr.io/r/base/setTimeLimit.html" class="external-link">setTimeLimit()</a></code> does not interrupt every loop, and student code can change your global environment.</p>
-<p>For large classes, <code>workers</code> runs several subprocesses at the same time:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"submissions/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>, workers <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="security">Security<a class="anchor" aria-label="anchor" href="#security"></a></h2>
-<p>corrector is not a sandbox. The <code>callr</code> engine protects your R session, not your computer: student code can read and write any file your user can, use the network, or run system commands. For code from people you do not trust, run corrector inside a container or virtual machine without your credentials.</p>
-<div class="section level3">
-<h3 id="cheating">Cheating<a class="anchor" aria-label="anchor" href="#cheating"></a></h3>
-<p>With the <code>callr</code> and <code>inproc</code> engines corrector blocks the common tricks: redefining base R functions or S3 comparison methods in the file, writing them into the global environment, or calling <code><a href="https://rdrr.io/r/base/quit.html" class="external-link">quit()</a></code>. A student who knows R in depth can still fool these engines (for example with <code><a href="https://rdrr.io/r/base/attach.html" class="external-link">attach()</a></code> or by changing the base package). corrector detects such code and notes it in the <code>message</code> column as <code>suspicious code</code> or <code>tampering</code>, and <code><a href="reference/grade_report.html">grade_report()</a></code> lists those students under “Check by hand”.</p>
-<p><code>engine = "isolated"</code> runs the student code in another process and only gets the results back, so those tricks do not change the grade. It takes about twice as long as <code>callr</code>; <code>workers</code> makes up for it:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"submissions/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>,</span>
-<span>                             engine <span class="op">=</span> <span class="st">"isolated"</span>, workers <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
-<p><code>engine = "container"</code> does the same inside a Docker container with no network and only the exercise’s files, so student code cannot reach your files or network either. Build the image once from the file the package ships:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="ex">docker</span> build <span class="at">-t</span> corrector-runner <span class="st">"</span><span class="va">$(</span><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'cat(system.file("container", package = "corrector"))'</span><span class="va">)</span><span class="st">"</span></span></code></pre></div>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<h2 id="security-and-cheating">Security and cheating<a class="anchor" aria-label="anchor" href="#security-and-cheating"></a></h2>
+<p>corrector is not a sandbox: with the default engine, <code>callr</code>, student code runs as your user and can read and write your files. It blocks the common tricks (redefining <code><a href="https://rdrr.io/r/base/all.html" class="external-link">all()</a></code>, <code>==</code> or comparison methods) and notes suspicious code, which <code><a href="reference/grade_report.html">grade_report()</a></code> lists for you to check by hand.</p>
+<ul><li>
+<code>engine = "isolated"</code> runs the student code in another process, so tricks such as <code><a href="https://rdrr.io/r/base/attach.html" class="external-link">attach()</a></code> do not change the grade.</li>
+<li>
+<code>engine = "container"</code> does the same inside Docker, with no network and only the exercise’s files, so the code cannot reach your computer either.</li>
+</ul><div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"submissions/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>,</span>
 <span>                             engine <span class="op">=</span> <span class="st">"container"</span>, workers <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
-<p>The article <a href="https://anevolbap.github.io/corrector/articles/cheat-resistant-grading.html">Cheat-resistant grading</a> explains what each engine covers and how to write tests that are hard to fool (for example, compare with <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> and use random inputs).</p>
-</div>
-</div>
-<div class="section level2">
-<h2 id="example-test-files">Example test files<a class="anchor" aria-label="anchor" href="#example-test-files"></a></h2>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples"</span>, package <span class="op">=</span> <span class="st">"corrector"</span><span class="op">)</span></span></code></pre></div>
+<p>How to pick an engine, build the Docker image, and write tests that are hard to fool: <a href="https://anevolbap.github.io/corrector/articles/cheat-resistant-grading.html">Cheat-resistant grading</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="alternatives">Alternatives<a class="anchor" aria-label="anchor" href="#alternatives"></a></h2>
+<p>corrector is for exercises that students write as files on their own computer and that the teacher grades afterwards, all at once, with their own tests, with no server and no student accounts. Other R packages cover other cases:</p>
 <ul><li>
-<strong><a href="https://rstudio.github.io/gradethis/" class="external-link">gradethis</a></strong>: grades code inside interactive <a href="https://rstudio.github.io/learnr/" class="external-link">learnr</a> tutorials. Requires a Shiny server.</li>
+<strong><a href="https://rstudio.github.io/gradethis/" class="external-link">gradethis</a></strong>: checks code exercise by exercise inside an interactive <a href="https://rstudio.github.io/learnr/" class="external-link">learnr</a> tutorial, with instant feedback. The exercise lives inside the tutorial and needs a Shiny server.</li>
 <li>
-<strong><a href="https://www.r-exams.org/" class="external-link">exams</a></strong>: generates randomised exam questions, exports to Moodle, Canvas, PDF and more.</li>
+<strong><a href="https://www.r-exams.org/" class="external-link">exams</a></strong>: generates random questions and exports them to Moodle, Canvas, PDF and more. It grades answers (a number, a choice, a text), not the code the student wrote.</li>
 <li>
-<strong><a href="https://github.com/skranz/RTutor" class="external-link">RTutor</a></strong>: Shiny-based interactive problem sets with automatic solution checking.</li>
-</ul><p>corrector is the lightest option: no server, plain <code>.R</code> file submissions, zero hard dependencies.</p>
-</div>
-<div class="section level2">
-<h2 id="folder-names">Folder names<a class="anchor" aria-label="anchor" href="#folder-names"></a></h2>
-<p>The default extractor takes the first underscore-separated token of the folder name and applies title case (so <code>garcia_juan_12345</code> becomes <code>Garcia</code>). Pass <code>student_name_fn</code> to override:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span></span>
-<span>  <span class="st">"submissions/"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>,</span>
-<span>  student_name_fn <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">folder</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"_.*$"</span>, <span class="st">""</span>, <span class="va">folder</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p>Submissions can also be handed in as a single <code>.zip</code>; the package extracts it into a temporary directory before grading.</p>
-<div class="section level3">
-<h3 id="moodle">Moodle<a class="anchor" aria-label="anchor" href="#moodle"></a></h3>
-<p>To grade the <code>.zip</code> from Moodle’s “Download all submissions” directly, use <code>layout = "moodle"</code>. It works with and without “Download submissions in folders”, grades only file submissions (online text is skipped), and uses the student’s full name:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/grade_submissions.html">grade_submissions</a></span><span class="op">(</span><span class="st">"assignment1-submissions.zip"</span>, test_dir <span class="op">=</span> <span class="st">"tests/"</span>,</span>
-<span>                             layout <span class="op">=</span> <span class="st">"moodle"</span><span class="op">)</span></span></code></pre></div>
-</div>
+<strong><a href="https://github.com/skranz/RTutor" class="external-link">RTutor</a></strong>: interactive problem sets with automatic checking and progress tracking, in its own format.</li>
+</ul><p>corrector is not interactive: students do not see results while they write, unless you give them the tests to run.</p>
 </div>
 <div class="section level2">
 <h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a></h2>

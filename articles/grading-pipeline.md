@@ -47,23 +47,48 @@ results <- grade_submissions("submissions/", test_dir = "tests/")
 ```
 
 `results` is a `grade_results` object: a long-format data frame with one
-row per test, plus the columns `student`, `exercise`, `status`,
-`message`, and `duration`. Status is one of `pass`, `fail`, `error`,
-`timeout`, `missing`, or `source_error`.
+row per test and the columns `student`, `exercise`, `test`, `status`,
+`message` and `duration`. Status is one of `pass`, `fail`, `error`,
+`timeout`, `missing`, or `source_error`. That tells a test that returned
+`FALSE` apart from one that raised an error, ran out of time, or a file
+that was not handed in or could not be loaded.
 
 ``` r
 
 head(as.data.frame(results, format = "long"))
 ```
 
-Convert to the legacy wide-boolean view with
-`as.data.frame(results, format = "wide")`.
+For the wide view (one logical column per exercise) use
+`as.data.frame(results, format = "wide")`. There `NA` means the exercise
+was not handed in or the file could not be loaded.
+
+While you write the tests, try them on a single file:
+
+``` r
+
+grade_exercise("submissions/garcia_juan/ejercicio1.R", test_dir = "tests/")
+```
+
+## Trying it without real submissions
+
+[`example_results()`](https://anevolbap.github.io/corrector/reference/example_results.md)
+returns made-up results (8 students, 5 exercises) to try the summaries,
+plots and exports. The package also ships test files for five sample
+exercises: roots of a quadratic equation, word search, sorting,
+simulation, and data frame transformation.
+
+``` r
+
+grade_report(example_results())
+list.files(system.file("examples", package = "corrector"))
+```
 
 ## Summarising
 
 [`grade_report()`](https://anevolbap.github.io/corrector/reference/grade_report.md)
 reduces the long results to per-exercise pass rates and per-student
-scores, plus counts of errors, timeouts, and missing submissions.
+scores, plus counts of errors, timeouts, and missing submissions. A
+missing exercise counts as 0.
 
 ``` r
 
@@ -71,8 +96,16 @@ grade_report(results)
 ```
 
 [`plot_report()`](https://anevolbap.github.io/corrector/reference/plot_report.md)
-produces three plots. Pass `backend = "ggplot2"` to use ggplot2, if
-installed.
+produces three plots: each student’s score, the pass rate per exercise,
+and a heatmap of the results. Pass `backend = "ggplot2"` to use ggplot2,
+if installed. To save them to a PDF:
+
+``` r
+
+pdf("report.pdf", width = 8, height = 5)
+plot_report(results, ask = FALSE)
+dev.off()
+```
 
 ## Exporting
 
@@ -84,7 +117,14 @@ export_to_html(results, "report.html")
 ```
 
 The HTML report colour-codes each cell by status and includes a
-per-student breakdown of every test.
+per-student breakdown of every test. To write to a Google Sheet (needs
+the googlesheets4 package):
+
+``` r
+
+googlesheets4::gs4_auth()
+export_to_sheets(results, "https://docs.google.com/spreadsheets/d/...")
+```
 
 ## Partial credit, weights and feedback
 

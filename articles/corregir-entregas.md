@@ -50,7 +50,9 @@ resultados <- grade_submissions("entregas/", test_dir = "tests/")
 `resultados` es un objeto `grade_results`: un data frame en formato
 largo con una fila por test y las columnas `student`, `exercise`,
 `test`, `status`, `message` y `duration`. `status` es uno de `pass`,
-`fail`, `error`, `timeout`, `missing` o `source_error`.
+`fail`, `error`, `timeout`, `missing` o `source_error`. Así se distingue
+un test que devolvió `FALSE` de uno que dio error, que agotó el tiempo,
+o de un archivo que no se entregó o no se pudo cargar.
 
 ``` r
 
@@ -58,7 +60,30 @@ head(as.data.frame(resultados, format = "long"))
 ```
 
 Para la vista ancha (una columna lógica por ejercicio) usá
-`as.data.frame(resultados, format = "wide")`.
+`as.data.frame(resultados, format = "wide")`. Ahí `NA` indica que el
+ejercicio no se entregó o que el archivo no se pudo cargar.
+
+Mientras escribís los tests, probalos sobre un solo archivo:
+
+``` r
+
+grade_exercise("entregas/garcia_juan/ejercicio1.R", test_dir = "tests/")
+```
+
+## Probar sin entregas reales
+
+[`example_results()`](https://anevolbap.github.io/corrector/reference/example_results.md)
+devuelve resultados ficticios (8 estudiantes, 5 ejercicios) para probar
+los resúmenes, los gráficos y las exportaciones. El paquete también trae
+archivos de tests para cinco ejercicios de ejemplo: raíces de una
+ecuación cuadrática, búsqueda de palabras, ordenamiento, simulación y
+transformación de data frames.
+
+``` r
+
+grade_report(example_results())
+list.files(system.file("examples", package = "corrector"))
+```
 
 ## Resumir
 
@@ -73,8 +98,17 @@ grade_report(resultados)
 ```
 
 [`plot_report()`](https://anevolbap.github.io/corrector/reference/plot_report.md)
-dibuja tres gráficos. Pasá `backend = "ggplot2"` para usar ggplot2, si
-está instalado.
+dibuja tres gráficos: la nota de cada estudiante, el porcentaje de
+aprobación por ejercicio y un mapa de calor con los resultados. Pasá
+`backend = "ggplot2"` para usar ggplot2, si está instalado. Para
+guardarlos en un PDF:
+
+``` r
+
+pdf("informe.pdf", width = 8, height = 5)
+plot_report(resultados, ask = FALSE)
+dev.off()
+```
 
 ## Exportar
 
@@ -86,7 +120,14 @@ export_to_html(resultados, "informe.html")
 ```
 
 El informe HTML pinta cada celda según el resultado e incluye el detalle
-de cada test por estudiante.
+de cada test por estudiante. Para escribir en una planilla de Google
+(necesita el paquete googlesheets4):
+
+``` r
+
+googlesheets4::gs4_auth()
+export_to_sheets(resultados, "https://docs.google.com/spreadsheets/d/...")
+```
 
 ## Puntaje parcial, pesos y devoluciones
 

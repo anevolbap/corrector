@@ -63,7 +63,7 @@
       <h1>Cheat-resistant grading</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/anevolbap/corrector/blob/v0.6.0/vignettes/cheat-resistant-grading.Rmd" class="external-link"><code>vignettes/cheat-resistant-grading.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/anevolbap/corrector/blob/main/vignettes/cheat-resistant-grading.Rmd" class="external-link"><code>vignettes/cheat-resistant-grading.Rmd</code></a></small>
       <div class="d-none name"><code>cheat-resistant-grading.Rmd</code></div>
     </div>
 
@@ -83,7 +83,7 @@ common tricks there:</p>
 <ul>
 <li>A student object that redefines a base function the tests use
 (<code><a href="https://rdrr.io/r/base/all.html" class="external-link">all()</a></code>, <code>==</code>, <code><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE()</a></code>, testthat’s
-<code><a href="https://testthat.r-lib.org/reference/equality-expectations.html" class="external-link">expect_equal()</a></code>, and so on) is not visible to the
+<code>expect_equal()</code>, and so on) is not visible to the
 tests.</li>
 <li>Student S3 methods for the comparison generics (<code>Ops</code>,
 <code>==</code>, <code>all.equal</code>, <code>as.logical</code>, …) are
@@ -171,8 +171,8 @@ number before you compare it:</p>
 <span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu">media</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/double.html" class="external-link">is.double</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/is.object.html" class="external-link">is.object</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">7</span> <span class="op">/</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>With testthat, prefer <code><a href="https://testthat.r-lib.org/reference/equality-expectations.html" class="external-link">expect_identical()</a></code> and
-<code><a href="https://testthat.r-lib.org/reference/inheritance-expectations.html" class="external-link">expect_type()</a></code>.</p>
+<p>With testthat, prefer <code>expect_identical()</code> and
+<code>expect_type()</code>.</p>
 <p>Use inputs the student cannot know in advance. A student who has seen
 the tests can hard-code the answers; random inputs checked against a
 reference solution in the test file stop that:</p>

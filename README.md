@@ -2,10 +2,11 @@
 
 [English version](https://github.com/anevolbap/corrector/blob/main/README.en.md)
 
-Paquete de R para corregir automáticamente ejercicios de programación. Cada
-estudiante entrega un archivo `.R` por ejercicio y el docente provee los archivos
-de tests. El paquete los carga en un entorno aislado, ejecuta los tests y
-devuelve un objeto con los resultados por test.
+Paquete de R para corregir ejercicios de programación en R. Cada estudiante
+entrega un archivo por ejercicio (`.R`, `.Rmd` o `.qmd`), el docente escribe
+los tests, y corrector corrige el curso entero de una vez, en tu computadora.
+Lee las entregas de una tarea de Moodle y prepara las devoluciones para
+subirlas de vuelta.
 
 Guías: [Corregir entregas de principio a fin](https://anevolbap.github.io/corrector/articles/corregir-entregas.html) ·
 [Corregir sin que te hagan trampa](https://anevolbap.github.io/corrector/articles/evaluacion-anti-trampas.html) ·
@@ -65,305 +66,104 @@ export_to_html(resultados, "informe.html")
 export_to_csv(resultados,  "notas.csv")
 ```
 
-El paquete incluye datos de ejemplo para probar las funciones sin necesidad de
-armar entregas reales:
+## Entregas y tests
 
-```r
-resultados <- example_results()  # 8 estudiantes ficticios, 5 ejercicios
-grade_report(resultados)
-plot_report(resultados)
-```
-
-## Estructura de los resultados
-
-`grade_submissions()` y `grade_exercise()` devuelven un objeto `grade_results`,
-un data frame en formato largo con una fila por (estudiante, ejercicio, test):
-
-| student | exercise   | test                    | status | message | duration |
-|---------|------------|-------------------------|--------|---------|----------|
-| Garcia  | ejercicio1 | test_ejercicio1_raices  | pass   | NA      | 0.001    |
-| Lopez   | ejercicio1 | test_ejercicio1_raices  | fail   | NA      | 0.001    |
-
-`status` es un factor con niveles `pass`, `fail`, `error`, `timeout`, `missing`,
-`source_error`. Esto permite distinguir un test que devolvió `FALSE` de uno que
-arrojó un error, agotó el tiempo límite, o de un archivo que el estudiante no
-entregó.
-
-Para obtener la vista clásica (una fila por estudiante, una columna lógica por
-ejercicio):
-
-```r
-as.data.frame(resultados, format = "wide")
-#   student    ejercicio1
-# 1 Garcia          TRUE
-# 2 Lopez          FALSE
-```
-
-`NA` indica que el ejercicio no se entregó o que el archivo no parseó.
-
-## Cómo funciona
-
-El corrector usa la siguiente convención de nombres:
+Una carpeta por estudiante y un archivo de tests por ejercicio. El nombre del
+archivo de tests tiene que coincidir con el del ejercicio:
 
 ```
 entregas/
 ├── garcia_juan/
-│   ├── ejercicio1.R   <- archivo del estudiante
-│   └── ejercicio2.R
+│   ├── ejercicio1.R
+│   └── ejercicio2.Rmd
 └── lopez_maria/
-    ├── ejercicio1.R
-    └── ejercicio2.R
+    └── ejercicio1.R
 
 tests/
-├── test_ejercicio1.R  <- archivo de tests del docente (el nombre tiene que coincidir)
+├── test_ejercicio1.R
 └── test_ejercicio2.R
 ```
 
-Cada archivo de tests tiene funciones con el formato `test_<ejercicio>_<caso>`
-que devuelven `TRUE` o `FALSE`:
+Un archivo de tests tiene funciones `test_<ejercicio>_<caso>` que devuelven
+`TRUE` o `FALSE`. También pueden usar expectativas de testthat
+(`expect_equal()` y otras).
 
 ```r
 # tests/test_ejercicio1.R
 test_ejercicio1_raices <- function() {
   all(ceros_cuadratica(1, 0, -1) == c(-1, 1))
 }
-
-test_ejercicio1_tipo <- function() {
-  is.numeric(ceros_cuadratica(1, 0, -1))
-}
 ```
 
-La lista de ejercicios esperados sale del directorio de tests: cada archivo
-`test_*.R` define un ejercicio. Si un estudiante no entrega un ejercicio que
-existe en `test_dir/`, se registra una fila con `status = missing` en lugar de
-ignorarlo en silencio.
-
-El código del estudiante y los tests se cargan en entornos nuevos para cada
-ejercicio. Los tests no ven las funciones de base R que el estudiante
-redefine (como `all()` o `==`), salvo las que pases en `allow_masking`. Con el
-motor `callr` (el que se usa por defecto) cada ejercicio corre en un proceso
-aparte, así las entregas no se afectan entre sí.
-
-Los tests también pueden usar expectativas de testthat. Un `expect_*` que
-falla cuenta como `fail` y su mensaje queda en la columna `message`:
+- Los ejercicios esperados salen de la carpeta de tests. Un ejercicio que el
+  estudiante no entregó queda como `missing`, no se ignora.
+- Los nombres de archivo se comparan sin importar mayúsculas: `Ejercicio1.R`
+  cuenta como `ejercicio1`. De `.Rmd` y `.qmd` se corren los bloques de R.
+- Las entregas pueden venir en una carpeta o en un `.zip`. El nombre de cada
+  estudiante sale de su carpeta (`garcia_juan` queda como `Garcia`); cambialo
+  con `student_name_fn`.
+- Para Moodle, pasá el `.zip` de "Descargar todas las entregas" con
+  `layout = "moodle"`. Funciona con y sin "Descargar entregas en carpetas".
 
 ```r
-# tests/test_ejercicio1.R
-library(testthat)
-
-test_ejercicio1_raices <- function() {
-  expect_equal(ceros_cuadratica(1, 0, -1), c(-1, 1))
-}
+resultados <- grade_submissions("tarea1-entregas.zip", test_dir = "tests/",
+                                layout = "moodle")
 ```
 
-El estudiante puede entregar `ejercicio1.R`, `ejercicio1.Rmd` o
-`ejercicio1.qmd` (de los dos últimos se corren los bloques de código R). Las
-mayúsculas no importan: `Ejercicio1.R` cuenta como `ejercicio1`.
+## Qué más hace
 
-## Uso
+- **Notas:** `student_scores()` da puntaje parcial y acepta pesos por test o
+  por ejercicio; `grade_scale()` pasa ese puntaje a una nota de 1 a 10.
+- **Devoluciones:** `export_feedback()` escribe un archivo por estudiante, en
+  castellano o en inglés; `export_moodle_feedback()` las arma en un `.zip`
+  para subir a Moodle.
+- **Resúmenes y exportación:** `grade_report()`, `plot_report()`,
+  `export_to_csv()`, `export_to_html()` y `export_to_sheets()`.
+- **Entregas parecidas:** `compare_submissions()` busca copias, aunque cambien
+  nombres de variables, espacios o comentarios.
+- **Tiempo límite y velocidad:** cada test tiene `timeout` segundos (10 por
+  defecto), y `workers` corrige varios estudiantes a la vez.
+- **Para probar:** `example_results()` trae resultados de ejemplo, y
+  `system.file("examples", package = "corrector")` tests para cinco
+  ejercicios.
 
-```r
-library(corrector)
-
-# Corregir un lote completo (carpeta o .zip)
-resultados <- grade_submissions("entregas/", test_dir = "tests/")
-
-# Corregir un archivo individual (útil mientras escribís los tests)
-grade_exercise("entregas/garcia_juan/ejercicio1.R", test_dir = "tests/")
-
-# Resumen en consola
-grade_report(resultados)
-# === Grade Report ===
-#
-# Pass rate by exercise:
-#   ejercicio1                50%
-#   ejercicio2               100%
-#
-# Overall mean score: 75%
-#
-# Score by student (descending):
-#   Garcia               #################### 100%
-#   Lopez                ##########            50%
-
-# Exportar
-export_to_csv(resultados, "notas.csv")               # vista wide por defecto
-export_to_csv(resultados, "notas-largo.csv", format = "long")
-export_to_html(resultados, "informe.html")           # tabla con colores y detalle por test
-
-# Exportar a Google Sheets (requiere googlesheets4)
-googlesheets4::gs4_auth()
-export_to_sheets(resultados, "https://docs.google.com/spreadsheets/d/...")
-```
-
-## Puntaje parcial y pesos
-
-Por defecto un ejercicio está aprobado solo si pasan todos sus tests.
-`student_scores()` da puntaje parcial (la fracción de tests que pasan) y
-acepta pesos por test o por ejercicio. La columna `total` es la nota: un
-ejercicio no entregado cuenta como 0.
-
-```r
-notas <- student_scores(resultados,
-                        weights = c(test_ejercicio1_raices = 2, ejercicio2 = 3))
-grade_report(resultados, scoring = "partial")
-```
-
-`grade_scale()` pasa el puntaje (de 0 a 1) a una escala de notas. Por
-defecto es de 1 a 10 y el 60% es un 4; el redondeo nunca aprueba a quien no
-llegó:
-
-```r
-notas$nota <- grade_scale(notas$total)
-grade_scale(notas$total, min = 0, max = 100, pass = 60, pass_at = 0.6)
-```
-
-## Devolución a cada estudiante
-
-`export_feedback()` escribe un archivo Markdown por estudiante con su nota,
-el puntaje de cada ejercicio y el resultado de cada test, con el mensaje de
-error cuando lo hay. Los archivos salen en castellano o en inglés según el
-idioma de la computadora; elegilo con `lang`:
-
-```r
-export_feedback(resultados, "devoluciones/", lang = "es")
-```
-
-Si corregiste con `layout = "moodle"`, `export_moodle_feedback()` arma un
-`.zip` que Moodle carga de una vez: en la página de entregas de la tarea,
-usá la opción para subir varios archivos de retroalimentación en un zip (en
-inglés, *Upload multiple feedback files in a zip*). La tarea tiene que tener
-activada la retroalimentación con archivos.
-
-```r
-export_moodle_feedback(resultados, "devoluciones-tarea1.zip")
-```
-
-## Entregas parecidas
-
-`compare_submissions()` compara, ejercicio por ejercicio, los archivos de
-todos los pares de estudiantes y lista los más parecidos. Cambiar nombres de
-variables, espacios o comentarios no esconde una copia. Una similitud alta no
-prueba que haya copia (las soluciones cortas se parecen); sirve para elegir
-qué entregas mirar a mano.
-
-```r
-compare_submissions("entregas/", min_similarity = 0.8)
-#>     exercise student_a student_b similarity
-#> 1 ejercicio1    Garcia     Lopez       1.00
-```
-
-## Gráficos
-
-`plot_report()` genera tres gráficos en secuencia: puntajes de los estudiantes
-ordenados, tasa de aprobación por ejercicio y un mapa de calor de resultados.
-
-```r
-# Interactivo, pausa entre gráficos
-plot_report(resultados)
-
-# Guardar los tres gráficos en un PDF
-pdf("informe.pdf", width = 8, height = 5)
-plot_report(resultados, ask = FALSE)
-dev.off()
-
-# Usar ggplot2 si está instalado (vuelve a base R si no)
-plot_report(resultados, backend = "ggplot2")
-```
+Todo esto, con ejemplos, en
+[Corregir entregas de principio a fin](https://anevolbap.github.io/corrector/articles/corregir-entregas.html).
 
 ![Vista previa de los gráficos](man/figures/plots-preview.png)
 
-## Tiempo límite por test
+## Seguridad y trampas
 
-Cada test tiene un límite de `timeout` segundos (10 por defecto), y la carga
-del archivo del estudiante también. El motor `callr` corre cada ejercicio en un
-subproceso nuevo, con una carpeta de trabajo temporal. Si un test no responde
-al límite (por ejemplo dentro de `Sys.sleep()`), el subproceso se corta cuando
-el ejercicio completo pasa `timeout` × cantidad de tests + 5 segundos: los
-tests que ya terminaron conservan su resultado y el resto queda como
-`timeout`. Para cambiar el límite:
+corrector no es un sandbox: con el motor por defecto, `callr`, el código del
+estudiante corre con tu usuario y puede leer y escribir tus archivos. Bloquea
+las trampas comunes (redefinir `all()`, `==` o métodos de comparación) y
+anota el código sospechoso, que `grade_report()` lista para revisar a mano.
 
-```r
-resultados <- grade_submissions("entregas/", test_dir = "tests/", timeout = 30)
-```
-
-Usá `timeout = Inf` para no poner límite. `engine = "inproc"` corre los tests
-en la sesión actual: es más rápido, pero `setTimeLimit()` no interrumpe todos
-los bucles y el código del estudiante puede modificar tu entorno global.
-
-Para cursos grandes, `workers` corre varios subprocesos a la vez:
-
-```r
-resultados <- grade_submissions("entregas/", test_dir = "tests/", workers = 4)
-```
-
-## Seguridad
-
-corrector no es un sandbox. El motor `callr` protege tu sesión de R, no tu
-computadora: el código del estudiante puede leer y escribir cualquier archivo
-al que tenga acceso tu usuario, usar la red o ejecutar comandos del sistema.
-Si no confiás en quien escribió el código, corré el corrector dentro de un
-contenedor o una máquina virtual sin tus credenciales.
-
-### Trampas
-
-Con los motores `callr` e `inproc` el corrector bloquea las trampas comunes:
-redefinir funciones de base R o métodos S3 de comparación en el archivo,
-escribirlas en el entorno global, o llamar a `quit()`. Un estudiante que
-conozca R a fondo todavía puede engañarlos (por ejemplo con `attach()` o
-modificando el paquete base). El corrector detecta ese código y lo anota en
-la columna `message` como `suspicious code` o `tampering`, y `grade_report()`
-lista a esos estudiantes en "Check by hand".
-
-`engine = "isolated"` corre el código del estudiante en otro proceso y solo
-recibe de vuelta los resultados, así esas trampas no cambian la nota. Tarda
-más o menos el doble que `callr`; `workers` lo compensa:
-
-```r
-resultados <- grade_submissions("entregas/", test_dir = "tests/",
-                                engine = "isolated", workers = 4)
-```
-
-`engine = "container"` hace lo mismo dentro de un contenedor de Docker sin
-red y con solo los archivos del ejercicio, así el código del estudiante
-tampoco llega a tus archivos ni a tu red. Construí la imagen una vez con el
-archivo que trae el paquete:
-
-```bash
-docker build -t corrector-runner "$(Rscript -e 'cat(system.file("container", package = "corrector"))')"
-```
+- `engine = "isolated"` corre el código del estudiante en otro proceso, así
+  trucos como `attach()` no cambian la nota.
+- `engine = "container"` hace lo mismo dentro de Docker, sin red y solo con
+  los archivos del ejercicio, así el código tampoco llega a tu computadora.
 
 ```r
 resultados <- grade_submissions("entregas/", test_dir = "tests/",
                                 engine = "container", workers = 4)
 ```
 
-El artículo
-[Corregir sin que te hagan trampa](https://anevolbap.github.io/corrector/articles/evaluacion-anti-trampas.html)
-explica qué cubre cada motor y cómo escribir tests difíciles de engañar (por
-ejemplo, comparar con `identical()` y usar datos al azar).
-
-## Archivos de tests de ejemplo
-
-El paquete incluye ejemplos para cinco tipos de ejercicio: raíces de ecuación
-cuadrática, búsqueda de palabras, ordenamiento, simulación y transformación de
-data frames.
-
-```r
-system.file("examples", package = "corrector")
-```
+Cómo elegir el motor, construir la imagen de Docker y escribir tests
+difíciles de engañar:
+[Corregir sin que te hagan trampa](https://anevolbap.github.io/corrector/articles/evaluacion-anti-trampas.html).
 
 ## Alternativas
 
-corrector sirve para ejercicios que el estudiante escribe como archivo
-(`.R`, `.Rmd` o `.qmd`) en su propia computadora y que el docente corrige
-después, todos juntos, con sus propios tests. Otros paquetes de R cubren otros
-casos:
+corrector sirve para ejercicios que el estudiante escribe como archivo en su
+propia computadora y que el docente corrige después, todos juntos, con sus
+propios tests, sin servidor ni cuentas para los estudiantes. Otros paquetes de
+R cubren otros casos:
 
 - **[gradethis](https://rstudio.github.io/gradethis/)**: revisa el código
   ejercicio por ejercicio dentro de un tutorial interactivo de
-  [learnr](https://rstudio.github.io/learnr/), con respuesta al instante. Muy
-  bueno para práctica guiada, pero el ejercicio vive dentro del tutorial y
-  necesita un servidor Shiny.
+  [learnr](https://rstudio.github.io/learnr/), con respuesta al instante. El
+  ejercicio vive dentro del tutorial y necesita un servidor Shiny.
 - **[exams](https://www.r-exams.org/)**: genera preguntas al azar y las exporta
   a Moodle, Canvas, PDF y otros formatos. Corrige respuestas (un número, una
   opción, un texto), no el código que escribió el estudiante.
@@ -371,55 +171,9 @@ casos:
   interactivas con corrección automática y seguimiento del progreso, en su
   propio formato.
 
-Lo que suma corrector:
-
-- Corre en tu computadora: sin servidor, sin red y sin cuentas para los
-  estudiantes. Un curso entero se corrige con una sola llamada.
-- Los tests son funciones de R comunes o expectativas de testthat, así que
-  sirven para cualquier ejercicio.
-- Con Moodle se complementa: Moodle junta las entregas en una tarea, corrector
-  las corrige desde el `.zip` y `export_moodle_feedback()` devuelve las
-  devoluciones a Moodle.
-- Resultados por test, puntaje parcial, pesos, escala de notas y una
-  devolución por estudiante, en castellano o en inglés.
-- Defensas contra trampas: los motores `isolated` y `container`, la detección
-  de código sospechoso y `compare_submissions()` para entregas copiadas.
-
-No es interactivo: el estudiante no ve el resultado mientras escribe, salvo
-que le des los tests para que los corra. Depende de `callr` y `processx`, que
-se instalan solos con el paquete.
+corrector no es interactivo: el estudiante no ve el resultado mientras
+escribe, salvo que le des los tests para que los corra.
 
 ## Contribuciones
 
 El feedback es bienvenido. Abrí un issue en GitHub.
-
-## Nombres de las carpetas
-
-Se espera que las carpetas de cada estudiante empiecen con el apellido,
-opcionalmente seguido de otros campos separados por guiones bajos
-(por ejemplo `garcia_juan_12345`). El corrector extrae el primer segmento como
-nombre para mostrar.
-
-Para usar otra convención, pasá una función a `student_name_fn`:
-
-```r
-resultados <- grade_submissions(
-  "entregas/", test_dir = "tests/",
-  student_name_fn = function(folder) sub("_.*$", "", folder)
-)
-```
-
-Las entregas también se pueden entregar como un único archivo `.zip`; el paquete
-lo descomprime automáticamente antes de corregir.
-
-### Moodle
-
-Para corregir directamente el `.zip` de "Descargar todas las entregas" de
-Moodle, usá `layout = "moodle"`. Funciona con y sin la opción "Descargar
-entregas en carpetas", corrige solo las entregas de archivos (ignora el texto
-en línea) y usa el nombre completo del estudiante:
-
-```r
-resultados <- grade_submissions("tarea1-entregas.zip", test_dir = "tests/",
-                                layout = "moodle")
-```
